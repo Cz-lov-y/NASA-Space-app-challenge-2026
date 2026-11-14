@@ -87,3 +87,9 @@ def test_trend_and_comparison_charts_use_own_units():
 def test_empty_plot_is_rejected():
     with pytest.raises(ValueError):
         trend_figure(_frame().iloc[:0])
+
+
+def test_comparison_preserves_missing_values_without_zero_imputation():
+    frame = _frame().assign(value=[1.0, float('nan'), 3.0])
+    values = list(comparison_figure(frame).data[0].y)
+    assert values[0] == -1.0 and pd.isna(values[1]) and values[2] == 1.0

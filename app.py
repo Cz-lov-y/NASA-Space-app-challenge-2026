@@ -1,11 +1,11 @@
 """EarthRisk — Green Mirage: Member D's Streamlit dashboard.
 
-The B → A → C interfaces are called directly. The bundled observations are
-synthetic; the interface must never present them as real NASA findings.
+The B → A → C interfaces are called directly. The default observations are synthetic; real NASA-derived data remain preliminary.
 """
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 
 import pandas as pd
 import streamlit as st
@@ -147,12 +147,19 @@ st.caption(
 st.sidebar.title("Explore a region")
 region = st.sidebar.text_input(
     "Region ID", value="demo-region",
-    help="The scaffold supports demo-region; Member B will supply real region IDs.",
+    help="Available: demo-region, whole_earth, central_us_sample.",
 ).strip()
+options = {
+    "demo-region": ["ndvi", "soil_moisture"],
+    "whole_earth": ["ndvi", "soil_water_0_100cm", "soil_water_0_10cm"],
+    "central_us_sample": ["soil_water_0_10cm"],
+}.get(region, ["ndvi", "soil_moisture"])
+defaults = options[:2] if region != "central_us_sample" else options
 selected = st.sidebar.multiselect(
     "Environmental indicators",
-    ["ndvi", "soil_moisture"],
-    default=["ndvi", "soil_moisture"],
+    options,
+    default=defaults,
+    key=f"indicators_{region}",
     format_func=indicator_label,
 )
 st.sidebar.caption(
@@ -170,9 +177,12 @@ if not selected:
     st.stop()
 
 frames = []
+provenance = {}
 for indicator in selected:
     try:
-        frames.append(load_indicator(region, indicator))
+        frame = load_indicator(region, indicator)
+        provenance[indicator] = deepcopy(frame.attrs.get("metadata", {}))
+        frames.append(frame)
     except (ValueError, FileNotFoundError, KeyError, OSError) as exc:
         st.warning(f"Indicator unavailable — {indicator_label(indicator)}: {exc}")
 if not frames:
@@ -205,7 +215,9 @@ if observations.empty or (observations.groupby("variable").size() < 3).any():
     st.stop()
 
 try:
-    analysis = analyze_region(observations)
+    soil_name = ("soil_water_0_100cm" if "soil_water_0_100cm" in selected else
+                 "soil_water_0_10cm" if "soil_water_0_10cm" in selected else "soil_moisture")
+    analysis = analyze_region(observations, soil_moisture_variable=soil_name)
 except (TypeError, ValueError, KeyError) as exc:
     st.error(f"The scientific analysis could not run: {exc}")
     st.stop()
@@ -223,6 +235,11 @@ elif not quality.get("qa_reviewed"):
         "These observations have not been marked QA-reviewed. Confirm their "
         "NASA provenance, coverage and quality filters before interpretation."
     )
+
+if region == "whole_earth":
+    st.warning("Global averages use different MODIS and GLDAS valid footprints; coverage fractions do not establish geographic overlap. Independent MODIS validation remains outstanding. These results cannot locate a local policy jurisdiction.")
+    if {"soil_water_0_10cm", "soil_water_0_100cm"}.issubset(selected):
+        st.info("Both soil layers selected: the 0–100 cm layer is the primary indicator; adding a third series can change the common analysis period and statistical correction.")
 
 indicator_dates = [
     set(pd.to_datetime(group["date"]).dt.normalize())
@@ -385,7 +402,11 @@ with tab_data:
         observations.sort_values(["variable", "date"]),
         width="stretch", hide_index=True,
     )
-    st.caption("Rows retain source names and units, limited to the selected period.")
+    st.caption("Rows retain source names, units, quality flags and coverage where available, limited to the selected period.")
+    with st.expander("Data provenance and quality rules"):
+        st.json(provenance)
+    st.download_button("Download provenance (JSON)", data=json.dumps(provenance, indent=2),
+                       file_name="earthrisk_provenance.json", mime="application/json")
     st.download_button(
         "Download displayed observations (CSV)",
         data=observations.to_csv(index=False).encode("utf-8"),

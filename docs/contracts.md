@@ -69,7 +69,7 @@ analysis = analyze_region(pd.concat(series, ignore_index=True))
 # Persist provenance separately, e.g. as a JSON sidecar; analysis does not carry it.
 ```
 
-The scaffold supports `demo-region`, `ndvi`, and `soil_moisture` from SYNTHETIC data only.
+The reader supports synthetic `demo-region` plus preliminary real `whole_earth` (`ndvi`, `soil_water_0_10cm`, `soil_water_0_100cm`) and `central_us_sample` (`soil_water_0_10cm`). Metadata is attached per frame and persisted in `data/processed/series_metadata.json`. The app still defaults to the synthetic demo and requires frontend integration for the real variables.
 
 ## A → C/D: analyze_region(data) -> dict
 
