@@ -267,8 +267,9 @@ tab_trends, tab_methods, tab_policy, tab_data = st.tabs(
 
 with tab_trends:
     st.markdown("### Original observations")
-    plot_columns = st.columns(min(len(frames), 2))
-    for column, indicator in zip(plot_columns, selected):
+    plotted_variables = observations["variable"].astype(str).drop_duplicates().tolist()
+    plot_columns = st.columns(min(len(plotted_variables), 2))
+    for column, indicator in zip(plot_columns, plotted_variables):
         subset = observations.loc[observations["variable"] == indicator]
         if not subset.empty:
             with column:
