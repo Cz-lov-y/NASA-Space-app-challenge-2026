@@ -158,6 +158,14 @@ def build_regional_screening(monthly: pd.DataFrame, catalog=None, *, alpha: floa
               "settings": {"alpha": alpha, "min_years": min_years, "min_months_per_year": 12},
               "multiple_testing": {"method": "benjamini_hochberg", "family_size": len(family),
                   "eligible_regions": sum(r["status"] == "eligible" for r in records),
+                  "catalog_regions": len(records),
+                  "supported_regions": sum(r["status"] != "unsupported" for r in records),
+                  "pending_regions": sum(r["status"] == "pending" for r in records),
+                  "insufficient_regions": sum(r["status"] == "insufficient" for r in records),
+                  "complete_period_regions": sum(
+                      r["analysis"] is not None and r["analysis"]["observation_period"]["years"] == list(range(2003, 2025))
+                      for r in records),
+                  "provisional": True,
                   "family_definition": "Both finite primary-indicator MK tests for every region with sufficient common complete years; no direction/significance/reliability selection.",
                   "scope": "All eligible regions supplied in this catalog; changes to catalog or data require recomputing the entire family."},
               "limitations": ["Provisional statistical screening; source QA and common spatial footprints remain unreviewed.",
@@ -170,3 +178,72 @@ def build_regional_screening(monthly: pd.DataFrame, catalog=None, *, alpha: floa
               "regions": records}
     json.dumps(report, allow_nan=False)
     return report
+
+
+def build_screening_summary(report: dict) -> dict:
+    """Return a compact GeoJSON catalog of stored statistical facts.
+
+    No model is refitted and no evidence category is inferred from a slope.
+    Worldwide significance is null unless a paired test entered the declared
+    family. Available-indicator diagnostics must never color a divergence map.
+    """
+    if not isinstance(report, dict) or report.get("schema_version") != "regional-screening-1":
+        raise ValueError("report must use schema regional-screening-1")
+    alpha = report["settings"]["alpha"]
+    features = []
+    for record in report["regions"]:
+        paired, available = record.get("analysis"), record.get("available_indicator_analysis")
+        result = paired or available
+        screening = record["screening"]
+        indicators = {}
+        for variable, analysis in (result or {}).get("analysis", {}).items():
+            ols, sen = analysis.get("linear_regression"), analysis.get("theil_sen")
+            q = screening["adjusted_p_values"].get(variable) if record["status"] == "eligible" else None
+            quality = analysis["data_quality"]
+            indicators[variable] = {
+                "unit": analysis["unit"],
+                "slope_per_year": ols["slope"] if ols else None,
+                "sen_slope_per_year": sen["slope"] if sen else None,
+                "n_years": quality["n_years"],
+                "source_coverage_year_count": len(quality["available_years"]),
+                "reliable": analysis["reliable"],
+                "worldwide_adjusted_p_value": q,
+                "worldwide_significant": q < alpha if q is not None else None,
+            }
+        properties = {
+            "region_id": record["region_id"],
+            "name": record.get("properties", {}).get("name", record["region_id"]),
+            "bbox": deepcopy(record.get("bbox")), "centroid": deepcopy(record.get("centroid")),
+            "status": record["status"], "classification": screening["classification"],
+            "category": screening["category"], "provisional": screening["provisional"],
+            "qa_reviewed": screening["qa_reviewed"],
+            "synthetic_demo": (result or {}).get("data_quality", {}).get("synthetic_demo", False),
+            "analysis_kind": "paired" if paired else "available_indicator" if available else "none",
+            "analysis_period": deepcopy((result or {}).get("observation_period")),
+            "paired_year_count": len((paired or {}).get("observation_period", {}).get("years", [])),
+            "available_year_count": len((available or {}).get("observation_period", {}).get("years", [])),
+            "reasons": deepcopy(screening["reasons"]),
+            "quality_flags": deepcopy(screening["quality_flags"]),
+            "indicators": indicators,
+        }
+        # The compact artifact stores counts and bounds rather than year arrays.
+        if properties["analysis_period"]:
+            properties["analysis_period"].pop("years", None)
+        features.append({"type": "Feature", "id": record["region_id"],
+                         "geometry": deepcopy(record.get("geometry")), "properties": properties})
+    summary = {"type": "FeatureCollection", "schema_version": "regional-map-1",
+               "dataset_version": report["dataset_version"], "input_sha256": report["input_sha256"],
+               "observation_period": deepcopy(report["observation_period"]),
+               "primary_variables": deepcopy(report["primary_variables"]),
+               "settings": deepcopy(report["settings"]),
+               "multiple_testing": deepcopy(report["multiple_testing"]),
+               "limitations": deepcopy(report["limitations"]) + [
+                   "Compact rendering artifact; inspect detailed screening.json for uncertainty intervals and reliability reasons.",
+                   "available_year_count counts standalone diagnostic years; paired_year_count counts shared analyzed years. Source coverage years are per indicator before alignment.",
+               ],
+               "features": features}
+    for key in ("source_csv_sha256", "source_catalog_sha256"):
+        if key in report:
+            summary[key] = report[key]
+    json.dumps(summary, allow_nan=False)
+    return summary

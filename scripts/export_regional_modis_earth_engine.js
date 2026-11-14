@@ -1,5 +1,8 @@
+// LIVE STATUS: worldwide pilot fails polar raster bounds. Do not launch annual tasks
+// until resolved; see docs/member_b_regional_steps.md. QA/resolution are unchanged.
 // Paste into Earth Engine CODE EDITOR (code.earthengine.google.com), not Cloud Shell.
 // Native MOD13A3.061 QA/scaling retained. Start with MODE='pilot'.
+var NONPOLAR_ONLY = false; // Explicit partial fallback:576cells; all648 remain in local catalog.
 var MODE = 'pilot'; // 'years' creates 22 annual tasks; 'month' retries one month.
 var FIRST_YEAR = 2003;
 var LAST_YEAR = 2024;
@@ -10,6 +13,7 @@ var features = [];
 for (var r = 0; r < 18; r++) {
   for (var c = 0; c < 36; c++) {
     var west = -180 + c * 10, south = -90 + r * 10;
+    if (NONPOLAR_ONLY && (south === -90 || south + 10 === 90)) continue;
     var rid = 'grid_r' + ('0' + r).slice(-2) + '_c' + ('0' + c).slice(-2);
     var area = Math.pow(6371007.181, 2) * Math.PI / 18 *
       (Math.sin((south + 10) * Math.PI / 180) - Math.sin(south * Math.PI / 180));
@@ -64,6 +68,7 @@ function exportMonths(start,end,label) {
   var rows=ee.FeatureCollection(ee.List.sequence(0,count.subtract(1)).map(function(i) {
     return oneMonth(start.advance(i,'month'));
   })).flatten();
+  label = label + (NONPOLAR_ONLY ? '_nonpolar' : '');
   Export.table.toDrive({collection:rows,description:'mod13a3_grid10_'+label,
     folder:'NASA_member_B_regional',fileNamePrefix:'mod13a3_grid10_'+label,
     fileFormat:'CSV',selectors:columns});

@@ -1,5 +1,11 @@
 # Member B: regional data and human handoff
 
+## Latest execution checkpoint
+
+The full-world polar-bounds defect remains unresolved, but the explicit nonpolar pilot has now **completed**. Task `ELF7RDWO3DRQGYIJY2PJWY6Q` exported January 2003 for 576 unchanged cells. The controller downloaded the CSV through authorized Drive access and verified the Drive checksum. Strict read-only validation passed: 249 finite NDVI means, including 205 in GLDAS-supported cells; remaining requested cells report `no_valid_pixels` rather than invented values. The raw pilot and audit are retained under `data/raw/modis_earth_engine/regional_validation/` and `data/processed/regional/modis_pilot_audit.json`.
+
+This partial pilot intentionally omits 72 polar grid cells, including 16 supported northern cells. `all_exported_months_cover_full_grid: false` is expected for this scope. No region boundary, source resolution, scaling or QA rule changed. All 648 cells remain in the local catalog. Independent pixel validation and the full polar export fix are pending. One month cannot supply statistical trends, and the pilot has not been imported into the accepted release. No yearly export tasks were launched; resume after the team reviews this milestone.
+
 The global globe demo needs regional observations. The existing whole-Earth mean cannot locate hotspots. The new backend uses 648 stable 10° cells covering the entire globe. IDs run south to north, west to east (`grid_r00_c00` through `grid_r17_c35`). Coarse cells are an initial screening resolution and can span several countries. Member D's humans own frontend design and implementation; these files supply their data interfaces.
 
 ## Completed automatically
@@ -29,6 +35,8 @@ Coverage is valid source area divided by the **whole 10° cell including oceans*
 
 ## Human steps: acquire the missing regional MODIS
 
+**Paused on an exporter defect:** authentication now works, but the worldwide pilot failed with the polar-boundary error documented below. Do not launch the yearly tasks or repeat the same Code Editor script until the controller resolves and verifies that defect. The following download sequence applies after a successful pilot.
+
 1. Open the [Earth Engine Code Editor](https://code.earthengine.google.com/) with the same approved account/project used for previous exports. This JavaScript runs in the Code Editor, not the Cloud Shell terminal.
 2. Open local `scripts/export_regional_modis_earth_engine.js`, copy its contents into a new Code Editor script, and save it as `EarthRisk regional MODIS`.
 3. Keep `MODE = 'pilot'` and click **Run** above the editor. Confirm the console region count is 648. In **Tasks**, click **Run** for `mod13a3_grid10_pilot_2003_01`; keep the proposed Google Drive CSV export settings and submit.
@@ -38,7 +46,7 @@ Coverage is valid source area divided by the **whole 10° cell including oceans*
 7. Give the controller the downloaded directory path. It can merge available years immediately, preserve all unexported months as missing, rebuild screening results, and supply the updated catalog to A/C/D. Once full annual exports are available, exclude the pilot CSV from the merge because it duplicates January 2003.
 8. If an annual task exceeds limits, set `MODE = 'month'` and `RETRY_MONTH = 'YYYY-MM-01'`, then run/export each month of that failed year. Keep exactly one accepted CSV per region/month: merge the 12 replacement monthly files **instead of** the failed/partial annual file. Report the exact error if the monthly retry also fails.
 
-The cloud exporter is prepared but has not been executed or independently validated in this local session. Task completion and account permissions remain external dependencies. No deadline guarantees are attached to Earth Engine processing.
+The authenticated Python cloud pilot has been executed and failed on polar raster bounds; it has not produced a usable CSV. Independent source-pixel validation is also pending. Task completion remains external; account/project authentication itself has succeeded.
 
 ## Commands the controller can automate
 
@@ -65,12 +73,17 @@ Ingest annual files together, excluding the pilot:
 .venv/bin/python scripts/merge_regional_timeseries.py /absolute/path/mod13a3_grid10_20[0-9][0-9].csv
 ```
 
-Each merge uses the supplied exports as the full accepted MODIS input set; pass all accepted files again when adding another year. A guard rejects a merge that would discard previously imported region/months. `--replace` permits an intentional replacement and makes omitted observations pending again; it is not needed when simply adding annual files. Inputs are not automatically archived, so retain the accepted CSV files. Filenames and hashes are saved in `modis_source_manifest.json`. Keep the original downloaded CSVs: hashes identify inputs but cannot reproduce their contents without those source exports. The merger validates stable region IDs, month uniqueness, period, units, range/scaling, area coverage consistency, source assets/time and QA provenance. It preserves blank/unexported months and never turns them into zero. `ndvi_exported_months` records actual imported rows separately from `ndvi_valid_months`. Full exported coverage with missing observations is `complete_with_missing` / `incomplete_ndvi`; full exports with no valid observations are `no_valid_observations` / `unavailable_ndvi`. An exported month with no valid pixels is distinct from `pending_export`.
+Imports are incremental. Pass only newly completed annual or monthly CSVs: previously accepted regional months remain in `accepted_modis_observations.csv` and are preserved in the combined release. Exact repeat observations are idempotent, including identical pilot/annual overlap. A changed existing measurement **or provenance field**, including `configured_at_utc`, is rejected unless `--replace` explicitly accepts the changed overlapping row. The last supplied version wins under `--replace`; unrelated accepted dates remain. Because the pilot and annual tasks normally have different configuration timestamps, either omit an unimported pilot from the annual import or use `--replace` for that deliberate overlap. The read-only pilot audit does not import the pilot.
+
+Every successfully accepted source CSV is automatically copied byte-for-byte into `data/raw/modis_earth_engine/regional/<sha256>.csv`. Archived bytes are never overwritten; a hash mismatch stops the import. `modis_source_manifest.json` retains cumulative source hashes, archive paths and original filenames, including historical source files superseded by explicit replacements. Each accepted row links to its source file hash. Existing GLDAS observations and original raw files are preserved. The archive contains source exports, not authentication tokens or task credentials.
+
+The merger validates stable region IDs, month uniqueness, period, units, range/scaling, area coverage consistency, native source projection, source asset/month and QA provenance. It preserves blank/unexported months and never turns them into zero. `ndvi_exported_months` records actual imported rows separately from `ndvi_valid_months`. Full exported coverage with missing observations is `complete_with_missing` / `incomplete_ndvi`; full exports with no valid observations are `no_valid_observations` / `unavailable_ndvi`. An exported month with no valid pixels is distinct from `pending_export`.
+
 
 ## Remaining human decisions and scientific work
 
 - Confirm 10° screening is acceptable for the demo. A cell can contain several jurisdictions; policy research should identify its country choices explicitly.
-- Launch and retrieve regional MODIS exports; local workers cannot grant account access or create export results without the authenticated account.
+- The user has authenticated Earth Engine and the controller has verified project `earthrisk-greenmirage`. The controller can now submit and monitor exports using the Python command below. Pilot completion, source-pixel review and retrieval of actual CSVs remain external data dependencies.
 - Review scientific limitations and coverage decisions with Member A. Further independent MODIS pixel validation, common valid-footprint analysis and effect-size/serial-dependence review remain necessary for strong ecological claims.
 - D's humans implement the interactive globe and region selection using this catalog and A's screening output. They must display pending/unsupported cells accurately and avoid presenting GLDAS-only cells as identified greening/drying hotspots.
 
@@ -81,3 +94,61 @@ The reduction receives the source NDVI `Projection` object, carrying its native 
 References checked during review: [Earth Engine reduceRegions](https://developers.google.com/earth-engine/apidocs/ee-image-reduceregions), [updateMask](https://developers.google.com/earth-engine/apidocs/ee-image-updatemask), and [MOD13A3.061 catalog](https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MOD13A3). These API and dataset checks support the intended calculation; cloud execution and independent source-pixel verification are still pending.
 
 A bounded search of Downloads (three directory levels, `mod13a3_grid10*` names) found no regional exports during this session. The critical external action is still to run and retrieve the regional pilot, then the annual exports after pilot review. Local data processing and statistical readiness cannot substitute for those actual regional MODIS observations.
+
+## Authenticated Python export automation
+
+Optional environment tooling is declared in `requirements-earthengine.txt`. It is separate from app/runtime requirements. The controller has obtained account authorization; credentials stay in the normal Earth Engine credential store outside Git. Project ID `earthrisk-greenmirage` has passed a basic Earth Engine service check. No annual tasks should be submitted before reviewing the pilot.
+
+Preview the exact task plan without loading Earth Engine or contacting cloud services:
+
+```sh
+.venv/bin/python scripts/export_regional_modis_earth_engine.py --project earthrisk-greenmirage --mode pilot
+```
+
+Submit the single pilot explicitly:
+
+```sh
+.venv/bin/python scripts/export_regional_modis_earth_engine.py --project earthrisk-greenmirage --mode pilot --submit
+```
+
+The Python exporter uses the same grid, explicit intersected source masks, native projection, QA, scaling, coverage denominator and CSV columns as the Code Editor script. Task IDs are stored locally in ignored `.cache/regional_modis_tasks.json`. A duplicate recorded project/date range is blocked while its status is active, completed or unknown; `--force` intentionally resubmits it. A known failed/cancelled task can be retried. Monitor existing task IDs without creating exports:
+
+```sh
+.venv/bin/python scripts/export_regional_modis_earth_engine.py --project earthrisk-greenmirage --status
+```
+
+After pilot review, the controller can use `--mode years --first-year 2003 --last-year 2024 --submit` to create annual tasks, or `--mode month --month YYYY-MM-01 --submit` for a failed month's retry. These actions still require the existing account/project permissions. Outputs go to Drive folder `NASA_member_B_regional` and can be imported incrementally after retrieval. Authentication does not itself supply regional observations or complete source validation.
+
+## Read-only regional release audit
+
+```sh
+.venv/bin/python scripts/audit_regional_release.py
+```
+
+This verifies source hashes, catalog geometry/counts, 264-month indexes, units and QA flags, accepted-source archive links, GLDAS preservation, coverage areas, regional/global area sums and weighted means, and quality-report consistency. It writes no files. Integrity failures exit with status 1. `full_required_period_complete` means every supported cell has all required NDVI observations; it is separate from `paired_preview_eligible_regions`, which counts statistically eligible cells only when the stored screening hashes match current data. Neither field certifies scientific validation or completion of the human-owned frontend.
+
+## Current cloud pilot failure and bounded diagnosis
+
+Authenticated task `ABTFV56ARF7J26CDWYOZC62A` failed with `Failed to compute bounds of <Geometry>`. This is an actual export failure, rather than an authentication or missing-credentials error. The controller has the task state in ignored `.cache/regional_modis_tasks.json`.
+
+Read-only service probes isolated the following behavior:
+
+- The unchanged QA/scaling/native-projection calculation succeeds for a tiny midlatitude region.
+- Every 10° cell can compute its geometric bounds in the native projection, including the polar and antimeridian cells.
+- Raster-reduction graphs for either polar band (80–90°N or 80–90°S), and individual polar cells, fail with the same error. The nonpolar 576-cell graph passes its size probe; this is not a completed 576-cell data export or independent pixel validation.
+- Removing output geometries, and explicitly transforming input geometries into the native projection, do not resolve the polar reduction failure.
+- Restricting the graph to the 301 GLDAS-supported cells also fails: 16 supported cells intersect the 80–90°N band. Omitting those cells would remove potentially valid paired observations and is not an accepted fix.
+
+No arbitrary polar clipping, source-resolution change, invented missing values, or unsupported reclassification has been applied. The grid and real GLDAS outputs remain intact. No further export tasks were submitted during these diagnostic probes. The remaining engineering task is to resolve the native-grid polar raster-reduction bounds, then retry one pilot and verify its actual regional CSV before submitting annual tasks. Until then, repeating the unchanged cloud script is expected to fail.
+
+## Explicit partial fallback after the polar failure
+
+The controller approved a partial pilot using `--nonpolar`. This exports the **576 complete original cells** whose boundaries do not touch either pole. It preserves their boundaries, source QA, native projection and resolution. It does not clip a polar cell or reclassify it as unsupported. All 648 cells stay in the local catalog. In particular, the 16 GLDAS-supported north-polar cells retain `pending_export` NDVI until the full-world reduction defect is resolved.
+
+```sh
+.venv/bin/python scripts/export_regional_modis_earth_engine.py --project earthrisk-greenmirage --mode pilot --nonpolar --submit
+```
+
+Only one such pilot should be retried before this milestone. Its description/filename ends in `_nonpolar`; task metadata records `scope: nonpolar` and `region_count: 576`. The duplicate guard distinguishes this explicit partial scope from the failed full-world scope. No annual tasks should be submitted before reviewing its actual CSV. If approved later, a nonpolar annual export contains 6,912 rows (576 × 12), and only 285 of the 301 GLDAS-supported cells can acquire paired observations from that scope. The remaining supported cells stay visibly pending.
+
+The existing read-only CSV audit continues to report the full-grid denominator of 648; a complete nonpolar pilot therefore intentionally reports 72 absent full-grid cells and `all_exported_months_cover_full_grid: false`. Verify its actual 576 distinct region IDs against `export_grid(nonpolar=True)` rather than relabeling it as whole-world completion. The incremental importer can accept these source files and preserve explicit missing months for the omitted supported cells. The Code Editor equivalent is `NONPOLAR_ONLY = true`; its default remains the full-world graph with the documented defect.

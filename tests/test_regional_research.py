@@ -212,3 +212,66 @@ def test_safe_generation_failure_codes_preserve_sources():
     invalid = run(search=search, generator=numeric)
     assert invalid['generation_failure_code'] == 'draft_numeric_digits_or_urls'
     assert invalid['candidate_sources'] and invalid['qualitative'] is None
+
+
+def test_explicit_offline_cache_validates_and_refreshes_numeric_payload(tmp_path, monkeypatch):
+    from src.regional_research import load_cached_report
+    report = run(search=search,generator=draft)
+    path = tmp_path/'real.json'
+    import json
+    path.write_text(json.dumps(report))
+    monkeypatch.setattr('src.regional_research.requests.post',lambda *a,**k:pytest.fail('network'))
+    analysis = {**ANALYSIS,'trend_slopes':{'ndvi':.123}}
+    result = load_cached_report(path,analysis,CONTEXT,now=NOW+timedelta(days=2))
+    assert result['status']=='cached' and result['cache_stale']
+    assert result['quantitative_analysis']==analysis
+    assert result['verification_status']=='machine_generated_unreviewed'
+    with pytest.raises(ValueError):
+        load_cached_report(path,analysis,CONTEXT,now=NOW+timedelta(days=2),allow_stale=False)
+
+
+@pytest.mark.parametrize('change',['region','period','boundary','dataset','jurisdiction','query_version','citation_url','review_label','source_duplicate','official_label'])
+def test_cache_rejects_mismatched_context_or_tampered_records(tmp_path,change):
+    import json
+    from src.regional_research import load_cached_report
+    report=run(search=search,generator=draft)
+    context=deepcopy(CONTEXT)
+    if change=='region':
+        report['region_id']='other'
+    elif change=='period':
+        context['period']=[2004,2024]
+    elif change=='boundary':
+        context['bbox']=[0,0,10,10]
+    elif change=='dataset':
+        context['dataset_version']='other'
+    elif change=='jurisdiction':
+        context['jurisdictions'][0]['name']='other'
+    elif change=='query_version':
+        report['cache_key']='old-query-version'
+    elif change=='citation_url':
+        report['citations'][0]['url']='https://attacker.example'
+    elif change=='review_label':
+        report['verification_status']='human_reviewed'
+    elif change=='source_duplicate':
+        report['candidate_sources'].append(deepcopy(report['candidate_sources'][0]))
+    else:
+        report['candidate_sources'][0]['official_domain_match']=False
+    path=tmp_path/'cached.json'
+    path.write_text(json.dumps(report))
+    with pytest.raises(ValueError,match='unavailable or incompatible'):
+        load_cached_report(path,ANALYSIS,context,now=NOW)
+
+
+def test_cli_cached_only_never_loads_keys_or_calls_research(tmp_path,monkeypatch,capsys):
+    import json
+    import scripts.run_regional_research as cli
+    path=tmp_path/'report.json'
+    path.write_text(json.dumps(run(search=search,generator=draft)))
+    bundle={'region_id':'cell','screening_status':'current','screening':{'analysis':ANALYSIS},
+            'research_context':deepcopy(CONTEXT)}
+    monkeypatch.setattr(cli,'load_region',lambda *a,**k:deepcopy(bundle))
+    monkeypatch.setattr(cli,'read_settings',lambda *a,**k:pytest.fail('secret file read'))
+    monkeypatch.setattr(cli,'research_selected_region',lambda *a,**k:pytest.fail('network'))
+    assert cli.main(['--region','cell','--cached-only','--report-file',str(path)])==0
+    result=json.loads(capsys.readouterr().out)
+    assert result['mode']=='cached_only_no_network' and result['status']=='cached'

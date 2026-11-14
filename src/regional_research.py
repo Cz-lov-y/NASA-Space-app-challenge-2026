@@ -138,6 +138,86 @@ def _validate_draft(draft, allowed):
     return result
 
 
+
+def research_context_key(region_context):
+    """Bind a research selection to geometry, release, period and query version."""
+    return hashlib.sha256(json.dumps(_context(region_context), sort_keys=True, allow_nan=False).encode()).hexdigest()
+
+
+def load_cached_report(path, analysis, region_context, *, now=None, allow_stale=True):
+    """Load an exact-context machine report without credentials or network.
+
+    Validate structure, source/citation correspondence and unreviewed labels.
+    This is structural validation, not source authenticity or claim verification.
+    Never trust the stored numerical payload: replace it with current analysis.
+    Raises ValueError for incompatible, incomplete or corrupt reports.
+    """
+    now = _instant(now)
+    context = _context(region_context)
+    key = research_context_key(region_context)
+    try:
+        if not isinstance(analysis, dict) or analysis.get('region', context['region_id']) != context['region_id']:
+            raise ValueError('Analysis region mismatch')
+        if analysis.get('data_quality', {}).get('synthetic_demo'):
+            raise ValueError('Synthetic region cannot use real research cache')
+        report = json.loads(Path(path).read_text())
+        if (report['cache_key'] != key or report['region_id'] != context['region_id']
+                or report['verification_status'] != 'machine_generated_unreviewed'):
+            raise ValueError('Research context or review label mismatch')
+        if report.get('run_context') and research_context_key(report['run_context']) != key:
+            raise ValueError('Stored context mismatch')
+        stamp = datetime.fromisoformat(report['retrieved_at'])
+        if not stamp.tzinfo or stamp > now:
+            raise ValueError('Invalid research timestamp')
+        stale = now - stamp > CACHE_TTL
+        if stale and not allow_stale:
+            raise ValueError('Research cache expired')
+        sources = report['candidate_sources']
+        if not isinstance(sources, list) or not 1 <= len(sources) <= MAX_SOURCES:
+            raise ValueError('Invalid sources')
+        by_id = {}
+        jurisdictions = {j['name']: j for j in context['jurisdictions'][:MAX_JURISDICTIONS]}
+        for source in sources:
+            if (not isinstance(source, dict) or not isinstance(source.get('id'), str)
+                    or not source['id'] or source['id'] in by_id
+                    or not _url(source.get('url')) or not source.get('title')
+                    or not isinstance(source.get('text'), str) or not source['text'].strip()
+                    or source.get('verification_status') != 'unverified'
+                    or source.get('policy_status') != 'unknown'
+                    or source.get('jurisdiction') not in jurisdictions):
+                raise ValueError('Invalid source record')
+            source_stamp = datetime.fromisoformat(source['retrieved_at'])
+            if not source_stamp.tzinfo or source_stamp > now:
+                raise ValueError('Invalid source timestamp')
+            host = urlparse(source['url']).hostname.lower()
+            domains = jurisdictions[source['jurisdiction']]['official_domains']
+            official = any(host == domain or host.endswith('.' + domain) for domain in domains)
+            if source.get('official_domain_match') is not official:
+                raise ValueError('Official source label mismatch')
+            by_id[source['id']] = source
+        draft = _validate_draft(report['qualitative'], set(by_id))
+        used = set(draft['summary']['source_ids'])
+        for field in ('policies', 'scientific_studies', 'conservation_options'):
+            for claim in draft[field]:
+                used.update(claim['source_ids'])
+        citations = report['citations']
+        if not isinstance(citations, list) or {c['id'] for c in citations} != used or len(citations) != len(used):
+            raise ValueError('Invalid citations')
+        for citation in citations:
+            source = by_id[citation['id']]
+            if any(citation.get(k) != source.get(k) for k in ('title', 'url', 'jurisdiction', 'source_type', 'retrieved_at', 'verification_status')):
+                raise ValueError('Citation/source mismatch')
+        if not isinstance(report['limitations'], list) or not all(isinstance(v,str) for v in report['limitations']):
+            raise ValueError('Invalid limitations')
+        report.update(status='cached', cache_stale=stale, quantitative_analysis=deepcopy(analysis),
+                      cache_validation='exact_context_and_structure_only')
+        if stale:
+            report['limitations'].append('Cached research is older than twenty-four hours; current source status is unverified.')
+        return report
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
+        raise ValueError('Research cache is unavailable or incompatible with this selection') from None
+
+
 def research_region(analysis, region_context, *, cache_dir=None, search=None,
                     generator=None, now=None, environ=None):
     """Return regional source candidates and an optional cited, unreviewed draft.
@@ -153,7 +233,7 @@ def research_region(analysis, region_context, *, cache_dir=None, search=None,
         raise ValueError("Analysis and context regions must match")
     now = _instant(now)
     env = os.environ if environ is None else environ
-    key = hashlib.sha256(json.dumps(context, sort_keys=True, allow_nan=False).encode()).hexdigest()
+    key = research_context_key(region_context)
     path = Path(cache_dir) / (key + ".json") if cache_dir else None
     report = {"region_id": region, "status": "unavailable", "verification_status": "unreviewed",
               "quantitative_analysis": deepcopy(analysis), "qualitative": None,
@@ -172,16 +252,10 @@ def research_region(analysis, region_context, *, cache_dir=None, search=None,
     cached = None
     if path and path.exists():
         try:
-            candidate = json.loads(path.read_text())
-            stamp = datetime.fromisoformat(candidate["retrieved_at"])
-            if (candidate["cache_key"] == key and candidate["region_id"] == region
-                    and stamp.tzinfo and stamp <= now and candidate.get("qualitative")):
-                _validate_draft(candidate["qualitative"], {s["id"] for s in candidate["candidate_sources"]})
-                cached = candidate
-                if now - stamp <= CACHE_TTL:
-                    cached.update(status="cached", quantitative_analysis=deepcopy(analysis), cache_stale=False)
-                    return cached
-        except (OSError, ValueError, KeyError, TypeError):
+            cached = load_cached_report(path, analysis, region_context, now=now)
+            if not cached['cache_stale']:
+                return cached
+        except ValueError:
             pass
     def fallback(reason):
         if cached:

@@ -121,7 +121,7 @@ When the default monthly file is absent, the CLI can still generate a pending
 catalog artifact. It requires an existing catalog. No credentials or network are
 used by these steps.
 
-Ten focused tests passed during implementation (60 tests and 66 subtests passed
+Fifteen focused tests passed during implementation (65 tests and 66 subtests passed
 when run with the existing statistics suite). They verify known synthetic
 slopes independently, period freezing, family adjustment, unchanged regional
 responses, untouched inputs, geometry, missing months, quality exclusions,
@@ -144,3 +144,51 @@ generated test data are explicitly marked `SYNTHETIC_TEST_ONLY`.
 No human decision blocks the current provisional backend. A scientifically
 reviewed result requires team agreement on footprint comparability and statistical
 limitations. These are not automatically approved by the implementation tests.
+
+
+## Compact map artifact and partial-data progress
+
+`build_screening_summary(report)` returns a GeoJSON FeatureCollection with schema
+`regional-map-1`. The CLI now writes both detailed `screening.json` and compact
+`map_screening.geojson` by default. Override the latter with `--map-output PATH`.
+Output paths must differ and cannot overwrite the input CSV or catalog.
+
+The compact artifact copies geometry and stored statistical facts; it performs
+no refitting. Each feature carries stable ID, name, bbox, centroid, status,
+classification, category, reasons, QA/provisional/synthetic flags and primitive
+indicator trend fields. Its `analysis_kind` is `paired`, `available_indicator` or
+`none`. `paired_year_count` counts common analyzed years; `available_year_count`
+counts the standalone diagnostic's analyzed years (zero when no standalone
+diagnostic exists). Per-indicator `source_coverage_year_count` counts complete
+source years before alignment, while `n_years` counts analyzed aligned years.
+These counts answer different questions and must not be interchanged.
+
+`worldwide_adjusted_p_value` and `worldwide_significant` are null unless a paired
+test entered the family. A significant individual trend does not establish a
+Supported Signal; use the stored paired `classification` for that determination.
+The detailed artifact remains the source for confidence intervals, individual
+excluded years and full reliability reasons. Source CSV/catalog hashes and dataset
+version are copied so callers can check artifact consistency.
+
+The family metadata now reports catalog, supported, pending, insufficient,
+eligible and complete-period region counts. `complete_period_regions` counts
+regions with all 22 common complete years; it is a temporal completeness measure,
+not source-QA approval. `provisional` remains true even when all observations have
+arrived. A cell with eight common complete years may become eligible before the
+remaining annual exports arrive. Its trends concern those eight years, not the
+whole frozen period. Seven common years remain insufficient. Large interior gaps
+or failed residual/robustness diagnostics can make an eligible result unreliable;
+both estimated primary tests still belong to the family. Recompute all results
+whenever more data arrive rather than adding isolated p-values to an old map.
+
+The importer distinguishes unreceived exports from actual missing observations.
+All-missing `pending_export` placeholders remain pending, while actual observations
+flagged `missing` or `no_valid_pixels` remain part of an insufficient record until
+sufficient common complete years exist. Partial imports can become eligible at
+eight years regardless of catalog wording; numerical completeness determines
+eligibility. No observed gaps are filled and no NDVI is invented.
+
+Additional focused tests cover the eight-year boundary, a dropped month and large
+interior gap, partial-export family changes, reliability failures retained in the
+family, compact-vs-detailed consistency, null pending significance and CLI source
+path protection. Their generated input values remain explicitly synthetic tests.

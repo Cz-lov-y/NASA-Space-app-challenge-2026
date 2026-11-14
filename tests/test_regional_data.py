@@ -105,6 +105,7 @@ def test_readonly_audit_and_import_roundtrip_preserve_months_and_status(tmp_path
         'region_area_m2':feature['properties']['region_area_m2']}
         for date in dates for var in ('soil_water_0_10cm','soil_water_0_100cm')])
     gldas.to_csv(out/'gldas_monthly_timeseries.csv',index=False)
+    original_gldas_bytes=(out/'gldas_monthly_timeseries.csv').read_bytes()
     gldas.to_csv(out/'monthly_timeseries.csv',index=False)
     first=tmp_path/'synthetic_jan.csv';second=tmp_path/'synthetic_feb.csv'
     synthetic_modis_rows(dates[:1]).to_csv(first,index=False)
@@ -117,13 +118,33 @@ def test_readonly_audit_and_import_roundtrip_preserve_months_and_status(tmp_path
     frame=pd.read_csv(out/'monthly_timeseries.csv')
     ndvi=frame.loc[frame.variable=='ndvi']
     assert len(ndvi)==264 and ndvi.value.notna().sum()==1
+    assert ndvi.region_area_m2.notna().all() and ndvi.region_area_m2.gt(0).all()
+    assert ndvi.loc[ndvi.quality_flag=='pending_export','valid_area_m2'].isna().all()
     assert ndvi.quality_flag.eq('pending_export').sum()==263
     assert json.loads((out/'catalog.json').read_text())['features'][0]['properties']['ndvi_status']=='partial'
+    mod.main([second],out)
     saved=(out/'monthly_timeseries.csv').read_bytes()
-    with pytest.raises(ValueError,match='discard previously imported'):
-        mod.main([second],out)
-    assert (out/'monthly_timeseries.csv').read_bytes()==saved
+    # Replaying either file is idempotent; a source-provenance change is explicit.
     mod.main([first,second],out)
+    assert (out/'monthly_timeseries.csv').read_bytes()==saved
+    changed=synthetic_modis_rows(dates[:1]);changed['value']=.4
+    conflicting=tmp_path/'synthetic_changed.csv';changed.to_csv(conflicting,index=False)
+    with pytest.raises(ValueError,match='Conflicting regional'):
+        mod.main([conflicting],out)
+    assert (out/'monthly_timeseries.csv').read_bytes()==saved
+    changed['value']=.3;changed['configured_at_utc']='2026-11-14T01:00:00Z';changed.to_csv(conflicting,index=False)
+    with pytest.raises(ValueError,match='Conflicting regional'):
+        mod.main([conflicting],out)
+    mod.main([conflicting],out,replace=True)
+    assert pd.read_csv(out/'monthly_timeseries.csv').query("variable=='ndvi'").value.notna().sum()==2
+    archived=json.loads((out/'modis_source_manifest.json').read_text())
+    assert len(archived)==3
+    for source in archived:
+        path=Path(source['file'])
+        assert path.name==source['sha256']+'.csv'
+        assert hashlib.sha256(path.read_bytes()).hexdigest()==source['sha256']
+    # Restore original provenance before testing the complete annual union.
+    mod.main([first],out,replace=True)
     assert pd.read_csv(out/'monthly_timeseries.csv').query("variable=='ndvi'").value.notna().sum()==2
     full=synthetic_modis_rows(dates)
     full.loc[263,['value','valid_area_m2','valid_area_fraction','quality_flag']]=[np.nan,0,0,'no_valid_pixels']
@@ -135,12 +156,20 @@ def test_readonly_audit_and_import_roundtrip_preserve_months_and_status(tmp_path
     report=pd.read_csv(out/'quality_report.csv').query("variable=='ndvi'").iloc[0]
     assert report.valid_months==263 and report.missing_months==1
     full.loc[:,['value','valid_area_m2','valid_area_fraction','quality_flag']]=[np.nan,0,0,'no_valid_pixels']
-    full.to_csv(complete,index=False);mod.main([complete],out)
+    full.to_csv(complete,index=False);mod.main([complete],out,replace=True)
     p=json.loads((out/'catalog.json').read_text())['features'][0]['properties']
     assert p['ndvi_status']=='no_valid_observations' and p['data_status']=='unavailable_ndvi'
-    # An explicit replacement is allowed and makes omitted dates pending again.
+    # Explicit replacement changes matching rows and preserves unrelated accepted dates.
     mod.main([first],out,replace=True)
-    assert pd.read_csv(out/'monthly_timeseries.csv').query("variable=='ndvi'").value.notna().sum()==1
+    frame=pd.read_csv(out/'monthly_timeseries.csv').query("variable=='ndvi'")
+    assert frame.value.notna().sum()==1 and frame.quality_flag.eq('pending_export').sum()==0
+    assert (out/'gldas_monthly_timeseries.csv').read_bytes()==original_gldas_bytes
+    first_archive=next(r for r in json.loads((out/'modis_source_manifest.json').read_text()) if r['sha256']==hashlib.sha256(first.read_bytes()).hexdigest())
+    Path(first_archive['file']).write_bytes(b'SYNTHETIC_CORRUPTION')
+    accepted_before=(out/'accepted_modis_observations.csv').read_bytes()
+    with pytest.raises(ValueError,match='archive hash mismatch'):
+        mod.main([first],out)
+    assert (out/'accepted_modis_observations.csv').read_bytes()==accepted_before
 
 
 def test_missing_image_cannot_claim_coverage_or_source_provenance():
@@ -157,3 +186,97 @@ def test_missing_image_cannot_claim_coverage_or_source_provenance():
     corrupt=row.copy();corrupt['source_asset_id']='MODIS/061/MOD13A3/2003_01_01'
     with pytest.raises(ValueError,match='cannot claim source'):
         mod.validate_modis(corrupt)
+
+
+
+def test_crossfile_identical_rows_are_idempotent_but_changed_overlap_is_explicit(tmp_path):
+    mod=load('merge_regional_timeseries')
+    a=tmp_path/'synthetic_pilot.csv';b=tmp_path/'synthetic_annual_overlap.csv'
+    rows=synthetic_modis_rows(['2003-01-01']);rows.to_csv(a,index=False);rows.to_csv(b,index=False)
+    combined,_=mod.read_exports([a,b])
+    assert len(combined)==1
+    rows['configured_at_utc']='2026-11-15T00:00:00Z';rows.to_csv(b,index=False)
+    with pytest.raises(ValueError,match='Conflicting'):
+        mod.read_exports([a,b])
+    combined,_=mod.read_exports([a,b],replace=True)
+    assert combined.configured_at_utc.iloc[0]=='2026-11-15T00:00:00Z'
+
+
+def test_python_exporter_dryplan_has_no_cloud_side_effects_and_submits_explicit_plan(tmp_path,monkeypatch,capsys):
+    import json
+    from types import SimpleNamespace
+    mod=load('export_regional_modis_earth_engine')
+    assert len(mod.export_plan('years'))==22
+    assert len(mod.export_grid())==648 and len(mod.export_grid(nonpolar=True))==576
+    assert all(f['properties']['bbox'][1]>-90 and f['properties']['bbox'][3]<90 for f in mod.export_grid(True))
+    assert mod.export_plan('month',month='2024-12-01')[0]['end']=='2025-01-01'
+    for invalid in ['2003-01-02','2002-12-01','2024-2-01']:
+        with pytest.raises(ValueError): mod.export_plan('month',month=invalid)
+    monkeypatch.setattr(mod,'submit_plan',lambda *a:pytest.fail('dry plan must not submit'))
+    mod.main(['--project','SYNTHETIC_TEST_PROJECT','--mode','pilot'])
+    assert json.loads(capsys.readouterr().out)['mode']=='dry_plan'
+    # Reload to restore submit_plan, then use a bounded in-memory fake EE client.
+    mod=load('export_regional_modis_earth_engine')
+    calls=[]
+    class Task:
+        id='SYNTHETIC_TEST_TASK_ID'
+        def start(self): calls.append('start')
+    def export(**kwargs):
+        calls.append(kwargs)
+        return Task()
+    fake=SimpleNamespace(Initialize=lambda **kw:calls.append(kw),batch=SimpleNamespace(
+        Export=SimpleNamespace(table=SimpleNamespace(toDrive=export))))
+    monkeypatch.setattr(mod,'build_collection',lambda *args:'SYNTHETIC_TEST_GRAPH')
+    path=tmp_path/'tasks.json'
+    result=mod.submit_plan(fake,'SYNTHETIC_TEST_PROJECT',mod.export_plan(),path)
+    assert calls[0]=={'project':'SYNTHETIC_TEST_PROJECT'}
+    assert calls[1]['selectors']==mod.COLUMNS and calls[1]['fileFormat']=='CSV'
+    assert calls[1]['collection']=='SYNTHETIC_TEST_GRAPH' and calls[2]=='start'
+    assert result[0]['task_id']=='SYNTHETIC_TEST_TASK_ID'
+    assert json.loads(path.read_text())==result
+    with pytest.raises(ValueError,match='already recorded'):
+        mod.submit_plan(fake,'SYNTHETIC_TEST_PROJECT',mod.export_plan(),path)
+    fake.data=SimpleNamespace(getTaskStatus=lambda ids:[{'id':i,'state':'COMPLETED'} for i in ids])
+    previous_starts=calls.count('start')
+    assert mod.poll_status(fake,'SYNTHETIC_TEST_PROJECT',path)[0]['status']=='COMPLETED'
+    assert calls.count('start')==previous_starts
+    with pytest.raises(ValueError,match='already recorded'):
+        mod.submit_plan(fake,'SYNTHETIC_TEST_PROJECT',mod.export_plan(),path)
+    mod.submit_plan(fake,'SYNTHETIC_TEST_PROJECT',mod.export_plan(),path,force=True)
+    assert calls.count('start')==previous_starts+1
+
+
+
+def test_release_audit_is_readonly_and_detects_source_and_unit_tampering(tmp_path):
+    """Tiny synthetic release exercises integrity checks without NASA source claims."""
+    import hashlib
+    import json
+    mod=load('audit_regional_release')
+    out=tmp_path/'synthetic_release';out.mkdir()
+    feature=make_grid()['features'][300];rid=feature['id'];p=feature['properties']
+    p.update(data_status='pending_ndvi',variables=['soil_water_0_10cm','soil_water_0_100cm'],
+        gldas_valid_months={'soil_water_0_10cm':264,'soil_water_0_100cm':264})
+    (out/'catalog.json').write_text(json.dumps({'type':'FeatureCollection','features':[feature]}))
+    (out/'metadata.json').write_text(json.dumps({'status':'SYNTHETIC_TEST_ONLY'}))
+    dates=pd.date_range('2003-01-01','2024-12-01',freq='MS').strftime('%Y-%m-%d')
+    rows=pd.DataFrame([{'date':date,'value':10.,'unit':'kg m-2','variable':var,'source':'GLDAS_NOAH025_M.2.1',
+        'region_id':rid,'quality_flag':'coverage_review_required','region_area_m2':p['region_area_m2'],
+        'valid_area_m2':p['region_area_m2']*.5,'valid_area_fraction':.5}
+        for date in dates for var in p['variables']])
+    rows.to_csv(out/'gldas_monthly_timeseries.csv',index=False);rows.to_csv(out/'monthly_timeseries.csv',index=False)
+    quality=rows.groupby(['region_id','variable']).value.agg(expected_months='size',valid_months='count')
+    quality['missing_months']=0;quality.to_csv(out/'quality_report.csv')
+    sources=[]
+    for i,date in enumerate(dates):
+        path=out/f'synthetic_source_{i}.txt';path.write_text('SYNTHETIC_TEST_NOT_NETCDF')
+        sources.append({'file':str(path),'date':date,'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
+    (out/'source_manifest.json').write_text(json.dumps(sources))
+    before={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in out.iterdir()}
+    report=mod.audit(out,root=tmp_path,expected_grid=1,expected_supported=1)
+    assert report['integrity_passed'] and not report['full_required_period_complete']
+    assert before=={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in out.iterdir()}
+    Path(sources[0]['file']).write_text('SYNTHETIC_TAMPERING')
+    assert not mod.audit(out,root=tmp_path,expected_grid=1,expected_supported=1)['integrity_passed']
+    rows['unit']='m3 m-3';rows.to_csv(out/'monthly_timeseries.csv',index=False)
+    report=mod.audit(out,root=tmp_path,expected_grid=1,expected_supported=1)
+    assert any('units and source' in e for e in report['errors'])

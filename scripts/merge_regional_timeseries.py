@@ -72,14 +72,59 @@ def validate_modis(frame):
     return frame
 
 
-def read_exports(paths):
+def combine_records(frames, replace=False):
+    """Union monthly observations; conflicting measurements/provenance need opt-in.
+
+    Input-file hash identifies archival origin, not scientific equality: one
+    identical row may appear in both a pilot and an annual source CSV.
+    """
+    accepted = {}
+    columns = sorted(set().union(*(set(f.columns) for f in frames)))
+    compare = [c for c in columns if c != 'source_file_sha256']
+    for frame in frames:
+        for row in frame.reindex(columns=columns).to_dict('records'):
+            key = (row['region_id'], row['date'])
+            if key in accepted:
+                old = accepted[key]
+                equal = all((pd.isna(row[c]) and pd.isna(old[c])) or row[c] == old[c] for c in compare)
+                if equal:
+                    continue
+                if not replace:
+                    raise ValueError(f'Conflicting regional observation {key}; use --replace to accept changed values/provenance')
+            accepted[key] = row
+    return pd.DataFrame(accepted.values(), columns=columns).sort_values(['region_id','date']).reset_index(drop=True)
+
+
+def read_exports(paths, replace=False):
     manifests=[];parts=[]
     for path in paths:
-        parts.append(pd.read_csv(path,dtype={'unit':str}))
-        manifests.append({'file':str(path.resolve().relative_to(ROOT)) if path.resolve().is_relative_to(ROOT) else str(path.resolve()),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
+        path=Path(path)
+        digest=hashlib.sha256(path.read_bytes()).hexdigest()
+        frame=validate_modis(pd.read_csv(path,dtype={'unit':str},float_precision='round_trip'))
+        frame['source_file_sha256']=digest
+        parts.append(frame)
+        manifests.append({'file':str(path.resolve().relative_to(ROOT)) if path.resolve().is_relative_to(ROOT) else str(path.resolve()),
+                          'original_name':path.name,'sha256':digest})
     if not parts: raise ValueError('Provide regional exports; old whole-Earth exports cannot locate spots')
-    modis=validate_modis(pd.concat(parts,ignore_index=True))
-    return modis,manifests
+    return combine_records(parts,replace=replace),manifests
+
+
+def archive_exports(paths, manifests, directory):
+    """Retain exact source bytes under content hashes; never overwrite a hash."""
+    directory=Path(directory)
+    archived=[]
+    for path,record in zip(paths,manifests):
+        content=Path(path).read_bytes()
+        if hashlib.sha256(content).hexdigest()!=record['sha256']:
+            raise ValueError('Source changed during import')
+        target=directory/(record['sha256']+'.csv')
+        if target.exists() and hashlib.sha256(target.read_bytes()).hexdigest()!=record['sha256']:
+            raise ValueError('Existing source archive hash mismatch')
+        directory.mkdir(parents=True,exist_ok=True)
+        if not target.exists(): target.write_bytes(content)
+        archived.append({'file':str(target.resolve().relative_to(ROOT)) if target.resolve().is_relative_to(ROOT) else str(target.resolve()),
+                         'original_name':record['original_name'],'sha256':record['sha256']})
+    return archived
 
 
 def audit_exports(paths):
@@ -97,18 +142,30 @@ def audit_exports(paths):
         'months':by_month,'all_exported_months_cover_full_grid':all(m['region_rows']==648 for m in by_month)}
 
 
-def main(paths,out,replace=False):
-    modis,manifests=read_exports(paths)
-    gldas=pd.read_csv(out/'gldas_monthly_timeseries.csv',dtype={'unit':str})
+def main(paths,out,replace=False,archive=None):
+    out=Path(out)
+    modis,new_manifests=read_exports(paths,replace=replace)
+    gldas=pd.read_csv(out/'gldas_monthly_timeseries.csv',dtype={'unit':str},float_precision='round_trip')
     catalog=json.loads((out/'catalog.json').read_text())
-    combined_path=out/'monthly_timeseries.csv'
-    if combined_path.exists() and not replace:
-        previous=pd.read_csv(combined_path,dtype={'unit':str})
+    ledger_path=out/'accepted_modis_observations.csv'
+    if ledger_path.exists():
+        previous=validate_modis(pd.read_csv(ledger_path,dtype={'unit':str},float_precision='round_trip'))
+        modis=combine_records([previous,modis],replace=replace)
+    elif (out/'monthly_timeseries.csv').exists():
+        # Migrate earlier releases without silently discarding their observations.
+        previous=pd.read_csv(out/'monthly_timeseries.csv',dtype={'unit':str},float_precision='round_trip')
         previous=previous.loc[(previous.variable=='ndvi') & previous.quality_flag.ne('pending_export')]
-        old_keys=set(zip(previous.region_id,previous.date))
-        new_keys=set(zip(modis.region_id,modis.date))
-        if not old_keys.issubset(new_keys):
-            raise ValueError('Merge would discard previously imported months. Pass the full accepted export set; use --replace only for an intentional replacement.')
+        if not previous.empty:
+            modis=combine_records([validate_modis(previous),modis],replace=replace)
+    # Validate complete union before archiving or changing any accepted outputs.
+    modis=validate_modis(modis)
+    if archive is None:
+        archive=(ROOT/'data/raw/modis_earth_engine/regional' if out.resolve()==(ROOT/'data/processed/regional').resolve() else out/'source_archive')
+    archived=archive_exports(paths,new_manifests,archive)
+    manifest_path=out/'modis_source_manifest.json'
+    old_manifests=json.loads(manifest_path.read_text()) if manifest_path.exists() else []
+    manifests=list({item['sha256']:item for item in old_manifests+archived}.values())
+    modis.to_csv(ledger_path,index=False)
     ids={f['id'] for f in catalog['features'] if f['properties']['data_status']!='unsupported_gldas'}
     # Explicit empty rows for every unexported month in eligible cells.
     dates=pd.date_range('2003-01-01','2024-12-01',freq='MS').strftime('%Y-%m-%d')
@@ -116,6 +173,8 @@ def main(paths,out,replace=False):
     modis=modis.set_index(['region_id','date']).reindex(index).reset_index()
     modis['variable']='ndvi';modis['unit']='1';modis['source']='MOD13A3.061'
     modis['quality_flag']=modis.quality_flag.fillna('pending_export')
+    region_areas={f['id']:f['properties']['region_area_m2'] for f in catalog['features']}
+    modis['region_area_m2']=modis.region_area_m2.fillna(modis.region_id.map(region_areas))
     for feature in catalog['features']:
         p=feature['properties']; rows=modis.loc[modis.region_id==p['region_id']]
         if rows.empty: continue
@@ -138,7 +197,8 @@ def main(paths,out,replace=False):
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('exports',type=Path,nargs='+');p.add_argument('--out',type=Path,default=ROOT/'data/processed/regional')
     p.add_argument('--validate-only',action='store_true',help='Print a read-only pilot/export audit without merging')
-    p.add_argument('--replace',action='store_true',help='Intentionally replace previous accepted MODIS inputs; omitted months become pending')
+    p.add_argument('--replace',action='store_true',help='Accept changed rows for overlapping region/months; all unrelated accepted rows remain')
+    p.add_argument('--archive',type=Path,help='Override the raw source archive directory')
     a=p.parse_args()
     if a.validate_only: print(json.dumps(audit_exports(a.exports),indent=2))
-    else: main(a.exports,a.out,replace=a.replace)
+    else: main(a.exports,a.out,replace=a.replace,archive=a.archive)

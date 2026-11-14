@@ -5,7 +5,7 @@ import hashlib
 import pytest
 
 from src.nasa_data import get_timeseries
-from src.regional_workflow import REGIONAL, load_region, research_selected_region
+from src.regional_workflow import REGIONAL, export_region, load_region, research_selected_region
 
 
 def test_real_regional_loader_and_unconfigured_research():
@@ -30,6 +30,27 @@ def test_real_regional_loader_and_unconfigured_research():
 def test_unknown_regional_id_fails():
     with pytest.raises(ValueError, match='Unknown regional ID'):
         load_region('grid_r99_c99')
+
+
+def test_cached_snapshots_are_isolated_and_detail_export_keeps_real_numbers():
+    first = load_region('grid_r14_c07')
+    original = first['observations'].value.iloc[0]
+    detail = export_region(first)
+    assert detail['observations'][0]['value'] == pytest.approx(original)
+    assert detail['paired_analysis'] is None
+    assert detail['available_indicator_analysis']['variables'] == ['soil_water_0_100cm']
+    json.dumps(detail, allow_nan=False)
+    first['observations'].iloc[0, first['observations'].columns.get_loc('value')] = -123
+    first['feature']['properties']['bbox'][0] = -999
+    first['screening']['status'] = 'invented'
+    second = load_region('grid_r14_c07')
+    assert second['observations'].value.iloc[0] == original
+    assert second['feature']['properties']['bbox'][0] != -999
+    assert second['screening']['status'] == 'pending'
+    missing = second['observations'].copy()
+    missing.loc[missing.index[0], 'value'] = float('nan')
+    second['observations'] = missing
+    assert export_region(second)['observations'][0]['value'] is None
 
 
 def test_changed_data_or_boundary_withholds_screening_and_changes_cache_identity(tmp_path):

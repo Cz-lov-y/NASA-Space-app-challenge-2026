@@ -157,3 +157,124 @@ def test_unreceived_export_placeholder_is_pending_not_insufficient():
     record = build_regional_screening(data)['regions'][0]
     assert record['status'] == 'insufficient'
     assert record['analysis'] is not None
+
+
+def test_eight_complete_common_years_gate_and_actual_gap_are_preserved():
+    eight = sample(years=8)
+    result = build_regional_screening(eight)
+    assert result['regions'][0]['status'] == 'eligible'
+    assert result['multiple_testing']['family_size'] == 2
+    # One missing month invalidates that whole year for both indicators.
+    incomplete = eight.copy()
+    incomplete.loc[0, 'value'] = float('nan')
+    result = build_regional_screening(incomplete)
+    assert result['regions'][0]['status'] == 'insufficient'
+    assert result['regions'][0]['analysis']['observation_period']['years'] == list(range(2004, 2011))
+    assert result['multiple_testing']['family_size'] == 0
+    # Eight years spanning a large gap can be estimated but are not reliable.
+    gapped = sample()
+    gapped = gapped[pd.to_datetime(gapped.date).dt.year.isin([2003, 2004, 2005, 2006, 2021, 2022, 2023, 2024])]
+    result = build_regional_screening(gapped)
+    record = result['regions'][0]
+    assert record['status'] == 'eligible'
+    assert result['multiple_testing']['family_size'] == 2
+    assert record['screening']['classification'] == 'uncertain_signal'
+    assert record['analysis']['analysis']['ndvi']['data_quality']['missing_fraction'] == pytest.approx(14/22)
+    assert not record['analysis']['analysis']['ndvi']['reliable']
+
+
+def test_partial_export_progress_updates_family_and_does_not_certify_source_qa():
+    a, b = sample('a'), sample('b')
+    b = b[(b.variable != 'ndvi') | (pd.to_datetime(b.date).dt.year < 2010)]
+    catalog = [feature('a', data_status='available'), feature('b', data_status='partial_ndvi'), feature('c', data_status='pending_ndvi')]
+    report = build_regional_screening(pd.concat([a, b]), catalog)
+    assert [r['status'] for r in report['regions']] == ['eligible', 'insufficient', 'pending']
+    assert report['multiple_testing']['family_size'] == 2
+    assert report['multiple_testing']['complete_period_regions'] == 1
+    assert report['multiple_testing']['pending_regions'] == 1
+    assert report['multiple_testing']['provisional']
+    b = sample('b')
+    b = b[(b.variable != 'ndvi') | (pd.to_datetime(b.date).dt.year < 2011)]
+    updated = build_regional_screening(pd.concat([a, b]), catalog)
+    assert updated['multiple_testing']['family_size'] == 4
+    assert updated['multiple_testing']['complete_period_regions'] == 1
+    assert updated['regions'][1]['status'] == 'eligible'
+    assert not updated['regions'][1]['screening']['qa_reviewed']
+
+
+def test_robustness_failures_remain_in_test_family():
+    data = sample()
+    green = data.variable.eq('ndvi')
+    years = (pd.to_datetime(data.loc[green, 'date']).dt.year - 2003).to_numpy()
+    data.loc[green, 'value'] = .2 + .001 * years**2
+    result = build_regional_screening(data)
+    record = result['regions'][0]
+    assert record['status'] == 'eligible'
+    assert result['multiple_testing']['family_size'] == 2
+    assert record['analysis']['analysis']['ndvi']['autocorrelation']['flagged']
+    assert record['screening']['classification'] == 'uncertain_signal'
+    assert 'quality_or_robustness_checks_failed' in record['screening']['reasons']
+
+
+def test_summary_matches_detailed_analysis_without_inventing_pending_significance():
+    from copy import deepcopy
+    from src.regional_statistics import build_screening_summary
+    soil_only = sample('b').query("variable != 'ndvi'")
+    report = build_regional_screening(pd.concat([sample('a'), soil_only]), [feature('a'), feature('b'), feature('ocean', data_status='unsupported_gldas')])
+    report.update(source_csv_sha256='csv', source_catalog_sha256='catalog')
+    before = deepcopy(report)
+    summary = build_screening_summary(report)
+    assert summary['type'] == 'FeatureCollection'
+    assert summary['schema_version'] == 'regional-map-1'
+    assert summary['multiple_testing'] == report['multiple_testing']
+    assert summary['source_csv_sha256'] == 'csv'
+    assert summary['source_catalog_sha256'] == 'catalog'
+    assert len(summary['features']) == len(report['regions'])
+    for detail, mapped in zip(report['regions'], summary['features']):
+        p = mapped['properties']
+        assert mapped['geometry'] == detail['geometry']
+        assert p['region_id'] == detail['region_id']
+        assert p['classification'] == detail['screening']['classification']
+        assert p['category'] == detail['screening']['category']
+        assert 'analysis' not in p
+        assert 'years' not in (p['analysis_period'] or {})
+        if detail['status'] == 'eligible':
+            assert p['paired_year_count'] == 22
+            assert p['analysis_kind'] == 'paired'
+            for variable, indicator in p['indicators'].items():
+                assert indicator['slope_per_year'] == detail['analysis']['trend_slopes'][variable]
+                assert indicator['worldwide_adjusted_p_value'] == detail['screening']['adjusted_p_values'][variable]
+                assert indicator['worldwide_significant']
+        elif detail['status'] == 'pending':
+            assert p['analysis_kind'] == 'available_indicator'
+            assert p['paired_year_count'] == 0
+            assert p['available_year_count'] == 22
+            assert p['synthetic_demo']
+            assert p['indicators']['soil_water_0_100cm']['slope_per_year'] == pytest.approx(-2)
+            assert p['indicators']['soil_water_0_100cm']['worldwide_significant'] is None
+        else:
+            assert p['analysis_kind'] == 'none'
+            assert not p['indicators']
+    assert report == before
+    assert len(json.dumps(summary)) < len(json.dumps(report))
+    json.dumps(summary, allow_nan=False)
+
+
+def test_cli_writes_consistent_compact_artifact_and_protects_source_paths(tmp_path):
+    from scripts.build_regional_screening import main
+    data_path, catalog_path = tmp_path / 'monthly.csv', tmp_path / 'catalog.json'
+    detail_path, map_path = tmp_path / 'screening.json', tmp_path / 'map.geojson'
+    sample().to_csv(data_path, index=False)
+    catalog_path.write_text(json.dumps({'type': 'FeatureCollection', 'features': [feature('test')]}))
+    options = ['--input', str(data_path), '--catalog', str(catalog_path), '--output', str(detail_path), '--map-output', str(map_path)]
+    main(options)
+    detail, summary = json.loads(detail_path.read_text()), json.loads(map_path.read_text())
+    assert summary['source_csv_sha256'] == detail['source_csv_sha256']
+    assert summary['source_catalog_sha256'] == detail['source_catalog_sha256']
+    assert summary['multiple_testing']['family_size'] == 2
+    data_before = data_path.read_bytes()
+    with pytest.raises(SystemExit):
+        main(options[:-1] + [str(data_path)])
+    assert data_path.read_bytes() == data_before
+    with pytest.raises(SystemExit):
+        main(options[:-1] + [str(detail_path)])

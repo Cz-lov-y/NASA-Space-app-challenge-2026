@@ -89,7 +89,7 @@ The cache key includes region ID, bounding box, the complete normalized jurisdic
 
 Fresh caches are reused for twenty-four hours. When live credentials are missing or a provider fails, an older exact-context cache may be returned with `cache_stale=true`, its original retrieval time, and an explicit fallback limitation. Reports for another region, period, boundary or dataset are not reused. `cache_dir=None` disables disk storage. Cache records include source excerpts, so use a server directory excluded from Git unless deliberately publishing a reviewed handoff artifact. Do not assume every transient or failed response is cached: only reports with a validated qualitative draft are stored.
 
-HTTP calls have bounded connect/read timeouts, no automatic retry, and generic failure messages that do not echo provider errors or keys. With six sequential discovery requests plus one model request, a slow uncached job can take several minutes; the frontend should keep navigation responsive and show progress while the worker runs. The backend does not itself provide job scheduling or cancellation. Search results without usable source text are discarded. Search failure/absence never proves that a policy is absent.
+HTTP calls have bounded connect/read timeouts, no automatic retry, and generic failure messages that do not echo provider errors or keys. With six sequential discovery requests plus one model request, a slow uncached job can take several minutes; the frontend should keep navigation responsive and show progress while the worker runs. The research function itself is synchronous; the optional `ResearchJobs` wrapper below supplies process-local scheduling and cancellation of delivery. Search results without usable source text are discarded. Search failure/absence never proves that a policy is absent.
 
 ## Validation and next handoff
 
@@ -129,3 +129,51 @@ The retrieved sources include a federal nature strategy, a federal wetland guide
 Granular generation failure codes now distinguish timeout, provider error, invalid JSON, invalid citation IDs, numeric digits/URLs in prose, and other invalid structure. They expose no raw provider bodies or credentials. No additional live requests should be necessary to inspect the saved sample.
 
 The HTTP search adapter follows [Tavily's official search endpoint documentation](https://docs.tavily.com/documentation/api-reference/endpoint/search): bearer authentication, explicit source content and no provider-generated answer. No provider account, deployment, or live-source verification is completed by the automated tests. The team's remaining decisions are service credentials/budget, trusted country/domain mapping, selected rehearsal regions, and review of generated claims.
+
+
+## Offline report reuse on a fresh checkout
+
+A genuine machine report is committed for the Canada sample; a fresh checkout does not need private `.cache` files or credentials to inspect it. The explicit cache-only path loads the report, verifies its exact selection context, refreshes numerical analysis from the current regional artifact, and performs no network requests or `.env` reads:
+
+```sh
+.venv/bin/python scripts/run_regional_research.py \
+  --region grid_r14_c07 \
+  --official-domain canada.ca --official-domain gc.ca \
+  --cached-only \
+  --report-file data/research/grid_r14_c07_context_brief.json
+```
+
+`--output` may be added to export that validated report with current numerical values. `--live` and `--cached-only` are mutually exclusive. Without an explicit report path, cache-only mode tries the private exact-key cache and then `data/research/<region_id>_context_brief.json`. It never substitutes another region's report. Its `configured` flags are false because credentials are deliberately not loaded (`credentials_loaded=false`); these flags do not claim that the user lacks service accounts.
+
+The public `research_context_key(context)` supplies the same key used by live caching and job selections. `load_cached_report(path, analysis, context, now=None, allow_stale=True)` is the no-network Python interface. It requires region, bounding box, dataset fingerprint, analysis period, jurisdiction/domain mapping and query version to match. It validates unique source IDs, source URLs, source/citation correspondence, timestamps, official-domain labels and machine-review status; it rejects incomplete first-attempt reports. Current numerical analysis replaces the stored numerical payload. A stale report retains its original timestamp and gets a limitation and `cache_stale=true`; `allow_stale=False` rejects it. This verifies cache structure and selection compatibility, not source authenticity, legal applicability or claim truth.
+
+If processing inputs change, the source fingerprint changes and the saved report is intentionally rejected. Do not edit the saved key or relabel a different-country report to bypass this check. A newly authorized live run can create a genuinely matching report. Query version changes also require fresh output; old source text cannot silently become new research. The existing live `research_region` cache path uses the same validation before reuse.
+
+## Optional background jobs for D
+
+`src/research_jobs.py` provides a UI-independent manager. D can create one manager per trusted application/user context and retain it while the app reruns; do not create a new manager on every interaction or share one user's credential-bearing jobs across users. The default runner is `research_selected_region`, so submitting is an explicit request for provider work. For offline operation, inject a runner that calls `load_cached_report` with the current bundle and analysis.
+
+```python
+from src.research_jobs import ResearchJobs
+from src.regional_research import research_context_key
+
+jobs = ResearchJobs(max_workers=2, max_pending=4, timeout_seconds=240)
+# Explicit submit after selection; settings stay on the server.
+request = jobs.submit(bundle, environ=server_settings, cache_dir=cache_path)
+# Save this request_id as the latest request for the current UI selection.
+snapshot = jobs.poll(
+    request["request_id"],
+    region_id=current_bundle["region_id"],
+    context_key=research_context_key(current_bundle["research_context"]),
+)
+```
+
+States are `queued`, `loading`, `complete`, `failed`, `cancelled`, `timed_out`, `unknown` and `stale`. Only `complete` includes a report; that report's own status still distinguishes successful, partial, cached or unavailable research. An exact-context duplicate shares the existing queued/running/completed job. A full queue raises `RuntimeError`; the UI should display a busy state and avoid blindly retrying. Jobs are bounded to at most two worker threads, with a configurable bounded number of waiting jobs; terminal history is bounded separately. The manager returns generic error codes without exception strings, provider bodies or credentials.
+
+Before displaying a result, D must verify that its request ID is still the latest selected request. `poll` also requires matching region and context and otherwise returns `stale` without a result. Submission snapshots the input bundle and credentials in memory, and returned reports are copied so external mutations cannot alter stored results. Context changes in geometry, release, period or jurisdiction mapping create a different key. If only credentials change for an otherwise identical selection, the existing job is deliberately reused; cancel/recreate the manager when switching user/provider context.
+
+`cancel(request_id)` suppresses delivery immediately. A queued wrapper skips the provider call when dequeued. A running HTTP call cannot be forcibly stopped by Python threads; it continues to occupy capacity until it returns, and its result stays suppressed. Timed-out jobs behave the same way. This prevents rapid cancel/submit interactions from creating an unbounded executor backlog. The display deadline includes queue time; a result completed before the deadline remains available even if polling happens later. Provider adapters retain their own connect/read timeouts; custom injected runners must bound their own I/O.
+
+Call `close(wait=False)` when disposing of the context; it rejects new submissions and suppresses pending results. Running requests may still finish. There is no database, distributed worker, cross-process coordination, automatic restart recovery or persistent job history. Deployments with multiple processes need application-specific coordination or accept process-local behavior. Test coverage uses event-controlled offline runners to verify duplication, queue limits, queued cancellation, late-result suppression, safe failure codes and stale selection handling.
+
+Run `.venv/bin/python -m pytest -q tests/test_regional_research.py tests/test_research_jobs.py tests/test_agent.py` for the combined backend checks. No additional paid calls were made for this caching/jobs milestone.
