@@ -1,0 +1,71 @@
+{
+  "task_type": "area",
+  "task_name": "whole_earth_MOD13A3_2019_2022",
+  "params": {
+    "dates": [
+      {
+        "startDate": "01-01-2019",
+        "endDate": "12-31-2022"
+      }
+    ],
+    "layers": [
+      {
+        "product": "MOD13A3.061",
+        "layer": "_1_km_monthly_NDVI"
+      },
+      {
+        "product": "MOD13A3.061",
+        "layer": "_1_km_monthly_VI_Quality"
+      },
+      {
+        "product": "MOD13A3.061",
+        "layer": "_1_km_monthly_pixel_reliability"
+      }
+    ],
+    "output": {
+      "format": {
+        "type": "geotiff"
+      },
+      "projection": "geographic"
+    },
+    "geo": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "properties": {
+            "region_id": "whole_earth",
+            "description": "Entire Earth, including oceans; WGS84 longitude and latitude"
+          },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  -180,
+                  -90
+                ],
+                [
+                  180,
+                  -90
+                ],
+                [
+                  180,
+                  90
+                ],
+                [
+                  -180,
+                  90
+                ],
+                [
+                  -180,
+                  -90
+                ]
+              ]
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
