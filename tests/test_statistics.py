@@ -1,7 +1,8 @@
-"""Deterministic synthetic cases, not NASA observations."""
+"""Synthetic cases and a clearly documented real-data regression baseline."""
 
 import json
 import math
+from pathlib import Path
 import unittest
 
 import numpy as np
@@ -250,6 +251,22 @@ class TrendTests(unittest.TestCase):
 
 
 class RegionTests(unittest.TestCase):
+    def test_gldas_central_us_real_data_regression_baseline(self):
+        # B's versioned 2003-2024 GLDAS surface-layer regional export.
+        path = Path(__file__).parent / "fixtures" / "gldas_central_us_monthly.csv"
+        frame = pd.read_csv(path, parse_dates=["date"])
+        self.assertEqual(len(frame), 264)
+        self.assertTrue(frame["quality_flag"].eq("good").all())
+        result = analyze_region(frame, soil_moisture_variable="soil_water_0_10cm")
+        trend = result["analysis"]["soil_water_0_10cm"]
+        self.assertEqual(trend["status"], "ok")
+        self.assertEqual(trend["data_quality"]["n_years"], 22)
+        self.assertAlmostEqual(trend["linear_regression"]["slope"], -0.07388118826339678, delta=1e-10)
+        self.assertAlmostEqual(trend["linear_regression"]["p_value"], 0.212108299380559, delta=1e-10)
+        self.assertAlmostEqual(trend["theil_sen"]["slope"], -0.09383511542754874, delta=1e-10)
+        self.assertAlmostEqual(trend["mann_kendall"]["p_value"], 0.1758957490227674, delta=1e-10)
+        self.assertFalse(trend["mann_kendall"]["significant"])
+
     def test_supported_divergence_and_contract(self):
         result = analyze_region(region(), frequency="annual")
         self.assertTrue(result["divergence_detected"])
