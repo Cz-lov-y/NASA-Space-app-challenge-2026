@@ -1,0 +1,1 @@
+"""EarthRisk tests."""
