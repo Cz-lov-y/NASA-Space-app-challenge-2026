@@ -4,6 +4,53 @@
 
 Required fields: `date` (ISO date), `value` (numeric), `unit`, `variable`, `source`, `region_id`. One row per regional observation. Store quality-control decisions, native spatial resolution, product version, geographic polygon/coverage and processing operations in separate provenance documentation. Avoid mixing different units or time aggregation without explicit conversion.
 
+### Contract v1: time series and provenance
+
+`get_timeseries(region, variable) -> pandas.DataFrame` returns one region and one
+variable per call, sorted by date, with exactly one regional observation per
+calendar month for monthly inputs (or per year for annual inputs). Required columns:
+`date` (parseable date or datetime), `value` (physical numeric value or NaN for
+missing/QA-rejected observations), `unit`, `variable`, `source`, `region_id`.
+All metadata columns are nonempty strings. Units, source and variable are consistent
+within a call; region_id identifies the same region used in the request. Apply
+product scale/offset exactly once, and decode product-specific fill values upstream.
+Represent invalid observations with NaN, never an unexplained finite sentinel.
+The monthly statistical interface rejects duplicate months and defaults to complete
+calendar-year means. Source products with other sampling intervals need documented,
+quality-controlled aggregation upstream.
+
+Each returned frame must carry a `frame.attrs["metadata"]` dictionary with:
+
+- `spatial_coverage`: geographic polygon/bounding box and coordinate reference
+  system, spatial resolution and aggregation/weighting where applicable.
+- `time_range`: `start` and `end` ISO dates describing temporal coverage.
+- `temporal_resolution`: sampling period and aggregation method.
+- `dataset_version`: dataset/product identifier and version.
+- `quality_control`: QA filtering and flag definitions, missing-value encoding,
+  and treatment of fill values, including any counts or flags available.
+
+Store the same provenance in a durable sidecar (for example JSON) with exports:
+DataFrame attributes may be lost when concatenating, serializing or transforming
+frames. Keep one metadata record per series when combining indicators. The
+statistics module consumes the six columns and does not validate or propagate
+these metadata; the caller is responsible for preserving and reviewing them.
+
+`examples.mock_data.mock_timeseries(region, variable)` implements this contract
+for `synthetic_region` and `NDVI` / `soil_moisture` only. Its mock geographic
+coverage and QA details are explicitly fictitious. It has no network or credentials
+and its source labels identify it as synthetic. It is a handoff stub, not Member B's
+NASA data implementation.
+
+```python
+import pandas as pd
+from examples.mock_data import mock_timeseries
+from src.statistics import analyze_region
+
+series = [mock_timeseries("synthetic_region", name) for name in ("NDVI", "soil_moisture")]
+provenance = {frame["variable"].iloc[0]: frame.attrs["metadata"] for frame in series}
+analysis = analyze_region(pd.concat(series, ignore_index=True))
+```
+
 The scaffold supports `demo-region`, `ndvi`, and `soil_moisture` from SYNTHETIC data only.
 
 ## A → C/D: analyze_region(data) -> dict
