@@ -8,6 +8,13 @@ measurements to verifiable government policy and conservation evidence.
 
 ## Current status
 
+The coordinated regional backend work is described in [the team delivery plan](docs/team_demo_plan.md).
+Real regional GLDAS observations now cover 301 supported 10° cells for 2003–2024;
+the catalog retains all 648 worldwide cells. Regional NDVI exports are still required
+before paired regional screening can run. The new optional research backend supports
+DeepSeek configuration and a separate Tavily search key. The human team owns the
+forthcoming globe frontend; the existing dashboard below has not been changed.
+
 An interactive **Streamlit frontend demo** exists with:
 
 - Regional and observation-window selection.
@@ -31,7 +38,7 @@ git clone https://github.com/Cz-lov-y/NASA-Space-app-challenge-2026.git
 cd NASA-Space-app-challenge-2026
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-data.txt
 python -m pytest -q
 streamlit run app.py
 ~~~
