@@ -1,6 +1,7 @@
 import { RegionalAnalysis, TimeSeriesObservation } from '../types/contracts';
 
 export const DEMO_TIMESERIES: TimeSeriesObservation[] = [
+  // NDVI (Vegetation Greenness, unit: index)
   { date: '2015-06-01', region_id: 'demo-region', variable: 'ndvi', value: 0.38, unit: 'index', source: 'SYNTHETIC_DEMO_NOT_NASA' },
   { date: '2016-06-01', region_id: 'demo-region', variable: 'ndvi', value: 0.39, unit: 'index', source: 'SYNTHETIC_DEMO_NOT_NASA' },
   { date: '2017-06-01', region_id: 'demo-region', variable: 'ndvi', value: 0.42, unit: 'index', source: 'SYNTHETIC_DEMO_NOT_NASA' },
@@ -11,6 +12,8 @@ export const DEMO_TIMESERIES: TimeSeriesObservation[] = [
   { date: '2022-06-01', region_id: 'demo-region', variable: 'ndvi', value: 0.51, unit: 'index', source: 'SYNTHETIC_DEMO_NOT_NASA' },
   { date: '2023-06-01', region_id: 'demo-region', variable: 'ndvi', value: 0.53, unit: 'index', source: 'SYNTHETIC_DEMO_NOT_NASA' },
   { date: '2024-06-01', region_id: 'demo-region', variable: 'ndvi', value: 0.56, unit: 'index', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+
+  // Soil Moisture (Water content in root-zone soil, unit: kg/m2)
   { date: '2015-06-01', region_id: 'demo-region', variable: 'soil_moisture', value: 26.1, unit: 'kg/m2', source: 'SYNTHETIC_DEMO_NOT_NASA' },
   { date: '2016-06-01', region_id: 'demo-region', variable: 'soil_moisture', value: 25.8, unit: 'kg/m2', source: 'SYNTHETIC_DEMO_NOT_NASA' },
   { date: '2017-06-01', region_id: 'demo-region', variable: 'soil_moisture', value: 24.6, unit: 'kg/m2', source: 'SYNTHETIC_DEMO_NOT_NASA' },
@@ -21,29 +24,60 @@ export const DEMO_TIMESERIES: TimeSeriesObservation[] = [
   { date: '2022-06-01', region_id: 'demo-region', variable: 'soil_moisture', value: 20.8, unit: 'kg/m2', source: 'SYNTHETIC_DEMO_NOT_NASA' },
   { date: '2023-06-01', region_id: 'demo-region', variable: 'soil_moisture', value: 19.7, unit: 'kg/m2', source: 'SYNTHETIC_DEMO_NOT_NASA' },
   { date: '2024-06-01', region_id: 'demo-region', variable: 'soil_moisture', value: 19.0, unit: 'kg/m2', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+
+  // Surface Temperature (Annual June mean temperature, unit: °C)
+  { date: '2015-06-01', region_id: 'demo-region', variable: 'temperature', value: 21.4, unit: '°C', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2016-06-01', region_id: 'demo-region', variable: 'temperature', value: 21.8, unit: '°C', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2017-06-01', region_id: 'demo-region', variable: 'temperature', value: 22.1, unit: '°C', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2018-06-01', region_id: 'demo-region', variable: 'temperature', value: 22.0, unit: '°C', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2019-06-01', region_id: 'demo-region', variable: 'temperature', value: 22.5, unit: '°C', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2020-06-01', region_id: 'demo-region', variable: 'temperature', value: 22.9, unit: '°C', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2021-06-01', region_id: 'demo-region', variable: 'temperature', value: 23.1, unit: '°C', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2022-06-01', region_id: 'demo-region', variable: 'temperature', value: 23.4, unit: '°C', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2023-06-01', region_id: 'demo-region', variable: 'temperature', value: 23.6, unit: '°C', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2024-06-01', region_id: 'demo-region', variable: 'temperature', value: 24.1, unit: '°C', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+
+  // Precipitation (Annual June precipitation rate, unit: mm/month)
+  { date: '2015-06-01', region_id: 'demo-region', variable: 'precipitation', value: 42.5, unit: 'mm/month', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2016-06-01', region_id: 'demo-region', variable: 'precipitation', value: 40.1, unit: 'mm/month', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2017-06-01', region_id: 'demo-region', variable: 'precipitation', value: 37.8, unit: 'mm/month', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2018-06-01', region_id: 'demo-region', variable: 'precipitation', value: 39.2, unit: 'mm/month', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2019-06-01', region_id: 'demo-region', variable: 'precipitation', value: 35.4, unit: 'mm/month', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2020-06-01', region_id: 'demo-region', variable: 'precipitation', value: 33.0, unit: 'mm/month', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2021-06-01', region_id: 'demo-region', variable: 'precipitation', value: 32.5, unit: 'mm/month', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2022-06-01', region_id: 'demo-region', variable: 'precipitation', value: 30.1, unit: 'mm/month', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2023-06-01', region_id: 'demo-region', variable: 'precipitation', value: 29.4, unit: 'mm/month', source: 'SYNTHETIC_DEMO_NOT_NASA' },
+  { date: '2024-06-01', region_id: 'demo-region', variable: 'precipitation', value: 27.8, unit: 'mm/month', source: 'SYNTHETIC_DEMO_NOT_NASA' },
 ];
 
 export const DEMO_ANALYSIS: RegionalAnalysis = {
   region: 'demo-region',
   observation_period: ['2015-06-01', '2024-06-01'],
-  variables: ['ndvi', 'soil_moisture'],
+  variables: ['ndvi', 'soil_moisture', 'temperature', 'precipitation'],
   trend_slopes: {
     ndvi: 0.020,
     soil_moisture: -0.793,
+    temperature: 0.285,
+    precipitation: -1.612,
   },
   confidence_intervals: {
     ndvi: [0.018, 0.022],
     soil_moisture: [-0.852, -0.734],
+    temperature: [0.245, 0.325],
+    precipitation: [-1.890, -1.334],
   },
   p_values: {
     ndvi: 0.0001,
     soil_moisture: 0.0001,
+    temperature: 0.0004,
+    precipitation: 0.0002,
   },
   data_quality: {
-    n_raw_rows: 20,
+    n_raw_rows: 40,
     qa_reviewed: false,
     synthetic_demo: true,
     sources: ['SYNTHETIC_DEMO_NOT_NASA'],
+    missing_fraction: 0.0,
   },
   divergence_detected: true,
   divergence_status: 'supported_signal',
@@ -52,6 +86,7 @@ export const DEMO_ANALYSIS: RegionalAnalysis = {
     'Synthetic demonstration record only — not actual NASA satellite observations.',
     'Ten annual June snapshots cannot substitute for full 12-month calendar-year desequencing.',
     'Opposing trend signs establish a candidate divergence signal, not physical proof of ecological damage or irrigation depletion.',
+    'Regressions are uncorrected for temporal autocorrelation and local microclimatic variance.',
   ],
   trends: {
     ndvi: {
@@ -71,6 +106,24 @@ export const DEMO_ANALYSIS: RegionalAnalysis = {
       p_value: 0.0001,
       theil_sen_slope_per_year: -0.800,
       kendall_tau: -0.98,
+    },
+    temperature: {
+      n_observations: 10,
+      slope_per_year: 0.285,
+      unit: '°C',
+      slope_95ci: [0.245, 0.325],
+      p_value: 0.0004,
+      theil_sen_slope_per_year: 0.280,
+      kendall_tau: 0.93,
+    },
+    precipitation: {
+      n_observations: 10,
+      slope_per_year: -1.612,
+      unit: 'mm/month',
+      slope_95ci: [-1.890, -1.334],
+      p_value: 0.0002,
+      theil_sen_slope_per_year: -1.580,
+      kendall_tau: -0.91,
     },
   },
 };

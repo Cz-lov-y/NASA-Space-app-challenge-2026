@@ -3,17 +3,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   Compass,
-  Database,
   AlertTriangle,
   CheckCircle2,
   HelpCircle,
-  TrendingUp,
   RotateCcw,
   Sparkles,
+  BarChart3,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { SelectedLocation } from '../../types/globe';
+import { TimeSeriesObservation, RegionalAnalysis } from '../../types/contracts';
 import { formatCoordinates } from '../../utils/coordinates';
 import { apiService } from '../../services/api';
+import { TimeseriesChart } from '../charts/TimeseriesChart';
+import { ZScoreChart } from '../charts/ZScoreChart';
+import { IndicatorFilter } from '../charts/IndicatorFilter';
+import { StatisticalAudit } from '../charts/StatisticalAudit';
 
 interface SlidingPanelProps {
   location: SelectedLocation | null;
@@ -29,9 +34,22 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
   const [dataStatus, setDataStatus] = useState<{
     hasData: boolean;
     isSynthetic: boolean;
+    observations?: TimeSeriesObservation[];
+    analysis?: RegionalAnalysis;
     statusMessage: string;
   } | null>(null);
+
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'visualize' | 'audit'>('visualize');
+
+  // Visualization interactive states
+  const [selectedIndicators, setSelectedIndicators] = useState<string[]>([
+    'ndvi',
+    'soil_moisture',
+  ]);
+  const [chartMode, setChartMode] = useState<'timeseries' | 'zscore'>('timeseries');
+  const [showTrendline, setShowTrendline] = useState(true);
+  const [yearRange, setYearRange] = useState<[number, number]>([2015, 2024]);
 
   useEffect(() => {
     if (!location) {
@@ -44,12 +62,14 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
 
     apiService.getLocationData(location).then((res) => {
       if (isMounted) {
-        setDataStatus({
-          hasData: res.hasData,
-          isSynthetic: res.isSynthetic,
-          statusMessage: res.statusMessage,
-        });
+        setDataStatus(res);
         setIsLoading(false);
+        if (res.observations && res.observations.length > 0) {
+          const years = res.observations.map((o) => new Date(o.date).getFullYear());
+          const minY = Math.min(...years);
+          const maxY = Math.max(...years);
+          setYearRange([minY, maxY]);
+        }
       }
     });
 
@@ -57,6 +77,18 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
       isMounted = false;
     };
   }, [location]);
+
+  const handleToggleIndicator = (variable: string) => {
+    setSelectedIndicators((prev) => {
+      if (prev.includes(variable)) {
+        if (prev.length === 1) return prev;
+        return prev.filter((v) => v !== variable);
+      }
+      return [...prev, variable];
+    });
+  };
+
+  const availableIndicators = ['ndvi', 'soil_moisture', 'temperature', 'precipitation'];
 
   return (
     <AnimatePresence>
@@ -66,10 +98,10 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-          className="fixed top-0 right-0 z-40 h-full w-full max-w-md lg:max-w-lg glass-panel flex flex-col shadow-2xl overflow-hidden border-l border-cyan-500/30"
+          className="fixed top-0 right-0 z-40 h-full w-full max-w-md md:max-w-xl lg:max-w-2xl glass-panel flex flex-col shadow-2xl overflow-hidden border-l border-cyan-500/30 font-sans"
         >
           {/* Top Panel Bar */}
-          <div className="flex items-center justify-between p-5 border-b border-cyan-500/20 bg-space-950/60">
+          <div className="flex items-center justify-between p-3.5 px-5 border-b border-cyan-500/20 bg-space-950/80">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-nasa-cyan animate-pulse" />
               <span className="text-xs font-mono font-bold tracking-widest text-nasa-cyan uppercase">
@@ -78,151 +110,191 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-space-800 transition-colors"
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-space-800 transition-colors"
               title="Close panel (Esc)"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 text-sm text-slate-300">
-            {/* Location Title & Geo Coordinates */}
-            <div>
-              <div className="text-[11px] font-mono tracking-wider text-slate-400 uppercase">
-                {location.country || 'GLOBAL SURFACE POINT'}
+          <div className="flex-1 overflow-y-auto p-5 space-y-4 text-sm text-slate-300">
+            {/* Unified Region Header & Coordinates Card */}
+            <div className="p-3.5 rounded-xl bg-space-900/80 border border-cyan-500/25 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono tracking-wider text-slate-400 uppercase">
+                  {location.country || 'GLOBAL SURFACE POINT'}
+                </span>
+                <span className="text-xs font-mono font-bold text-nasa-cyan flex items-center gap-1.5">
+                  <Compass className="w-3.5 h-3.5" />
+                  {formatCoordinates(location.lat, location.lng)}
+                </span>
               </div>
-              <h2 className="text-xl font-bold font-mono text-white tracking-wide mt-0.5">
+              <h2 className="text-lg font-bold font-mono text-white tracking-wide">
                 {location.name}
               </h2>
               {location.description && (
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                <p className="text-xs text-slate-400 leading-relaxed font-mono">
                   {location.description}
                 </p>
               )}
             </div>
 
-            {/* Geographic Coordinates Card */}
-            <div className="p-4 rounded-xl bg-space-900/80 border border-cyan-500/25 space-y-3">
-              <div className="flex items-center gap-2 text-xs font-mono text-slate-400 uppercase">
-                <Compass className="w-4 h-4 text-nasa-cyan" />
-                <span>Geographic Precision Coordinates</span>
+            {/* Scientific Data Availability / Provenance Warning */}
+            {isLoading ? (
+              <div className="p-3 rounded-lg bg-space-900/50 border border-slate-800 animate-pulse text-xs font-mono text-cyan-300">
+                Querying regional telemetry index...
               </div>
-              <div className="flex items-baseline justify-between font-mono">
-                <span className="text-lg font-bold text-nasa-cyan">
-                  {formatCoordinates(location.lat, location.lng)}
+            ) : dataStatus?.hasData && dataStatus.isSynthetic ? (
+              <div className="px-3.5 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-200 flex items-center justify-between text-xs font-mono">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <div>
+                    <span className="font-bold text-amber-300 uppercase">Synthetic Demonstration Record</span>
+                    <span className="block text-[10px] text-amber-200/80">
+                      10-year illustrative test series (2015–2024) · Not NASA observations
+                    </span>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-[10px] font-semibold text-amber-300 shrink-0">
+                  Candidate Green Mirage
                 </span>
-                <span className="text-[10px] text-slate-400">WGS 84</span>
               </div>
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800 text-xs font-mono">
-                <div>
-                  <span className="text-slate-400">LATITUDE:</span>{' '}
-                  <span className="text-slate-200">{location.lat.toFixed(4)}°</span>
+            ) : dataStatus?.hasData ? (
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 flex items-center gap-2 text-xs font-mono">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>{dataStatus.statusMessage}</span>
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl bg-space-900/70 border border-slate-700/60 space-y-3">
+                <div className="flex items-start gap-2.5">
+                  <HelpCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-xs font-mono font-semibold text-slate-200">
+                      No Observational Records for Selected Point
+                    </p>
+                    <p className="text-xs text-slate-400 leading-relaxed font-mono">
+                      {dataStatus?.statusMessage}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-slate-400">LONGITUDE:</span>{' '}
-                  <span className="text-slate-200">{location.lng.toFixed(4)}°</span>
+                <div className="pt-2 border-t border-slate-800">
+                  <button
+                    onClick={() =>
+                      onSelectPreset({
+                        id: 'demo-region',
+                        name: 'Synthetic Demo Region',
+                        lat: 36.7783,
+                        lng: -119.4179,
+                        hasObservationalData: true,
+                        isSyntheticDemo: true,
+                        regionId: 'demo-region',
+                        country: 'Global / Fictitious',
+                        description: 'Scaffold demonstration dataset for testing the opposing NDVI/soil-moisture trend interface.',
+                      })
+                    }
+                    className="w-full py-2 px-3 rounded-lg bg-nasa-blue/30 hover:bg-nasa-blue/50 border border-cyan-500/40 text-xs font-mono text-cyan-200 flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-nasa-cyan" />
+                    <span>Load Demo Region with Test Observations</span>
+                  </button>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Scientific Data Availability Status */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs font-mono text-slate-400 uppercase">
-                <Database className="w-4 h-4 text-nasa-cyan" />
-                <span>Observational Data Readiness</span>
-              </div>
+            {/* MILESTONE 2: Environmental Data Visualization & Statistical Dashboard */}
+            {dataStatus?.hasData && dataStatus.observations && (
+              <div className="space-y-3 pt-1">
+                {/* Tab Navigation: Visualization vs Statistical Audit */}
+                <div className="flex items-center gap-2 p-1 rounded-xl bg-space-950 border border-slate-800 font-mono text-xs">
+                  <button
+                    onClick={() => setActiveTab('visualize')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg transition-colors ${
+                      activeTab === 'visualize'
+                        ? 'bg-nasa-blue text-white font-bold shadow-md'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <BarChart3 className="w-4 h-4 text-nasa-cyan" />
+                    <span>Environmental Trends</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('audit')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg transition-colors ${
+                      activeTab === 'audit'
+                        ? 'bg-nasa-blue text-white font-bold shadow-md'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-nasa-cyan" />
+                    <span>Scientific Audit</span>
+                  </button>
+                </div>
 
-              {isLoading ? (
-                <div className="p-4 rounded-xl bg-space-900/50 border border-slate-800 animate-pulse text-xs font-mono text-cyan-300">
-                  Querying regional telemetry index...
-                </div>
-              ) : dataStatus?.hasData && dataStatus.isSynthetic ? (
-                /* Synthetic Demo Active */
-                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span className="font-mono font-bold text-xs uppercase tracking-wider text-amber-300">
-                      Synthetic Demonstration Record
-                    </span>
-                  </div>
-                  <p className="text-xs text-amber-200/90 leading-relaxed">
-                    This region carries 10-year illustrative data (2015–2024) for interface testing. <strong>These are synthetic values, not NASA satellite observations.</strong>
-                  </p>
-                  <div className="pt-2 border-t border-amber-500/20 flex items-center justify-between text-xs font-mono">
-                    <span className="text-amber-300">Signal Status:</span>
-                    <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold">
-                      Candidate Green Mirage
-                    </span>
-                  </div>
-                </div>
-              ) : dataStatus?.hasData ? (
-                /* Real Data Available */
-                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span className="font-mono font-bold text-xs uppercase">
-                      Observational Series Loaded
-                    </span>
-                  </div>
-                  <p className="text-xs">{dataStatus.statusMessage}</p>
-                </div>
-              ) : (
-                /* Arbitrary clicked point with No Data */
-                <div className="p-4 rounded-xl bg-space-900/70 border border-slate-700/60 space-y-3">
-                  <div className="flex items-start gap-2.5">
-                    <HelpCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="text-xs font-mono font-semibold text-slate-200">
-                        No Observations for Arbitrary Point
-                      </p>
-                      <p className="text-xs text-slate-400 leading-relaxed">
-                        {dataStatus?.statusMessage}
-                      </p>
+                {/* Tab 1: Interactive Charts & Filters */}
+                {activeTab === 'visualize' && (
+                  <div className="space-y-3">
+                    <IndicatorFilter
+                      availableIndicators={availableIndicators}
+                      selectedIndicators={selectedIndicators}
+                      onToggleIndicator={handleToggleIndicator}
+                      yearRange={yearRange}
+                      minYear={2015}
+                      maxYear={2024}
+                      onChangeYearRange={setYearRange}
+                      showTrendline={showTrendline}
+                      onToggleTrendline={() => setShowTrendline(!showTrendline)}
+                      chartMode={chartMode}
+                      onChangeChartMode={setChartMode}
+                    />
+
+                    <div className="p-3.5 rounded-xl bg-space-950/80 border border-cyan-500/20 space-y-2">
+                      <div className="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-slate-800/80 pb-1.5">
+                        <span className="font-bold text-white uppercase">
+                          {chartMode === 'timeseries'
+                            ? 'Interactive Multi-Indicator Trends'
+                            : 'Standardized Z-Score Comparison'}
+                        </span>
+                        <span className="text-[10px] text-cyan-300">
+                          {chartMode === 'timeseries' ? 'DUAL-AXIS SCALING' : 'DIMENSIONLESS (σ)'}
+                        </span>
+                      </div>
+
+                      {chartMode === 'timeseries' ? (
+                        <TimeseriesChart
+                          observations={dataStatus.observations}
+                          selectedIndicators={selectedIndicators}
+                          yearRange={yearRange}
+                          showTrendline={showTrendline}
+                        />
+                      ) : (
+                        <ZScoreChart
+                          observations={dataStatus.observations}
+                          yearRange={yearRange}
+                        />
+                      )}
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-slate-800">
-                    <button
-                      onClick={() =>
-                        onSelectPreset({
-                          id: 'demo-region',
-                          name: 'Synthetic Demo Region',
-                          lat: 36.7783,
-                          lng: -119.4179,
-                          hasObservationalData: true,
-                          isSyntheticDemo: true,
-                          regionId: 'demo-region',
-                          country: 'Global / Fictitious',
-                          description: 'Scaffold demonstration dataset for testing the opposing NDVI/soil-moisture trend interface.',
-                        })
-                      }
-                      className="w-full py-2 px-3 rounded-lg bg-nasa-blue/30 hover:bg-nasa-blue/50 border border-cyan-500/40 text-xs font-mono text-cyan-200 flex items-center justify-center gap-2 transition-colors"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 text-nasa-cyan" />
-                      <span>Jump to Demo Region (Test Data)</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
 
-            {/* Milestone 2 Preview Placeholder */}
-            <div className="p-4 rounded-xl bg-space-900/50 border border-slate-800 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-                <TrendingUp className="w-4 h-4 text-nasa-cyan" />
-                <span>Next Milestone: Interactive Visualizations</span>
+                {/* Tab 2: Statistical Audit & Safeguards */}
+                {activeTab === 'audit' && (
+                  <StatisticalAudit
+                    analysis={dataStatus.analysis}
+                    observations={dataStatus.observations}
+                    selectedIndicators={selectedIndicators}
+                    yearRange={yearRange}
+                  />
+                )}
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Full dual-axis Apache ECharts (NDVI greenness trajectory vs. soil moisture water table decline) and Member A's Theil–Sen / Mann–Kendall audit cards will activate in Milestone 2.
-              </p>
-            </div>
+            )}
           </div>
 
           {/* Bottom Actions Bar */}
-          <div className="p-4 border-t border-cyan-500/20 bg-space-950/80 flex items-center justify-between">
+          <div className="p-3.5 px-6 border-t border-cyan-500/20 bg-space-950/90 flex items-center justify-between">
             <button
               onClick={onClose}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-space-850 hover:bg-space-800 border border-slate-700 text-xs font-mono text-slate-300 hover:text-white transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-space-850 hover:bg-space-800 border border-slate-700 text-xs font-mono text-slate-300 hover:text-white transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Center Globe</span>
