@@ -1,61 +1,64 @@
-"""A -> C/D scientific-analysis interface: preliminary divergence screening."""
-from __future__ import annotations
-
-from src.preprocessing import validate_timeseries
-from src.statistics import estimate_trend
-
-VEGETATION_VARIABLE = "ndvi"
-WATER_VARIABLE = "soil_moisture"
+"""Transparent evidence categories for vegetation/soil-moisture divergence."""
 
 
-def analyze_region(data) -> dict:
-    """Return serializable findings, with conservative interpretation.
+def analyze_region(data, **kwargs) -> dict:
+    """Preserve the import path used by the existing Streamlit app and agent."""
+    from .statistics import analyze_region as analyze
+    return analyze(data, **kwargs)
 
-    A sign-only discrepancy is a CANDIDATE signal, not a confirmed ecological
-    mechanism. Authentic source provenance and scientific review are required.
+
+def detect_divergence(analyses: dict, *, alpha: float = 0.05,
+                      vegetation_variables: tuple[str, ...] = ("NDVI", "EVI"),
+                      soil_moisture_variable: str = "soil_moisture") -> dict:
+    """Consume aligned analyze_region analyses, including BH-adjusted MK values.
+
+    Supported Signal requires positive greenness, negative moisture, marginal
+    Sen intervals excluding zero, adjusted MK significance and reliability.
     """
-    frame = validate_timeseries(data)
-    regions = frame["region_id"].unique()
-    if len(regions) != 1:
-        raise ValueError("analyze_region expects data for exactly one region")
-    trends = {
-        variable: estimate_trend(group)
-        for variable, group in frame.groupby("variable", sort=True)
-    }
-    is_demo = frame["source"].astype(str).str.contains("SYNTHETIC_DEMO").any()
-    both = VEGETATION_VARIABLE in trends and WATER_VARIABLE in trends
-    divergence = None
-    if both:
-        v = trends[VEGETATION_VARIABLE]["slope_per_year"]
-        w = trends[WATER_VARIABLE]["slope_per_year"]
-        divergence = bool(v is not None and w is not None and v > 0 and w < 0)
-    limitations = [
-        "Initial trend tests do not correct for seasonality or autocorrelation.",
-        "Opposite trend signs are screening signals, not proof of environmental harm.",
-        "Match geographic support and dates before interpreting real datasets.",
-    ]
-    if is_demo:
-        limitations.insert(0, "Synthetic demonstration data — NOT NASA observations.")
-    if not both:
-        limitations.append("Both NDVI and soil moisture are required for divergence screening.")
-    return {
-        "region": str(regions[0]),
-        "observation_period": {
-            "start": frame["date"].min().date().isoformat(),
-            "end": frame["date"].max().date().isoformat(),
-        },
-        "variables": sorted(trends),
-        "trends": trends,
-        "trend_slopes": {name: t["slope_per_year"] for name, t in trends.items()},
-        "confidence_intervals": {name: t["slope_95ci"] for name, t in trends.items()},
-        "p_values": {name: t["p_value"] for name, t in trends.items()},
-        "data_quality": {
-            "n_observations": int(len(frame)),
-            "sources": sorted(frame["source"].unique().astype(str).tolist()),
-            "synthetic_demo": bool(is_demo),
-            "qa_reviewed": False,
-        },
-        "divergence_detected": divergence,
-        "divergence_status": "candidate_only" if divergence else "not_detected_or_unavailable",
-        "limitations": limitations,
-    }
+    if not 0 < alpha < 0.5:
+        raise ValueError("alpha must lie strictly between 0 and 0.5")
+    names = {v.casefold(): v for v in analyses}
+    if len(names) != len(analyses):
+        raise ValueError("variable names collide when compared case-insensitively")
+    soil = names.get(soil_moisture_variable.casefold())
+    vegetation = list(dict.fromkeys(names[v.casefold()] for v in vegetation_variables if v.casefold() in names))
+    if soil in vegetation:
+        raise ValueError("vegetation and soil moisture must be different variables")
+    if soil is None or not vegetation:
+        return {"category": "Uncertain Signal", "pairs": [],
+                "reasons": ["required_vegetation_or_soil_moisture_missing"]}
+    pairs = []
+    for name in vegetation:
+        green, water = analyses[name], analyses[soil]
+        reasons = []
+        aligned = green["data_quality"]["analyzed_years"] == water["data_quality"]["analyzed_years"]
+        if not aligned:
+            reasons.append("unmatched_observation_years")
+        if green["status"] != "ok" or water["status"] != "ok":
+            reasons.append("insufficient_data")
+            category = "Uncertain Signal"
+        else:
+            directional = green["theil_sen"]["slope"] > 0 and water["theil_sen"]["slope"] < 0
+            significant = all(r.get("adjusted_p_value") is not None and r["adjusted_p_value"] < alpha
+                              for r in (green, water))
+            intervals = green["theil_sen"]["confidence_interval"][0] > 0 and water["theil_sen"]["confidence_interval"][1] < 0
+            reliable = green["reliable"] and water["reliable"] and aligned
+            if not reliable:
+                reasons.append("quality_or_robustness_checks_failed")
+            if directional and significant and intervals and reliable:
+                category = "Supported Signal"
+            elif directional or not reliable:
+                category = "Uncertain Signal"
+                if not significant:
+                    reasons.append("adjusted_significance_not_established")
+                if not intervals:
+                    reasons.append("directional_confidence_intervals_not_established")
+            else:
+                category = "No Detected Divergence"
+                reasons.append("required_opposing_directions_absent")
+        pairs.append({"vegetation": name, "soil_moisture": soil, "category": category, "reasons": reasons})
+    categories = {p["category"] for p in pairs}
+    # Conflicting vegetation indicators are retained and downgrade the result.
+    category = next(iter(categories)) if len(categories) == 1 else "Uncertain Signal"
+    return {"category": category, "pairs": pairs,
+            "reasons": ["vegetation_indicators_disagree"] if len(categories) > 1 else []}
