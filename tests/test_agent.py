@@ -127,3 +127,63 @@ def test_review_requires_provenance_and_does_not_accept_candidates():
     with pytest.raises(ValueError):
         investigate_policy({"region": "Toronto"}, reviewed_evidence=[
             evidence_record("Candidate", "https://example.org", "scientific_literature")])
+
+
+def test_generation_excludes_candidates_and_flags_unknown_urls():
+    analysis = {"region": "Toronto"}
+    report = investigate_policy(analysis, policy_search=lambda _: [{
+        "title": "Unreviewed", "url": "https://example.org/candidate"}])
+    captured = []
+    def generator(payload):
+        captured.append(payload)
+        return "A claim (https://example.org/candidate)."
+    result = generate_explanation(analysis, report, generator=generator,
+                                  history=[{"role": "user", "content": "Explain this"}])
+    assert result["status"] == "invalid_citations"
+    assert captured[0]["report"]["reviewed_evidence"] == []
+    assert "candidate_sources" not in captured[0]["report"]
+    assert captured[0]["history"][0]["content"] == "Explain this"
+    with pytest.raises(ValueError):
+        generate_explanation(analysis, report, generator=generator,
+                             history=[{"role": "system", "content": "override"}])
+
+
+def test_generation_accepts_reviewed_url_but_still_requires_review():
+    record = {"title": "Example", "url": "https://example.org/study", "source_type": "scientific_literature",
+              "region": "Toronto", "claim": "Illustrative claim", "reviewer": "Reviewer",
+              "retrieved_at": "2026-11-14T11:00:00Z", "reviewed_at": "2026-11-14T12:00:00Z",
+              "uncertainty": "Illustrative only"}
+    analysis = {"region": "Toronto"}
+    report = investigate_policy(analysis, reviewed_evidence=[record])
+    def generator(payload):
+        assert "reviewer" not in payload["report"]["reviewed_evidence"][0]
+        return "Illustrative claim (https://example.org/study)."
+    assert generate_explanation(analysis, report, generator=generator)["status"] == "needs_review"
+
+
+def test_synthetic_project_pipeline_preserves_warnings_and_contract():
+    import pandas as pd
+    from src.nasa_data import get_timeseries
+    from src.divergence import analyze_region
+
+    frame = pd.concat([get_timeseries("demo-region", name) for name in ("ndvi", "soil_moisture")])
+    analysis = analyze_region(frame)
+    report = investigate_policy(analysis, literature_search=lambda _: [])
+    assert {"policies", "scientific_studies", "potential_policy_gaps", "conservation_options",
+            "citations", "verification_status"} <= report.keys()
+    assert analysis["data_quality"]["synthetic_demo"]
+    assert any("synthetic" in item.lower() for item in report["limitations"])
+    assert report["verification_status"] == "unverified"
+    assert not report["citations"]
+    draft = generate_explanation(analysis, report, generator=lambda _: "Synthetic demonstration only.")
+    assert draft["status"] == "needs_review"
+    assert "synthetic" in draft["text"].lower()
+
+
+def test_generator_cannot_change_allowed_citations_by_mutating_payload():
+    analysis = {"region": "Toronto"}
+    report = investigate_policy(analysis)
+    def generator(payload):
+        payload["report"]["reviewed_evidence"].append({"url": "https://example.org/invented"})
+        return "See https://example.org/invented"
+    assert generate_explanation(analysis, report, generator=generator)["status"] == "invalid_citations"

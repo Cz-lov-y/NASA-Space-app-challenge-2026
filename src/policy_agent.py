@@ -1,5 +1,7 @@
 """Evidence research interface; discovery never implies verification."""
 from collections.abc import Callable
+from copy import deepcopy
+import re
 
 import requests
 
@@ -88,8 +90,27 @@ def generate_explanation(analysis: dict, report: dict, *, generator=None,
         raise ValueError("Report must match the selected region")
     if generator is None:
         return {"status": "unavailable", "text": None, "limitations": ["No model provider is configured."]}
-    payload = {"system_instructions": SYSTEM_INSTRUCTIONS, "analysis": analysis,
-               "report": report, "question": question, "history": history or []}
+    if question is not None and (not isinstance(question, str) or not question.strip()):
+        raise ValueError("question must be non-empty text")
+    if history is not None and (not isinstance(history, list) or any(
+        not isinstance(turn, dict) or turn.get("role") not in ("user", "assistant")
+        or not isinstance(turn.get("content"), str) or not turn["content"].strip()
+        for turn in history
+    )):
+        raise ValueError("history must contain user or assistant text turns")
+    # Candidate metadata and reviewer identities are not source evidence.
+    reviewed = []
+    for field in ("policies", "scientific_studies"):
+        for item in report.get(field, []):
+            if item.get("verification_status") == "human_reviewed":
+                reviewed.append({key: item.get(key) for key in (
+                    "title", "url", "source_type", "claim", "jurisdiction", "authority",
+                    "effective_date", "policy_status", "uncertainty") if key in item})
+    payload = {"system_instructions": SYSTEM_INSTRUCTIONS, "analysis": deepcopy(analysis),
+               "report": {"region": report["region"], "reviewed_evidence": reviewed,
+                          "limitations": deepcopy(report.get("limitations", []))},
+               "question": question, "history": deepcopy(history or [])}
+    allowed = {item["url"] for item in reviewed}
     try:
         result = generator(payload)
         if not isinstance(result, str) or not result.strip():
@@ -97,5 +118,12 @@ def generate_explanation(analysis: dict, report: dict, *, generator=None,
     except (requests.RequestException, ValueError, TypeError) as exc:
         return {"status": "unavailable", "text": None,
                 "limitations": [f"Generation failed ({type(exc).__name__})."]}
-    return {"status": "needs_review", "text": result.strip(),
-            "limitations": ["Generated claims and citations require independent review."]}
+    text = result.strip()
+    mentioned = {url.rstrip(".,;:!?)\"]") for url in re.findall(r"https?://[^\s<>]+", text)}
+    limitations = ["Generated claims and citations require independent review."]
+    if mentioned - allowed:
+        limitations.append("The draft contains URLs outside the reviewed evidence; do not display it until corrected.")
+        return {"status": "invalid_citations", "text": text, "limitations": limitations}
+    if not reviewed:
+        limitations.append("No reviewed policy or research evidence was supplied.")
+    return {"status": "needs_review", "text": text, "limitations": limitations}
