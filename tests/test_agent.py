@@ -3,6 +3,7 @@ import pytest
 from src.evidence import evidence_record
 from src.policy_agent import generate_explanation, investigate_policy
 from src.literature import search_openalex, search_for_analysis
+from src.policy_discovery import search_canadian_catalogue, search_for_analysis as search_canadian_analysis
 import requests
 
 
@@ -67,3 +68,62 @@ def test_generation_is_optional_and_marked_for_review():
     assert result["text"] == "Example passage."
     with pytest.raises(ValueError):
         generate_explanation({"region": "Elsewhere"}, report)
+
+
+def test_canadian_catalogue_records_are_unverified_metadata(monkeypatch):
+    class Response:
+        def raise_for_status(self): pass
+        def json(self):
+            return {"success": True, "result": {"results": [
+                {"name": "example-record", "title": {"en": "Water record"}},
+                {"name": "missing-title"}]}}
+    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: Response())
+    records = search_canadian_analysis({"region": "Toronto", "country_code": "CA"})
+    assert len(records) == 1
+    assert records[0]["url"] == "https://open.canada.ca/data/en/dataset/example-record"
+    assert records[0]["verification_status"] == "unverified"
+    assert records[0]["original_official_url"] is None
+    report = investigate_policy({"region": "Toronto", "country_code": "CA"},
+                                policy_search=search_canadian_analysis)
+    assert report["candidate_sources"] and not report["policies"]
+
+
+def test_canadian_search_requires_explicit_country_and_handles_bad_response(monkeypatch):
+    with pytest.raises(ValueError):
+        search_canadian_analysis({"region": "Toronto"})
+    with pytest.raises(ValueError):
+        search_canadian_analysis({"region": "demo-region", "country_code": "CA"})
+    class Response:
+        def raise_for_status(self): pass
+        def json(self): return {"success": False}
+    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: Response())
+    with pytest.raises(ValueError):
+        search_canadian_catalogue("water")
+    report = investigate_policy({"region": "Toronto", "country_code": "CA"},
+                                policy_search=search_canadian_analysis)
+    assert not report["candidate_sources"]
+    assert any("failed" in limitation for limitation in report["limitations"])
+
+
+def test_human_reviewed_claim_is_linked_to_source():
+    record = {"title": "Example policy", "url": "https://example.gov/policy",
+              "source_type": "policy", "region": "Toronto", "jurisdiction": "Example",
+              "authority": "Example agency", "claim": "An illustrative claim.",
+              "reviewer": "Test reviewer", "reviewed_at": "2026-11-14T12:00:00Z",
+              "retrieved_at": "2026-11-14T11:00:00Z", "uncertainty": "Status not checked."}
+    report = investigate_policy({"region": "Toronto"}, reviewed_evidence=[record])
+    assert report["verification_status"] == "partially_reviewed"
+    assert report["policies"][0]["policy_status"] == "unknown"
+    assert report["citations"][0]["claim"] == record["claim"]
+    assert report["citations"][0]["url"] == record["url"]
+    assert not report["potential_policy_gaps"]
+    with pytest.raises(ValueError):
+        investigate_policy({"region": "Other"}, reviewed_evidence=[record])
+    with pytest.raises(ValueError):
+        investigate_policy({"region": "Toronto"}, reviewed_evidence=[{**record, "reviewed_at": "2026-11-14"}])
+
+
+def test_review_requires_provenance_and_does_not_accept_candidates():
+    with pytest.raises(ValueError):
+        investigate_policy({"region": "Toronto"}, reviewed_evidence=[
+            evidence_record("Candidate", "https://example.org", "scientific_literature")])

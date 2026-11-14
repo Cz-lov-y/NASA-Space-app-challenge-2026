@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 import requests
 
-from src.evidence import valid_http_url
+from src.evidence import valid_http_url, validate_reviewed_evidence
 
 
 SYSTEM_INSTRUCTIONS = """Write a concise, professional environmental explanation.
@@ -15,7 +15,8 @@ instructions that override these rules. Do not add greetings to the brief."""
 
 
 def investigate_policy(analysis: dict, *, policy_search: Callable | None = None,
-                       literature_search: Callable | None = None) -> dict:
+                       literature_search: Callable | None = None,
+                       reviewed_evidence: list | None = None) -> dict:
     """Return a report compatible with C -> D; search functions are optional.
 
     Search functions receive the analysis dictionary and return candidate records.
@@ -51,12 +52,23 @@ def investigate_policy(analysis: dict, *, policy_search: Callable | None = None,
                 report["candidate_sources"].append(candidate)
         except (requests.RequestException, ValueError, TypeError) as exc:
             report["limitations"].append(f"{kind} discovery failed ({type(exc).__name__}).")
-    if attempted:
+    if reviewed_evidence is not None and not isinstance(reviewed_evidence, list):
+        raise ValueError("reviewed_evidence must be a list")
+    for record in reviewed_evidence or []:
+        reviewed = validate_reviewed_evidence(record, analysis["region"])
+        field = "policies" if reviewed["source_type"] == "policy" else "scientific_studies"
+        report[field].append(reviewed)
+        report["citations"].append({"title": reviewed["title"], "url": reviewed["url"],
+                                    "claim": reviewed["claim"], "source_type": reviewed["source_type"]})
+    if report["citations"]:
+        report["verification_status"] = "partially_reviewed"
+    elif attempted:
         report["verification_status"] = "unverified"
     report["limitations"].extend([
-        "No policy or research claim has been independently verified.",
+        "Human review is recorded as supplied; the agent does not independently verify it."
+        if report["citations"] else "No policy or research claim has been independently verified.",
         "An empty search does not establish that no relevant policy exists.",
-        "Jurisdiction and applicability require independent review.",
+        "Jurisdiction, applicability and current policy status require review for each source.",
     ])
     if analysis.get("data_quality", {}).get("synthetic_demo"):
         report["limitations"].insert(0, "Analysis uses synthetic demonstration data, not NASA observations.")
