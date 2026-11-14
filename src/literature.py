@@ -4,6 +4,7 @@ Returned metadata are candidate references, NOT independently verified
 scientific claims. Inspect each original publication before citing it.
 """
 import requests
+from datetime import datetime, timezone
 
 from src.evidence import evidence_record
 
@@ -27,5 +28,21 @@ def search_openalex(query: str, limit: int = 3) -> list[dict]:
         url = item.get("doi") or item.get("id")
         title = item.get("display_name") or ""
         if title and url:
-            candidates.append(evidence_record(title, url, "scientific_literature"))
+            record = evidence_record(title, url, "scientific_literature")
+            record.update(publication_date=item.get("publication_date"),
+                          retrieved_at=datetime.now(timezone.utc).isoformat(),
+                          discovery_source="OpenAlex",
+                          uncertainty="Candidate metadata; original publication not reviewed.")
+            candidates.append(record)
     return candidates
+
+
+def search_for_analysis(analysis: dict) -> list[dict]:
+    """Discover candidates from the region and supplied variable names."""
+    region = analysis.get("region")
+    if not isinstance(region, str) or not region.strip():
+        raise ValueError("A named region is required for literature search")
+    variables = analysis.get("variables") or []
+    if not isinstance(variables, list) or not all(isinstance(v, str) for v in variables):
+        raise ValueError("variables must be a list of names")
+    return search_openalex(" ".join([region, *variables, "vegetation water"]))
