@@ -16,7 +16,7 @@ data = pd.read_csv("data/processed/global_combined/monthly_timeseries.csv",
                    dtype={"unit": str})
 data = data.loc[
     data["date"].between("2003-01-01", "2024-12-01")
-    & data["variable"].isin(["ndvi", "soil_water_0_10cm"])
+    & data["variable"].str.casefold().isin(["ndvi", "soil_water_0_10cm"])
 ].copy()
 
 # Review quality_flag, spatial provenance and the intended QA policy first.
@@ -29,8 +29,12 @@ assert result["divergence_status"] == "not_assessed"
 have `region_id="whole_earth"` and the six usual columns `date`, `value`, `unit`,
 `variable`, `source`, `region_id`. Supply a single selected soil variable;
 the default is `soil_water_0_10cm`. Set `soil_moisture_variable` explicitly for
-another name such as `soil_water_0_100cm`. Single-variable inputs and missing
-coverage columns are accepted, but never produce a divergence assessment.
+another name such as `soil_water_0_100cm`. Selection is case-insensitive and
+preserves original names; B's current export uses `ndvi`, while `NDVI` also works.
+The selected soil variable must exist, even for a single-variable input. A typo,
+an NDVI-only table, or an absent selected layer raises `ValueError` listing the
+available names. Missing coverage columns are accepted. No input produces a
+divergence assessment.
 The default monthly aggregation and statistical settings are inherited from
 `analyze_region`; see `docs/methodology.md`. All variables passed to a call
 are aligned to common valid years, and all their MK tests enter the same BH
@@ -39,10 +43,19 @@ and changes the multiple-testing family. Select indicators intentionally.
 
 ## Output and UI / agent rules
 
-The underlying regional engine runs unchanged for per-variable trend estimates,
-confidence intervals, p-values, statistical reliability, data quality and
-sensitivity. Its pairwise divergence result is discarded; it is not embedded
-elsewhere in the output. The wrapper always returns:
+The underlying regional engine runs unchanged internally. The wrapper constructs
+a strict allowlist for consumer-facing output: `analysis[variable]` contains only
+status, unit, source, data quality, OLS slope and Theil–Sen slope. It discards
+the pairwise classification **and** does not expose p-values, confidence intervals,
+statistical reliability or sensitivity diagnostics. This is a breaking output
+change from the earlier global wrapper: `p_values`, `confidence_intervals`,
+`adjusted_p_values`, `trends`, `trend_slopes`, and inference fields under `analysis`
+are no longer returned. The separate `analyze_region` API is unchanged.
+
+Descriptive slopes remain visible and can have opposite signs. That alone cannot
+establish a co-located divergence; withholding inferential fields reduces the
+chance of misuse but cannot prevent downstream consumers from misinterpreting
+the slopes or analyzing the input independently. The wrapper always returns:
 
 ```text
 scope = "global_exploratory"
@@ -51,6 +64,7 @@ divergence_status = "not_assessed"
 divergence.category = "Not assessed"
 global_exploratory.green_mirage_assessed = false
 global_exploratory.spatial_overlap = "not_established"
+global_exploratory.inferential_results_exposed = false
 ```
 
 These values remain fixed even if the underlying unwrapped detector would return
@@ -73,9 +87,9 @@ denominator is not automatically verified.
 `coverage_review_required`, `low_coverage` and other flags do not trigger filtering
 or change statistical reliability. The caller must review provenance and apply
 and document a policy upstream, without silently marking data validated. The
-wrapper sets `quality_flags_applied=false` and records this limitation. A
-per-variable `reliable=true` only means the engine's statistical screening passed;
-it does not establish valid source QA, spatial overlap or ecological significance.
+wrapper sets `quality_flags_applied=false` and records this limitation. It does
+not expose the underlying engine's `reliable` flag, which would not establish
+valid source QA, spatial overlap or ecological significance.
 Retain source metadata and any QA decisions separately; `DataFrame.attrs` may be
 lost on concatenation and is not verified by this interface.
 

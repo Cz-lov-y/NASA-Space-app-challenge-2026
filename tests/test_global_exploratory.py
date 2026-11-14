@@ -33,8 +33,20 @@ class GlobalExploratoryTests(unittest.TestCase):
         self.assertNotIn("Supported Signal", json.dumps(result))
         self.assertFalse(result["global_exploratory"]["green_mirage_assessed"])
         self.assertFalse(result["global_exploratory"]["quality_flags_applied"])
-        self.assertEqual(result["trend_slopes"], raw["trend_slopes"])
-        self.assertEqual(result["p_values"], raw["p_values"])
+        self.assertFalse(result["global_exploratory"]["inferential_results_exposed"])
+        for name in result["variables"]:
+            self.assertEqual(result["analysis"][name]["linear_slope"], raw["analysis"][name]["linear_regression"]["slope"])
+            self.assertEqual(result["analysis"][name]["theil_sen_slope"], raw["analysis"][name]["theil_sen"]["slope"])
+        def all_keys(item):
+            if isinstance(item, dict):
+                return set(item).union(*(all_keys(v) for v in item.values()))
+            if isinstance(item, list):
+                return set().union(*(all_keys(v) for v in item))
+            return set()
+        prohibited = {"p_values", "p_value", "adjusted_p_values", "adjusted_p_value",
+                      "confidence_intervals", "confidence_interval", "reliable",
+                      "reliability_reasons", "mann_kendall", "sensitivity", "trends"}
+        self.assertFalse(prohibited & all_keys(result))
         self.assertTrue(result["data_quality"]["synthetic_demo"])
         self.assertEqual(result["global_exploratory"]["coverage_by_variable"]["NDVI"]["quality_flag_counts"], {"coverage_review_required": 192})
         json.dumps(result, allow_nan=False)
@@ -81,6 +93,15 @@ class GlobalExploratoryTests(unittest.TestCase):
         result = analyze_global_exploratory(frame, soil_moisture_variable="soil_water_0_100cm")
         self.assertIn("soil_water_0_100cm", result["variables"])
         self.assertEqual(result["divergence_status"], "not_assessed")
+
+    def test_selected_soil_must_exist_and_matching_is_case_insensitive(self):
+        frame = global_data()
+        self.assertEqual(analyze_global_exploratory(frame, soil_moisture_variable="SOIL_WATER_0_10CM")["scope"], "global_exploratory")
+        for name in ("soil_water_0_100cm", "soil_water_0_100", "", None):
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, "soil_moisture_variable"):
+                analyze_global_exploratory(frame, soil_moisture_variable=name)
+        with self.assertRaisesRegex(ValueError, "available variables"):
+            analyze_global_exploratory(frame.loc[frame.variable == "NDVI"])
 
 
 if __name__ == "__main__":
