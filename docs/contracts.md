@@ -35,6 +35,22 @@ frames. Keep one metadata record per series when combining indicators. The
 statistics module consumes the six columns and does not validate or propagate
 these metadata; the caller is responsible for preserving and reviewing them.
 
+The B → A interface is **single-variable per call**. The caller requests each
+indicator separately, validates that its geographic support and units are
+comparable, saves each metadata record, then concatenates the rows into a
+multi-variable long table for `analyze_region`. Do not assume that matching
+`region_id` values prove geographic alignment. `analyze_region` accepts one
+region, not necessarily all indicators, and determines common usable years.
+
+The full-calendar-year requirement belongs to **A's default analysis**, not a
+requirement that B fabricate or discard incomplete years. B returns the actual
+monthly observations and preserves missing values and coverage metadata. With
+`frequency="monthly"` and default `min_months_per_year=12`, A retains an annual
+mean only when all 12 months have valid values; it excludes incomplete years and
+reports them. Partial endpoint years and missing interior years are allowed in
+the input. A lower threshold is configurable but retained incomplete years are
+flagged for seasonal coverage. The annual mean is equally weighted by month.
+
 `examples.mock_data.mock_timeseries(region, variable)` implements this contract
 for `synthetic_region` and `NDVI` / `soil_moisture` only. Its mock geographic
 coverage and QA details are explicitly fictitious. It has no network or credentials
@@ -43,12 +59,14 @@ NASA data implementation.
 
 ```python
 import pandas as pd
+from copy import deepcopy
 from examples.mock_data import mock_timeseries
 from src.statistics import analyze_region
 
 series = [mock_timeseries("synthetic_region", name) for name in ("NDVI", "soil_moisture")]
-provenance = {frame["variable"].iloc[0]: frame.attrs["metadata"] for frame in series}
+provenance = {frame["variable"].iloc[0]: deepcopy(frame.attrs["metadata"]) for frame in series}
 analysis = analyze_region(pd.concat(series, ignore_index=True))
+# Persist provenance separately, e.g. as a JSON sidecar; analysis does not carry it.
 ```
 
 The scaffold supports `demo-region`, `ndvi`, and `soil_moisture` from SYNTHETIC data only.
@@ -129,4 +147,5 @@ See `docs/methodology.md` and `STATISTICS_README.md` for assumptions and usage.
 Keys: `policies[]`, `scientific_studies[]`, `potential_policy_gaps[]`, `conservation_options[]`, `citations[]`, `verification_status`. The scaffold returns empty arrays and `not_started`; it does NOT fetch government policies.
 
 Policy findings must include jurisdiction, title, effective date/status if known, original official URL, retrieval time, evidence type, and uncertainty. Distinguish verified claims from candidates and inference. An absence of search results is NOT proof that a policy does not exist.
+
 
