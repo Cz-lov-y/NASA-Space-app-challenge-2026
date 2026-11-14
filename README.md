@@ -2,24 +2,29 @@
 
 NASA Space Apps Challenge 2026 | Toronto | 14–15 November 2026
 
-**Mission:** Investigate whether increasing vegetation greenness coincides with deteriorating water conditions, then connect reproducible Earth-observation findings to verifiable policy and conservation evidence.
+**Mission:** Screen for places where vegetation greenness is increasing
+while soil moisture is declining, then connect reproducible environmental
+measurements to verifiable government policy and conservation evidence.
 
-## Project status
+## Current status
 
-**Scaffold / demonstration only.** The included CSV is deliberately synthetic; it is NOT a NASA dataset, an environmental finding, or a verified policy report. Replace it with authentic, quality-controlled NASA observations before presenting scientific conclusions.
+An interactive **Streamlit frontend demo** exists with:
 
-## Team ownership
+- Regional and observation-window selection.
+- NDVI and soil-moisture trends, per-year slopes and confidence intervals.
+- Standardized time-series comparison, raw p-values and method caveats.
+- Conservative Green Mirage candidate screening.
+- Source/QA warnings, agent evidence panels, and CSV/JSON exports.
+- A future-ready geographic panel that never fabricates map coordinates.
 
-| Member | Branch | Ownership |
-| --- | --- | --- |
-| A — Statistical modeling / team lead | `feature/statistics` | `src/statistics.py`, `src/divergence.py`, `tests/test_statistics.py`, `docs/methodology.md` |
-| B — NASA data engineering | `feature/nasa-data` | `src/nasa_data.py`, `src/preprocessing.py`, `data/sample/`, `tests/test_data.py`, `docs/data_sources.md` |
-| C — Policy research agent | `feature/policy-agent` | `src/policy_agent.py`, `src/literature.py`, `src/evidence.py`, `tests/test_agent.py`, `docs/agent_methodology.md` |
-| D — Frontend and deployment | `feature/frontend` | `app.py`, `src/ui/`, `.streamlit/`, dependencies, and integration |
+**All bundled observations are intentionally SYNTHETIC. They are not NASA
+data, a verified environmental finding, or a government policy assessment.**
+The agent currently returns an empty, unverified report until real research
+integration is completed.
 
 ## Quick start (Python 3.12 recommended)
 
-```bash
+~~~bash
 git clone https://github.com/Cz-lov-y/NASA-Space-app-challenge-2026.git
 cd NASA-Space-app-challenge-2026
 python3 -m venv .venv
@@ -27,20 +32,54 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m pytest -q
 streamlit run app.py
-```
+~~~
 
-On Windows, activate with `.venv\Scripts\activate`.
+Windows virtual environment activation: `.venv\Scripts\activate`.
 
-## Contracts
+The default demo region is `demo-region`. Select both NDVI and soil moisture.
+The **Investigate This Region** button exercises Member C's interface; it
+does not generate verified policy documents until C implements retrieval.
 
-1. `src.nasa_data.get_timeseries(region, variable) -> pandas.DataFrame` (Member B to A).
-2. `src.divergence.analyze_region(data) -> dict` (Member A to C/D).
-3. `src.policy_agent.investigate_policy(analysis) -> dict` (Member C to D).
+## Team ownership
 
-See `docs/contracts.md` for exact fields and integration expectations.
+| Member | Branch | Owned work |
+| --- | --- | --- |
+| A — Statistics / team lead | `feature/statistics` | `src/statistics.py`, `src/divergence.py`, statistical tests, methodology |
+| B — NASA data | `feature/nasa-data` | `src/nasa_data.py`, `src/preprocessing.py`, real NASA observations, QA |
+| C — Policy/literature agent | `feature/policy-agent` | `src/policy_agent.py`, `src/literature.py`, `src/evidence.py` |
+| D — Frontend/integration | `feature/frontend` | `app.py`, `src/ui/`, display tests, theme, launch |
 
-## Workflow
+The team works independently on assigned branches and opens PRs into
+`main`. Keep `main` runnable and never commit API keys.
 
-Create work only on your assigned feature branch, push, and open a pull request against `main`. Keep `main` runnable. Run `python -m pytest -q` before requesting review. Never commit API keys or claim that the demonstration data is authentic.
+## Integration contracts
 
-See `docs/team_workflow.md` for detailed commands and `docs/architecture.md` for the system design.
+1. **B → A/D:** `get_timeseries(region, variable) -> pandas.DataFrame`
+2. **A → C/D:** `analyze_region(data) -> dict`
+3. **C → D:** `investigate_policy(analysis) -> dict`
+
+Details: `docs/contracts.md`, `docs/architecture.md`,
+`docs/team_workflow.md` and `docs/frontend.md`.
+
+## Scientific and research safeguards
+
+- A positive NDVI slope and negative moisture slope is a **candidate
+  opposite-trend signal** only, not proof of causation or harm.
+- Trend statistics may need correction for seasonality, serial dependence,
+  spatial correlation and multiple comparisons.
+- The comparative z-score chart shows relative trajectories, **not** an
+  environmental risk score or the original unit magnitudes.
+- Missing indicators, mismatched dates, uncertain data QA, and missing
+  source verification are visible, not silently filled.
+- Agent evidence must retain original source links and verification
+  statuses; a failed search does not establish that no policy exists.
+
+## Deployment
+
+After team review and green tests, deploy `main` / `app.py` to Streamlit
+Community Cloud. Requirements are in `requirements.txt` and
+`.streamlit/config.toml`. No credentials are necessary for the synthetic
+demo; any future API keys belong in private deployment secrets.
+
+See `docs/frontend.md` for detailed integration, smoke-test, and
+deployment checklists.
