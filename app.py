@@ -275,12 +275,12 @@ with tab_trends:
             with column:
                 st.plotly_chart(
                     trend_figure(subset),
-                    use_container_width=True,
+                    width="stretch",
                     key=f"timeseries_{indicator}",
                 )
     if observations["variable"].nunique() > 1:
         st.markdown("### Standardized comparison")
-        st.plotly_chart(comparison_figure(observations), use_container_width=True)
+        st.plotly_chart(comparison_figure(observations), width="stretch")
         st.caption(
             "Each indicator is centered on its own mean and divided by its "
             "standard deviation (z-score). This compares shapes across units; "
@@ -304,7 +304,7 @@ with tab_methods:
             "Kendall tau": number(result.get("kendall_tau")),
         })
     if science_rows:
-        st.dataframe(pd.DataFrame(science_rows), use_container_width=True, hide_index=True)
+        st.dataframe(pd.DataFrame(science_rows), width="stretch", hide_index=True)
     q1, q2, q3 = st.columns(3)
     q1.metric("Observation records", str(len(observations)))
     q2.metric("Data QA reviewed", "Yes" if quality.get("qa_reviewed") else "No")
@@ -342,7 +342,7 @@ with tab_policy:
         "slopes": analysis.get("trend_slopes"),
         "sources": list(map(str, sources)),
     }, sort_keys=True, default=str)
-    if st.button("Investigate This Region", type="primary"):
+    if st.button("Investigate This Region", type="primary", key="investigate"):
         try:
             with st.spinner("Running the research interface..."):
                 report = investigate_policy(analysis)
@@ -383,7 +383,7 @@ with tab_data:
     st.markdown("### Observations used in this screening")
     st.dataframe(
         observations.sort_values(["variable", "date"]),
-        use_container_width=True, hide_index=True,
+        width="stretch", hide_index=True,
     )
     st.caption("Rows retain source names and units, limited to the selected period.")
     st.download_button(
