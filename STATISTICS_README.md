@@ -20,6 +20,11 @@ versions have been tested. Tests use the standard library's `unittest`.
 
 ## Integration
 
+For `whole_earth` aggregate data, use `analyze_global_exploratory` and the
+[global exploratory interface guide](docs/global_exploratory.md). Global output
+must not be presented as a Green Mirage finding; its spatial footprints have not
+been matched. The region API below remains available for regional analysis.
+
 ```python
 import json
 import pandas as pd

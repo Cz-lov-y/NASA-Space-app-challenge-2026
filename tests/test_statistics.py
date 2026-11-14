@@ -259,13 +259,46 @@ class RegionTests(unittest.TestCase):
         self.assertTrue(frame["quality_flag"].eq("good").all())
         result = analyze_region(frame, soil_moisture_variable="soil_water_0_10cm")
         trend = result["analysis"]["soil_water_0_10cm"]
+        self.assertFalse(frame["source"].str.contains("SYNTHETIC", case=False).any())
+        self.assertIs(result["data_quality"]["synthetic_demo"], False)
+        self.assertNotIn("Synthetic demonstration/test observations are included; this is NOT a verified NASA finding.",
+                         result["limitations"])
         self.assertEqual(trend["status"], "ok")
         self.assertEqual(trend["data_quality"]["n_years"], 22)
         self.assertAlmostEqual(trend["linear_regression"]["slope"], -0.07388118826339678, delta=1e-10)
         self.assertAlmostEqual(trend["linear_regression"]["p_value"], 0.212108299380559, delta=1e-10)
         self.assertAlmostEqual(trend["theil_sen"]["slope"], -0.09383511542754874, delta=1e-10)
         self.assertAlmostEqual(trend["mann_kendall"]["p_value"], 0.1758957490227674, delta=1e-10)
+        for method, expected in (
+            ("linear_regression", (-0.19344164010509968, 0.04567926357830611)),
+            ("theil_sen", (-0.19797764345325042, 0.029456866991609588)),
+        ):
+            with self.subTest(method=method):
+                interval = trend[method]["confidence_interval"]
+                self.assertEqual(trend[method]["confidence_level"], 0.95)
+                self.assertLess(interval[0], 0)
+                self.assertGreater(interval[1], 0)
+                self.assertAlmostEqual(interval[0], expected[0], delta=1e-10)
+                self.assertAlmostEqual(interval[1], expected[1], delta=1e-10)
         self.assertFalse(trend["mann_kendall"]["significant"])
+        self.assertIs(trend["reliable"], True)
+        self.assertEqual(trend["reliability_reasons"], [])
+        sensitivity = trend["sensitivity"]
+        self.assertIs(sensitivity["direction_stable"], True)
+        self.assertIs(sensitivity["ols_sen_direction_agree"], True)
+        self.assertAlmostEqual(sensitivity["leave_one_year_out_slope_range"][0], -0.11727034856282151, delta=1e-10)
+        self.assertAlmostEqual(sensitivity["leave_one_year_out_slope_range"][1], -0.06387759863021934, delta=1e-10)
+        self.assertLess(sensitivity["leave_one_year_out_slope_range"][1], 0)
+        autocorrelation = trend["autocorrelation"]
+        self.assertEqual(autocorrelation["status"], "screen_only")
+        self.assertIs(autocorrelation["flagged"], False)
+        self.assertEqual(autocorrelation["adjacent_pairs"], 21)
+        self.assertAlmostEqual(autocorrelation["lag1"], 0.2292749595018158, delta=1e-10)
+        self.assertAlmostEqual(autocorrelation["threshold"], 0.42770706486254506, delta=1e-10)
+        self.assertEqual(result["divergence"]["category"], "Uncertain Signal")
+        self.assertIsNone(result["divergence_detected"])
+        self.assertEqual(result["divergence_status"], "uncertain_signal")
+        self.assertIn("required_vegetation_or_soil_moisture_missing", result["divergence"]["reasons"])
 
     def test_supported_divergence_and_contract(self):
         result = analyze_region(region(), frequency="annual")

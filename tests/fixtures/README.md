@@ -13,3 +13,15 @@ This fixture contains monthly observations from 2003 through 2024 for
 months (2003-01, 2014-07, 2024-12) were independently recomputed; the entire
 NetCDF-to-CSV extraction was not independently validated. Regression tests
 protect numerical behavior, not the scientific correctness of the source data.
+
+The CSV `date` field is a `YYYY-MM-DD` string. The regression test parses it
+once with `pd.read_csv(..., parse_dates=["date"])`; the statistics preparation
+step also normalizes dates with `pd.to_datetime` and accepts parsed datetimes.
+
+The fixture includes B's extra per-month `quality_flag` and
+`valid_area_fraction` columns. They originate from B's exported time series;
+their counts and coverage summaries are recorded in B's quality report. These
+columns are not among the six required `analyze_region` input fields and the
+statistics module neither interprets nor filters them. The regression test
+asserts the fixture's flags are `good` before analysis. Callers must review and
+apply an appropriate QA policy to real input before calling the statistics API.
