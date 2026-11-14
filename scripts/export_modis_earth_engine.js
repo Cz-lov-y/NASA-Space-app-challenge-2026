@@ -63,7 +63,10 @@ function summarize(image) {
 function monthlyRows(start, end) {
   start = ee.Date(start);
   end = ee.Date(end);
-  var offsets = ee.List.sequence(0, end.difference(start, 'month').subtract(1));
+  // Calendar month arithmetic avoids fractional month differences in non-leap years.
+  var countMonths = ee.Number(end.get('year')).subtract(start.get('year')).multiply(12)
+    .add(ee.Number(end.get('month')).subtract(start.get('month')));
+  var offsets = ee.List.sequence(0, countMonths.subtract(1));
   return ee.FeatureCollection(offsets.map(function(offset) {
     var date = start.advance(offset, 'month');
     var month = collection.filterDate(date, date.advance(1, 'month'));
@@ -104,6 +107,18 @@ if (MODE === 'pilot') {
     var end = year === LAST_YEAR ? END_EXCLUSIVE : (year + 1) + '-01-01';
     exportMonths(year + '-01-01', end, String(year));
   }
+} else if (MODE === 'repair') {
+  // Recover the months omitted by the original fractional-month calculation.
+  var repairs = ee.FeatureCollection([]);
+  for (var y = 2003; y <= 2025; y++) {
+    if (y % 4 !== 0) {
+      repairs = repairs.merge(monthlyRows(y + '-12-01', (y + 1) + '-01-01'));
+    }
+  }
+  repairs = repairs.merge(monthlyRows('2026-11-01', '2026-12-01'));
+  Export.table.toDrive({collection: repairs, description: 'mod13a3_missing_months_repair',
+    folder: 'NASA_member_B', fileNamePrefix: 'mod13a3_missing_months_repair',
+    fileFormat: 'CSV', selectors: columns});
 } else {
-  throw new Error("MODE must be 'pilot' or 'years'");
+  throw new Error("MODE must be 'pilot', 'years', or 'repair'");
 }
