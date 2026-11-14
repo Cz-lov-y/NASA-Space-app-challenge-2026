@@ -1,0 +1,122 @@
+{
+  "whole_earth": {
+    "ndvi": {
+      "csv": "data/processed/global_combined/monthly_timeseries.csv",
+      "metadata": {
+        "spatial_coverage": {
+          "crs": "EPSG:4326",
+          "bbox": [
+            -180,
+            -90,
+            180,
+            90
+          ],
+          "aggregation": "area-weighted over valid cells; coverage denominator is the entire Earth including oceans",
+          "native_resolution": "MODIS sinusoidal approximately 1 km"
+        },
+        "time_range": {
+          "start": "2003-01-01",
+          "end": "2026-11-01"
+        },
+        "temporal_resolution": "monthly source; area-weighted regional average, no additional temporal averaging",
+        "dataset_version": "MOD13A3.061",
+        "quality_control": {
+          "status": "coverage_review_required; independent scientific validation pending",
+          "missing_values": "blank in CSV, NaN in DataFrame; no interpolation",
+          "rules": "NDVI source mask, raw [-2000,10000], DetailedQA bits 0-1 = 0, SummaryQA = 0, scale 0.0001",
+          "coverage_notes": "whole Earth includes oceans; variable MODIS and GLDAS valid footprints are not confirmed to overlap"
+        },
+        "source_document": "data/processed/global_combined/metadata.md"
+      }
+    },
+    "soil_water_0_10cm": {
+      "csv": "data/processed/global_combined/monthly_timeseries.csv",
+      "metadata": {
+        "spatial_coverage": {
+          "crs": "EPSG:4326",
+          "bbox": [
+            -180,
+            -90,
+            180,
+            90
+          ],
+          "aggregation": "area-weighted over valid cells; coverage denominator is the entire Earth including oceans",
+          "native_resolution": "0.25 degrees"
+        },
+        "time_range": {
+          "start": "2003-01-01",
+          "end": "2026-11-01"
+        },
+        "temporal_resolution": "monthly source; area-weighted regional average, no additional temporal averaging",
+        "dataset_version": "GLDAS_NOAH025_M.2.1",
+        "quality_control": {
+          "status": "coverage_review_required; independent scientific validation pending",
+          "missing_values": "blank in CSV, NaN in DataFrame; no interpolation",
+          "rules": "CF fill/missing decoded; identity scaling checked; negatives flagged; common layer mask for 0\u2013100 cm",
+          "coverage_notes": "whole Earth includes oceans; variable MODIS and GLDAS valid footprints are not confirmed to overlap"
+        },
+        "source_document": "data/processed/global_combined/metadata.md"
+      }
+    },
+    "soil_water_0_100cm": {
+      "csv": "data/processed/global_combined/monthly_timeseries.csv",
+      "metadata": {
+        "spatial_coverage": {
+          "crs": "EPSG:4326",
+          "bbox": [
+            -180,
+            -90,
+            180,
+            90
+          ],
+          "aggregation": "area-weighted over valid cells; coverage denominator is the entire Earth including oceans",
+          "native_resolution": "0.25 degrees"
+        },
+        "time_range": {
+          "start": "2003-01-01",
+          "end": "2026-11-01"
+        },
+        "temporal_resolution": "monthly source; area-weighted regional average, no additional temporal averaging",
+        "dataset_version": "GLDAS_NOAH025_M.2.1",
+        "quality_control": {
+          "status": "coverage_review_required; independent scientific validation pending",
+          "missing_values": "blank in CSV, NaN in DataFrame; no interpolation",
+          "rules": "CF fill/missing decoded; identity scaling checked; negatives flagged; common layer mask for 0\u2013100 cm",
+          "coverage_notes": "whole Earth includes oceans; variable MODIS and GLDAS valid footprints are not confirmed to overlap"
+        },
+        "source_document": "data/processed/global_combined/metadata.md"
+      }
+    }
+  },
+  "central_us_sample": {
+    "soil_water_0_10cm": {
+      "csv": "data/processed/gldas_integration/monthly_timeseries.csv",
+      "metadata": {
+        "spatial_coverage": {
+          "crs": "EPSG:4326",
+          "bbox": [
+            -100,
+            35,
+            -90,
+            45
+          ],
+          "aggregation": "cosine-latitude area-weighted mean over valid cells",
+          "native_resolution": "0.25 degrees"
+        },
+        "time_range": {
+          "start": "2003-01-01",
+          "end": "2024-12-01"
+        },
+        "temporal_resolution": "monthly source; area-weighted regional average, no additional temporal averaging",
+        "dataset_version": "GLDAS_NOAH025_M.2.1",
+        "quality_control": {
+          "status": "basic QC; scientific review pending",
+          "missing_values": "blank in CSV, NaN in DataFrame; no interpolation",
+          "rules": "CF fill/missing decoded; identity scaling checked; negatives flagged; common layer mask for 0\u2013100 cm",
+          "coverage_notes": "low_coverage if valid area fraction below provisional 0.8"
+        },
+        "source_document": "data/processed/gldas_integration/metadata.md"
+      }
+    }
+  }
+}

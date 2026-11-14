@@ -65,8 +65,11 @@ def comparison_figure(frame: pd.DataFrame) -> go.Figure:
     for variable, group in frame.groupby("variable", sort=True):
         observations = group.sort_values("date")
         y = observations["value"].astype(float).to_numpy()
-        std = float(np.std(y))
-        z = (y - float(np.mean(y))) / std if std > 0 else np.zeros(len(y))
+        valid = np.isfinite(y)
+        z = np.full(len(y), np.nan)
+        if valid.any():
+            std = float(np.std(y[valid]))
+            z[valid] = (y[valid] - float(np.mean(y[valid]))) / std if std > 0 else 0.0
         fig.add_trace(
             go.Scatter(
                 x=observations["date"],

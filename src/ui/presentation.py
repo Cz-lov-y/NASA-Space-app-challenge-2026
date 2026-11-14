@@ -11,6 +11,8 @@ from urllib.parse import urlparse
 INDICATOR_LABELS = {
     "ndvi": "Vegetation greenness (NDVI)",
     "soil_moisture": "Soil moisture",
+    "soil_water_0_100cm": "Soil water storage (0–100 cm)",
+    "soil_water_0_10cm": "Soil water storage (0–10 cm)",
 }
 
 
@@ -49,6 +51,14 @@ def confidence_interval(value: object, digits: int = 3) -> str:
 
 def screening_summary(analysis: dict) -> tuple[str, str, str]:
     """Return (status, headline, explanation) for the sign-only screen."""
+    if analysis.get("schema_version") == "0.3":
+        details = analysis.get("divergence") or {}
+        category = details.get("category", "Uncertain Signal")
+        reasons = details.get("reasons", []) + [r for p in details.get("pairs", []) for r in p.get("reasons", [])]
+        explanation = "Statistical classification; source QA and spatial comparability require separate review."
+        if reasons:
+            explanation += " Reasons: " + ", ".join(reasons)
+        return ("candidate" if category == "Supported Signal" else "incomplete" if category == "Uncertain Signal" else "not_detected", category, explanation)
     detected = analysis.get("divergence_detected")
     if detected is True:
         return (

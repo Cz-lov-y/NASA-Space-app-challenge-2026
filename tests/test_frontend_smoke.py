@@ -22,3 +22,12 @@ def test_demo_research_button_does_not_invent_policies():
     app.button("investigate").click().run()
     assert not app.exception
     assert any("not yet implemented" in str(item.proto) for item in app.warning)
+
+
+def test_whole_earth_real_data_keeps_coverage_warning():
+    app = AppTest.from_file(APP_PATH, default_timeout=30).run()
+    app.sidebar.text_input[0].set_value('whole_earth').run()
+    assert not app.exception
+    assert len(app.tabs) == 4
+    assert any('footprints' in str(w.proto) for w in app.warning)
+    assert any('MOD13A3.061' in str(c.proto) for c in app.caption)

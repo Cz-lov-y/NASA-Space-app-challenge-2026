@@ -17,8 +17,10 @@ An interactive **Streamlit frontend demo** exists with:
 - Source/QA warnings, agent evidence panels, and CSV/JSON exports.
 - A future-ready geographic panel that never fabricates map coordinates.
 
-**All bundled observations are intentionally SYNTHETIC. They are not NASA
-data, a verified environmental finding, or a government policy assessment.**
+**The default demo uses SYNTHETIC observations.** Preliminary NASA-derived
+global MODIS and GLDAS data are also included and can be selected with region
+`whole_earth`; their spatial coverage and scientific QA remain under review.
+They do not establish a verified environmental finding or policy assessment.
 The agent currently returns an empty, unverified report until real research
 integration is completed.
 
@@ -37,6 +39,8 @@ streamlit run app.py
 Windows virtual environment activation: `.venv\Scripts\activate`.
 
 The default demo region is `demo-region`. Select both NDVI and soil moisture.
+For preliminary real data, enter `whole_earth` and select NDVI and 0–100 cm
+soil water storage. Review the coverage warning and provenance before interpreting results.
 The **Investigate This Region** button exercises Member C's interface; it
 does not generate verified policy documents until C implements retrieval.
 
