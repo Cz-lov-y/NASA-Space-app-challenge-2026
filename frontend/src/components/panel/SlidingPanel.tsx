@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -10,6 +10,7 @@ import {
   Sparkles,
   BarChart3,
   FileSpreadsheet,
+  Copy, Printer, Share2, Download,
 } from 'lucide-react';
 import { SelectedLocation } from '../../types/globe';
 import { LocationData, RegionalDetail } from '../../types/contracts';
@@ -39,6 +40,8 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
   const [dataYears, setDataYears] = useState<[number, number]>([2003,2024]);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [actionStatus, setActionStatus] = useState('');
+  const reportRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'visualize' | 'audit'>('visualize');
 
   // Visualization interactive states
@@ -51,6 +54,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
   const [yearRange, setYearRange] = useState<[number, number]>([2015, 2024]);
 
   useEffect(() => {
+    setActionStatus('');
     if (!location) {
       setDataStatus(null);
       return;
@@ -141,6 +145,35 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
 
   const availableIndicators = [...new Set((dataStatus?.observations || []).map(o => o.variable))];
 
+  const reportText = () => {
+    const rows = (dataStatus?.observations || []).map(o => [o.date.slice(0,10), o.variable, o.value ?? '', o.unit, o.source].join(','));
+    return `EarthRisk — ${location?.name || 'Location'}\nCoordinates: ${location ? formatCoordinates(location.lat, location.lng) : ''}\n\n${reportRef.current?.innerText || ''}\n\nMonthly observations (date,variable,value,unit,source)\n${rows.join('\n')}`;
+  };
+  const copyReport = async () => {
+    try { await navigator.clipboard.writeText(reportText()); setActionStatus('Results copied.'); }
+    catch { setActionStatus('Could not copy. Please check clipboard permissions.'); }
+  };
+  const shareReport = async () => {
+    try {
+      if (navigator.share) { await navigator.share({ title: `EarthRisk — ${location?.name || 'Location'}`, text: reportText() }); setActionStatus('Share menu opened.'); }
+      else { await navigator.clipboard.writeText(reportText()); setActionStatus('Sharing is unavailable here. Results copied instead.'); }
+    } catch (error) { if (!(error instanceof Error && error.name === 'AbortError')) setActionStatus('Unable to share results.'); }
+  };
+  const printReport = () => {
+    const popup = window.open('', '_blank');
+    if (!popup) { setActionStatus('Allow pop-ups to save a PDF.'); return; }
+    const safe = reportText().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c] || c));
+    popup.document.write(`<!doctype html><html><head><title>EarthRisk results</title><style>body{font:14px system-ui;color:#17334a;margin:2cm}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px system-ui;line-height:1.5}h1{font-size:22px}</style></head><body><h1>EarthRisk results</h1><pre>${safe}</pre></body></html>`);
+    popup.document.close(); popup.focus(); popup.print();
+    setActionStatus('Print dialog opened. Choose “Save as PDF” to save the report.');
+  };
+  const downloadData = () => {
+    const csv = ['date,variable,value,unit,source,region_id', ...(dataStatus?.observations || []).map(o => [o.date.slice(0,10), o.variable, o.value ?? '', o.unit, o.source, o.region_id].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))].join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = `earthrisk-${location?.regionId || 'results'}.csv`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000); setActionStatus('Data downloaded.');
+  };
+
   return (
     <AnimatePresence>
       {location && (
@@ -169,7 +202,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
           </div>
 
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-4 text-sm text-slate-300">
+          <div ref={reportRef} className="flex-1 overflow-y-auto p-5 space-y-4 text-sm text-slate-300">
             {/* Unified Region Header & Coordinates Card */}
             <div className="p-3.5 rounded-xl bg-space-900/80 border border-cyan-500/25 space-y-2">
               <div className="flex items-center justify-between">
@@ -342,6 +375,17 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
               </div>
             )}
             {dataStatus?.hasData && dataStatus.detail && <ResearchPanel detail={dataStatus.detail} />}
+            {dataStatus?.hasData && <section className="rounded-xl border border-slate-200 bg-white p-4">
+              <h3 className="text-sm font-semibold text-slate-800">Take these results with you</h3>
+              <p className="mt-1 text-xs text-slate-500">Copy, share, or save this location’s results and data.</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" onClick={copyReport} className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100"><Copy size={15}/> Copy all</button>
+                <button type="button" onClick={printReport} className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100"><Printer size={15}/> Save as PDF</button>
+                <button type="button" onClick={shareReport} className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100"><Share2 size={15}/> Share results</button>
+                <button type="button" onClick={downloadData} className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100"><Download size={15}/> Download data</button>
+              </div>
+              <p role="status" className="mt-2 text-xs text-slate-500">{actionStatus}</p>
+            </section>}
           </div>
 
           {/* Bottom Actions Bar */}

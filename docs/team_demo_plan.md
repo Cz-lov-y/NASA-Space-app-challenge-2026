@@ -310,3 +310,10 @@ Verification for this milestone: **319 Python tests and 68 subtests passed**, in
 The redundant header region dropdown was removed. Explore Earth now provides a clear example selector that focuses the globe and opens a cell, including when the same example is chosen again. Selection focus aligns geographic north with screen-up; dragging still rotates without selecting. The location panel uses a short plain-language preliminary result and loading message; detailed statistics remain under Details. It no longer repeats internal QA state, algorithm scope or raw provenance in the main view. Existing methodological context remains available in the map's About section and Details; uncertainty and missing data are not presented as certainty.
 
 Browser checks selected Canada without AI calls or page errors; the production build passed. A numerical orientation check covered four latitudes and longitudes. **319 Python tests and 68 subtests passed**. The existing worldwide acquisition continues in the background; its generated source and index changes are outside this frontend commit.
+
+
+### Shareable location results
+
+The introductory summary uses higher-contrast text. The location panel now offers Copy all, Save as PDF, Share results and Download data. Copy/share include the visible report and actual monthly observations; sharing uses the device share menu when available and copies the report otherwise. Save as PDF opens the browser print dialog, where the user chooses a PDF destination. The CSV download contains the current selected-window observations. None of these buttons initiates policy research. Users must review results and sources before relying on them.
+
+The next product work remains completion and monitoring of global source acquisition, scientific review of data coverage and classification, clear deployment/access for judges, and rehearsal of a few representative locations. Source gaps and unprocessed cells remain explicit.

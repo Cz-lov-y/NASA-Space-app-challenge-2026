@@ -42,7 +42,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({ type, isOpen, onClose }) =
                   <p className="font-medium">
                     NASA Space Apps Challenge 2026 · Toronto Hackathon Project
                   </p>
-                  <p className="text-xs text-cyan-300/80 mt-1">
+                  <p className="text-xs text-slate-700 mt-1">
                     Screening Earth observation records for landscape greening accompanied by root-zone soil water depletion.
                   </p>
                 </div>
