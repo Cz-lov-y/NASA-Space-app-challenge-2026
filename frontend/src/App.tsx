@@ -7,6 +7,7 @@ import { GeoCoordinate, ModalType, SelectedLocation } from './types/globe';
 import { PRESET_REGIONS } from './mock/regions';
 import { apiService } from './services/api';
 import { mapRegion, gridId, fineGridId, DEMO_REGION_IDS } from './services/regions';
+import { RegionalDetail } from './types/contracts';
 
 export const App: React.FC = () => {
   const [selectedCoordinate, setSelectedCoordinate] = useState<GeoCoordinate | null>(null);
@@ -15,6 +16,11 @@ export const App: React.FC = () => {
 
   const [regions, setRegions] = useState<SelectedLocation[]>([]);
   const [fineRegions, setFineRegions] = useState<SelectedLocation[]>([]);
+  const [preparedRegions, setPreparedRegions] = useState<SelectedLocation[]>([]);
+  const [visitedRegions, setVisitedRegions] = useState<SelectedLocation[]>([]);
+  const [savedRegions, setSavedRegions] = useState<SelectedLocation[]>([]);
+  const [screenedTotal, setScreenedTotal] = useState(0);
+  const [screenedOffset, setScreenedOffset] = useState(0);
   const [fineError, setFineError] = useState(false);
   const [fineMode, setFineMode] = useState(true);
   const [tiles, setTiles] = useState<any[]>([]);
@@ -22,9 +28,24 @@ export const App: React.FC = () => {
   const [tileLoading, setTileLoading] = useState(false);
   const [family, setFamily] = useState<any>(null);
   const pendingPoint = useRef<GeoCoordinate | null>(null);
+  useEffect(() => {
+    let active = true;
+    const refresh = () => apiService.getGlobalScreenedCells(screenedOffset).then(data => {
+      if (active) { setScreenedTotal(data.total || 0); setSavedRegions(data.features.map((f: any) => mapRegion({ ...f, properties: { ...f.properties, indicators: f.properties.classification === 'unsupported' ? {} : { data: true } } }))); }
+    }).catch(() => {});
+    void refresh(); const timer = setInterval(refresh, 20000);
+    return () => { active = false; clearInterval(timer); };
+  }, [screenedOffset]);
   useEffect(() => { let active = true; apiService.getFineTiles().then(data => {
     if (active) setTiles(data.tiles);
   }).catch(() => { if (active) setFineError(true); }); return () => { active = false; }; }, []);
+  useEffect(() => {
+    let active = true;
+    if (tiles.length) Promise.all(tiles.filter(t => t.status === 'available').map(t => apiService.getFineRegions(t.id)))
+      .then(maps => { if (active) setPreparedRegions(maps.flatMap(m => m.features.map(mapRegion))); })
+      .catch(() => { if (active) setPreparedRegions([]); });
+    return () => { active = false; };
+  }, [tiles]);
   useEffect(() => {
     let active = true; setTileLoading(true); setFineError(false); setFineRegions([]); setFamily(null);
     apiService.getFineRegions(tileId).then(data => {
@@ -86,6 +107,14 @@ export const App: React.FC = () => {
     setSelectedLocation(location);
   }, []);
 
+  const recordDetail = useCallback((detail: RegionalDetail) => {
+    const p = detail.feature?.properties;
+    if (!p?.centroid || !detail.observations.some(o => o.value !== null)) return;
+    const region = mapRegion({ properties: { ...p, classification: detail.screening?.classification || 'pending', family_scope: detail.screening?.family_scope || (detail.ndvi_retrieval ? 'single-cell exploratory' : undefined),
+      indicators: { data: true } } });
+    setVisitedRegions(current => [...current.filter(r => r.id !== region.id), region]);
+  }, []);
+
   // Deselect and return Earth to centered initial state
   const handleDeselect = useCallback(() => {
     pendingPoint.current = null;
@@ -115,7 +144,7 @@ export const App: React.FC = () => {
         selectedCoordinate={selectedCoordinate}
         onSelectCoordinate={handleSelectCoordinate}
         onDeselect={handleDeselect}
-        regions={fineMode ? [...visibleRegions, ...tiles.filter(t => t.id !== tileId).map(t => ({
+        regions={fineMode ? [...visibleRegions, ...preparedRegions.filter(r => !visibleRegions.some(v => v.id === r.id)), ...visitedRegions.filter(r => !visibleRegions.some(v => v.id === r.id) && !preparedRegions.some(v => v.id === r.id)), ...savedRegions.filter(r => !visibleRegions.some(v => v.id === r.id) && !preparedRegions.some(v => v.id === r.id) && !visitedRegions.some(v => v.id === r.id)), ...tiles.filter(t => t.id !== tileId).map(t => ({
           id: `tile-${t.id}`, name: t.name, lat: (t.bbox[1]+t.bbox[3])/2, lng: (t.bbox[0]+t.bbox[2])/2,
           hasObservationalData: false, isSyntheticDemo: false, isTileNavigation: true,
         }))] : visibleRegions}
@@ -141,7 +170,10 @@ export const App: React.FC = () => {
         </label>}
         {fineMode && tileLoading && <p className="mt-2">Loading native cells…</p>}
         {fineMode && family && <p className="mt-2 text-slate-400">The six marked areas have {family.catalog_regions} declared cells and {family.family_size} tests. The grid below shows one area; cells elsewhere are not in this family.</p>}
-        {fineMode && <p className="mt-2 text-slate-400">Click land between 60°S and 90°N for its 0.25° soil history. Paired vegetation results are currently available in the six marked areas. Oceans and some land cells have no GLDAS values.</p>}
+        {fineMode && <p className="mt-2 text-slate-400">Click land between 60°S and 90°N for its 0.25° soil history. Vegetation is loaded and aligned for supported cells; the six marked areas are preloaded. Oceans and some land cells have no GLDAS values.</p>}
+        {fineMode && <p className="mt-2 text-slate-400">Purple: uncertain signal · amber: supported signal · cyan: data available. Colors show evidence categories, not a probability.</p>}
+        {fineMode && <p className="mt-2 text-slate-400">Diamonds are individual-cell or tile screenings; circles are from the jointly adjusted six-area collection. A worldwide scan is not yet complete.</p>}
+        {fineMode && screenedTotal > 0 && <p className="mt-2 text-slate-400">{screenedTotal} extra cells processed; showing {screenedOffset + 1}–{Math.min(screenedOffset + 1000, screenedTotal)}. {screenedTotal > 1000 && <><button type="button" disabled={!screenedOffset} onClick={() => setScreenedOffset(Math.max(0, screenedOffset - 1000))} className="text-cyan-300 underline disabled:text-slate-600">Previous</button>{' · '}<button type="button" disabled={screenedOffset + 1000 >= screenedTotal} onClick={() => setScreenedOffset(screenedOffset + 1000)} className="text-cyan-300 underline disabled:text-slate-600">Next</button></>}</p>}
         {fineMode && fineError && <p>Fine data for this area are unavailable.</p>}
         {fineMode && fineRegions.length > 0 && <>
           <p className="mt-2">{currentTile ? `${currentTile.bbox.join(', ')} · north ↑` : 'Native cells · north ↑'}</p>
@@ -161,6 +193,7 @@ export const App: React.FC = () => {
         location={selectedLocation}
         onClose={handleDeselect}
         onSelectPreset={handleSelectPreset}
+        onDetail={recordDetail}
       />
 
       {/* Radix UI Accessible Modal Dialogs (Intro, Instructions, Methodology) */}

@@ -104,11 +104,12 @@ export interface RegionalDetail {
   observations: TimeSeriesObservation[];
   paired_analysis: RegionalAnalysis | null;
   available_indicator_analysis: RegionalAnalysis | null;
-  screening: { category: string | null; classification: string; reasons: string[]; qa_reviewed: boolean } | null;
+  screening: { category: string | null; classification: string; reasons: string[]; qa_reviewed: boolean; family_scope?: string; confidence_label?: string; probability_status?: string } | null;
   feature: any;
   provenance: any;
   annual_fits?: Record<string, any>;
   research?: { context_key: string; cached_url: string; start_url: string };
+  ndvi_retrieval?: { state: string; request_id?: string; completed_years?: number; total_years?: number; poll_url?: string; retry_url?: string; error_code?: string; retryable?: boolean };
 }
 export interface LocationData {
   hasData: boolean;

@@ -115,3 +115,13 @@ def test_reprocessing_requires_explicit_replace_and_ready_reuse_requires_integri
     assert mod.readiness(tile)['needs_processing_correction']
     with pytest.raises(ValueError,match='--reprocess --replace'):
         mod.acquire(path,'SYNTHETIC_PROJECT',fetch_requested=True,ee_client=object())
+
+
+def test_explicit_audit_deferral_never_claims_pass_or_performs_heavy_audit(tmp_path,monkeypatch):
+    path=registry(tmp_path,monkeypatch);tile=mod.load_tiles(path)[0]
+    write_native(tmp_path,tile);complete_release(tile['directory'])
+    monkeypatch.setattr(mod,'audit',lambda directory:pytest.fail('audit was explicitly deferred'))
+    result=mod.acquire(path,'SYNTHETIC_PROJECT',fetch_requested=True,ee_client=object(),audit_required=False)
+    assert result['tiles'][0]['release_audit_status']=='deferred_for_demo'
+    assert result['tiles'][0]['audit_passed_checks'] is None
+    assert not (tile['directory']/'release_audit.json').exists()

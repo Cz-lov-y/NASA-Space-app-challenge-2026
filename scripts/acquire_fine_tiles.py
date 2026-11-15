@@ -83,7 +83,7 @@ def readiness(tile):
     return state
 
 
-def acquire(registry_path,project,*,fetch_requested=False,selected=None,cache=None,ee_client=None,reprocess=False,replace=False):
+def acquire(registry_path,project,*,fetch_requested=False,selected=None,cache=None,ee_client=None,reprocess=False,replace=False,audit_required=True):
     if reprocess and not fetch_requested:raise ValueError('Explicit reprocessing requires --fetch')
     if reprocess and not replace:raise ValueError('Reprocessing existing source observations requires explicit --replace')
     tiles=load_tiles(registry_path,selected)
@@ -91,7 +91,7 @@ def acquire(registry_path,project,*,fetch_requested=False,selected=None,cache=No
     report={'mode':'acquire' if fetch_requested else 'dry_plan','project':project,'registry':str(registry_path),
         'source_grid_degrees':.25,'selection':'Fixed registry; exploratory selection history disclosed separately. Acquisition never chooses replacements using classifications.','tiles':[],
         'export_tasks_submitted':0,'account_or_project_changes':False,'calculation_version':CALCULATION_VERSION,
-        'reprocess_requested':reprocess,'replacement_authorized':replace}
+        'reprocess_requested':reprocess,'replacement_authorized':replace,'audit_required':audit_required}
     for tile in tiles:
         state=readiness(tile)
         if not fetch_requested:
@@ -102,10 +102,12 @@ def acquire(registry_path,project,*,fetch_requested=False,selected=None,cache=No
         if state.get('needs_processing_correction') and not (reprocess and replace):
             raise ValueError('Existing tile uses an outdated area calculation; require --fetch --reprocess --replace to correct it explicitly')
         if state['ready'] and not reprocess:
-            audit_report=audit(directory)
-            (directory/'release_audit.json').write_text(json.dumps(audit_report,indent=2,allow_nan=False)+'\n')
-            if not audit_report['integrity_passed']:raise ValueError('Existing complete tile failed integrity audit; inspect '+str(directory/'release_audit.json'))
-            report['tiles'].append({**state,'action':'reused_complete_release','audit_passed_checks':audit_report.get('passed_checks')});continue
+            audit_report=audit(directory) if audit_required else {'integrity_passed':None,'status':'deferred_for_demo'}
+            if audit_required:
+                (directory/'release_audit.json').write_text(json.dumps(audit_report,indent=2,allow_nan=False)+'\n')
+                if not audit_report['integrity_passed']:raise ValueError('Existing complete tile failed integrity audit; inspect '+str(directory/'release_audit.json'))
+            report['tiles'].append({**state,'action':'reused_complete_release','audit_passed_checks':audit_report.get('passed_checks'),
+                'release_audit_status':'passed' if audit_required else 'deferred_for_demo'});continue
         if not state['native_ready']:
             log=io.StringIO()
             with contextlib.redirect_stdout(log):process_native(ROOT/'data/raw/gldas',directory,tile['bbox'],tile['id'])
@@ -133,10 +135,12 @@ def acquire(registry_path,project,*,fetch_requested=False,selected=None,cache=No
             acquisition['annual_source_files']=len(annual['files'])
             acquisition['ingestion']=ingest([source['path'] for source in annual['files']],directory,replace=replace)
         acquisition['statistics']=prepare(directory)
-        audit_report=audit(directory)
-        (directory/'release_audit.json').write_text(json.dumps(audit_report,indent=2,allow_nan=False)+'\n')
-        if not audit_report['integrity_passed']:raise ValueError('Tile release audit failed; inspect '+str(directory/'release_audit.json'))
-        report['tiles'].append({**readiness(tile),'action':'acquired_and_prepared',**acquisition})
+        audit_report=audit(directory) if audit_required else {'integrity_passed':None,'status':'deferred_for_demo'}
+        if audit_required:
+            (directory/'release_audit.json').write_text(json.dumps(audit_report,indent=2,allow_nan=False)+'\n')
+            if not audit_report['integrity_passed']:raise ValueError('Tile release audit failed; inspect '+str(directory/'release_audit.json'))
+        report['tiles'].append({**readiness(tile),'action':'acquired_and_prepared',
+            'release_audit_status':'passed' if audit_required else 'deferred_for_demo',**acquisition})
     report['ready_tiles']=sum(t['ready'] for t in report['tiles'])
     report['requires_fetch_tiles']=sum(not t['full_export_index_received'] for t in report['tiles'])
     return report

@@ -274,3 +274,12 @@ The existing six tiles retain their jointly adjusted paired statistics. Other ce
 
 
 Verification: **290 Python tests and 68 subtests passed**; the frontend production build passed. Browser testing clicked an unregistered land cell and displayed its real NASA-derived data with zero research requests and no page errors. Independent API smoke checks covered a land cell, a fully masked ocean cell and a point south of the GLDAS envelope. Cached and concurrent identical requests are deduplicated; unrelated overlapping cold scans return a retryable busy status. Stop after commit and push for team review.
+
+
+### Automatic paired screening milestone — 2026-11-15
+
+Supported land clicks automatically load original native MODIS monthly values for the same 0.25° GLDAS cell and screen paired 2003–2024 data. Soil appears while the bounded data job retrieves 22 years, with progress and retry support; cached results and source receipts are retained locally. Research remains separately button-triggered. Automatically generated evidence categories are preliminary; no calibrated probability of harm exists. Single-cell and individual batch-tile results are not adjusted worldwide, and use diamond markers distinct from the jointly adjusted six-area collection.
+
+The global batch script enumerates original GLDAS support without manual tile selection, fetches/aligns MODIS, produces tile-level screened shards and resumes from checkpoints. Its full scan has not been run: 17,284 supported one-degree tiles imply up to 380,248 annual requests and substantial storage. The bounded Mexico pilot `global_r085_c078` completed with 16 cells; rigorous checks are deferred at user request. A 20 GiB free-space floor and checkpointed error handling protect long runs. Worldwide paired completeness and worldwide multiple-testing correction remain false until actually achieved.
+
+Verified 305 Python tests and 68 subtests, a frontend production build, real cached Poland/Mexico paired API results, and mocked browser job completion with no research calls. A live browser attempt did not complete within 30 seconds under restricted Earth Engine throughput; the UI displays progress and can retry. The next work is running or replacing the slow global batch and assessing finished coverage, then completing scientific validation as requested later. Stop after this milestone commit/push for team review.

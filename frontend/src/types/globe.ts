@@ -19,6 +19,7 @@ export interface SelectedLocation {
   resolutionDegrees?: number;
   pairedYearCount?: number;
   isTileNavigation?: boolean;
+  isExploratoryScreening?: boolean;
 }
 
 export type ModalType = 'intro' | 'instructions' | 'methodology' | null;

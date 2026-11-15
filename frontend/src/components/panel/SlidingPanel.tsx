@@ -12,10 +12,10 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import { SelectedLocation } from '../../types/globe';
-import { LocationData } from '../../types/contracts';
+import { LocationData, RegionalDetail } from '../../types/contracts';
 import { ResearchPanel } from './ResearchPanel';
 import { formatCoordinates } from '../../utils/coordinates';
-import { apiService } from '../../services/api';
+import { apiService, apiJson, locationDataFromDetail } from '../../services/api';
 import { TimeseriesChart } from '../charts/TimeseriesChart';
 import { ZScoreChart } from '../charts/ZScoreChart';
 import { IndicatorFilter } from '../charts/IndicatorFilter';
@@ -25,12 +25,14 @@ interface SlidingPanelProps {
   location: SelectedLocation | null;
   onClose: () => void;
   onSelectPreset: (location: SelectedLocation) => void;
+  onDetail?: (detail: RegionalDetail) => void;
 }
 
 export const SlidingPanel: React.FC<SlidingPanelProps> = ({
   location,
   onClose,
   onSelectPreset,
+  onDetail,
 }) => {
   const [dataStatus, setDataStatus] = useState<LocationData | null>(null);
   const [dataYears, setDataYears] = useState<[number, number]>([2003,2024]);
@@ -77,6 +79,45 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
       isMounted = false;
     };
   }, [location]);
+
+  const retrieval = dataStatus?.detail?.ndvi_retrieval;
+  useEffect(() => {
+    if (!retrieval?.poll_url || !['queued', 'loading'].includes(retrieval.state)) return;
+    let active = true; let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      try {
+        const job = await apiJson(retrieval.poll_url!);
+        if (!active) return;
+        if (job.state === 'complete' && job.detail) {
+          const next = locationDataFromDetail(job.detail);
+          setDataStatus(next);
+          if (next.observations?.some(o => o.variable === 'ndvi' && o.value !== null))
+            setSelectedIndicators(current => current.includes('ndvi') ? current : ['ndvi', ...current]);
+        } else if (['queued', 'loading'].includes(job.state)) {
+          setDataStatus(current => current?.detail ? { ...current, detail: { ...current.detail, ndvi_retrieval: { ...retrieval, ...job } } } : current);
+          timer = setTimeout(poll, 2000);
+        } else {
+          setDataStatus(current => current?.detail ? { ...current, detail: { ...current.detail, ndvi_retrieval: { ...retrieval, ...job } } } : current);
+        }
+      } catch {
+        if (active) setDataStatus(current => current?.detail ? { ...current, detail: { ...current.detail, ndvi_retrieval: { ...retrieval, state: 'failed' } } } : current);
+      }
+    };
+    timer = setTimeout(poll, 1000);
+    return () => { active = false; clearTimeout(timer); };
+  }, [location?.regionId, retrieval?.poll_url]);
+
+  useEffect(() => { if (dataStatus?.detail && onDetail) onDetail(dataStatus.detail); }, [dataStatus?.detail, onDetail]);
+
+  const retryVegetation = async () => {
+    if (!retrieval?.retry_url) return;
+    try {
+      const state = await apiJson(retrieval.retry_url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      setDataStatus(current => current?.detail ? { ...current, detail: { ...current.detail, ndvi_retrieval: state } } : current);
+    } catch {
+      setDataStatus(current => current?.detail ? { ...current, detail: { ...current.detail, ndvi_retrieval: { ...retrieval, state: 'failed' } } } : current);
+    }
+  };
 
   const handleToggleIndicator = (variable: string) => {
     setSelectedIndicators((prev) => {
@@ -204,7 +245,10 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
             )}
 
             {dataStatus?.detail && <div className="space-y-2 text-xs font-mono">
-              <p className="text-amber-200">{dataStatus.detail.screening?.category || (dataStatus.detail.screening?.classification === 'unsupported' ? 'Outside GLDAS model coverage' : 'Paired screening pending')} · source QA review pending</p>
+              {retrieval && <p className="text-cyan-200">{retrieval.state === 'complete' ? 'Vegetation data aligned.' : ['queued', 'loading'].includes(retrieval.state) ? `Aligning vegetation data: ${retrieval.completed_years || 0}/${retrieval.total_years || 22} years` : retrieval.state === 'busy' ? 'Vegetation processing is busy.' : retrieval.state === 'failed' ? 'Vegetation data could not be loaded; soil data remain available.' : retrieval.state === 'unavailable' ? 'Vegetation retrieval is unavailable.' : 'Vegetation data pending.'}</p>}
+              {retrieval?.retryable && retrieval.retry_url && <button type="button" onClick={retryVegetation} className="border border-cyan-700 rounded px-2 py-1 text-cyan-200">Retry vegetation loading</button>}
+              <p className="text-amber-200">{dataStatus.detail.screening?.category || (dataStatus.detail.screening?.classification === 'unsupported' ? 'Outside GLDAS model coverage' : dataStatus.detail.screening?.classification === 'insufficient' ? 'Insufficient usable paired years' : 'Paired screening pending')} · source QA review pending</p>
+              {dataStatus.detail.screening?.family_scope && <p className="text-slate-400">{dataStatus.detail.screening.family_scope}. This is preliminary evidence, not a calibrated probability of harm.</p>}
               <p className="text-slate-400">Cyan dots identify cells with observations. They do not by themselves indicate environmental risk.</p>
               <details className="rounded-lg border border-slate-700 p-3"><summary>NASA source and processing provenance</summary>
                 <pre className="whitespace-pre-wrap text-[10px] mt-2">{JSON.stringify(dataStatus.detail.provenance, null, 2)}</pre>

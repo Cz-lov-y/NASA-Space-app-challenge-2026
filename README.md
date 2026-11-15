@@ -23,6 +23,14 @@ Worldwide fine coverage and scientific review remain next.
 
 Click any point inside the native GLDAS envelope (60°S–90°N) to load the original 0.25° soil-water cell directly from the existing local NASA monthly files. The first load takes a few seconds; subsequent selections reuse a verified local cache. Country candidates use coarse Natural Earth boundaries. The six prepared areas retain their joint MODIS/GLDAS paired screening. Outside those areas, soil-only statistics are exploratory and native NDVI/paired screening remain pending. Oceans, masked cells and areas south of 60°S return an explicit unavailable state; no values are invented. Local raw GLDAS files are required for on-demand cells.
 
+### Automatic land screening
+
+Selecting a supported native GLDAS cell outside the prepared areas now starts a background request for the same cell's 2003–2024 MODIS vegetation data. The panel shows progress and automatically screens the paired record when it is ready; results and source data are cached locally. Earth Engine access and the optional dependencies are required for uncached vegetation data. Soil appears first. Some cells have insufficient paired years or no data. Selecting a location never starts policy/AI research: use its button.
+
+The map displays prepared and processed cells in evidence categories. Diamonds use individual-cell or tile exploratory screening; circles belong to the six-area jointly adjusted family. These colors are not calibrated probabilities of harm. Worldwide processing remains incomplete.
+
+For an automated, resumable full-grid batch, first preview `.venv/bin/python scripts/global_screen_earth_engine.py`, then run `.venv/bin/python scripts/global_screen_earth_engine.py --fetch`. The current workflow could require about 380,248 annual Earth Engine requests and hundreds of GB; it stops if less than 20 GiB remains or on systemic service failures. A bounded 16-cell pilot is included. See [the current team plan](docs/team_demo_plan.md).
+
 ### Run the real-data globe locally
 
 Use Python 3.12 with `requirements-data.txt` and Node 22. From the repository root,

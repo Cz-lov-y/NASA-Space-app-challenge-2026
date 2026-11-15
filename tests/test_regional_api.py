@@ -41,10 +41,12 @@ class Jobs:
 @pytest.fixture
 def api(monkeypatch,tmp_path):
     monkeypatch.setattr(module,'load_region',lambda *a,**k:bundle())
+    import src.global_cell_modis as native_modis
+    monkeypatch.setattr(native_modis,'batch_tile_directory',lambda *a,**k:None)
     monkeypatch.setattr(module,'build_region_detail',lambda data:{'region_id':data['region_id'],'paired_analysis':None,
         'available_indicator_analysis':{'variables':['soil_water_0_100cm']},'annual_fits':{'soil_water_0_100cm':{}}})
     service=RegionalAPI(directory=tmp_path,cache_dir=tmp_path/'cache',report_dir=tmp_path/'reports',
-                        settings=SETTINGS,live_enabled=True,jobs=Jobs(),fine_directory=tmp_path/"fine")
+                        settings=SETTINGS,live_enabled=True,jobs=Jobs(),fine_directory=tmp_path/"fine",enable_native_modis=False)
     yield service
     service.close()
 
@@ -371,3 +373,60 @@ def test_duplicate_wait_is_bounded_without_cancelling_owner_scan(api,monkeypatch
         assert api._global_native('same-cell')=={'region_id':'same-cell'}
     finally:
         release.set();first.join(timeout=2)
+
+
+def test_selected_native_detail_starts_only_data_job_research_and_poll_do_not(api,monkeypatch):
+    rid='gldas025_r448_c0800'
+    data=bundle();data.update(region_id=rid,on_demand_native=True)
+    data['research_context']['region_id']=rid
+    data['observations']=pd.DataFrame({'value':[1.0]})
+    key=hashlib.sha256((rid+data['research_context']['dataset_version']).encode()).hexdigest()
+    class DataJobs:
+        def __init__(self):self.calls=[]
+        def submit(self,bundle,**kwargs):
+            self.calls.append(kwargs)
+            return {'state':'loading','region_id':rid,'request_id':'b'*32,'context_key':key,
+                    'completed_years':3,'total_years':22}
+        def poll(self,*a,**kwargs):return {'state':'complete','region_id':rid,'context_key':key}
+        def close(self):pass
+    fake=DataJobs();api.native_modis_jobs=fake;api.enable_native_modis=True
+    monkeypatch.setattr(api,'_bundle',lambda region_id:deepcopy(data))
+    monkeypatch.setattr(api,'_global_native',lambda region_id:deepcopy(data))
+    status,detail=api.handle('GET',f'/api/v1/regions/{rid}')
+    assert status==200 and detail['ndvi_retrieval']['state']=='loading'
+    assert len(fake.calls)==1 and api.jobs.calls==[]
+    api.handle('GET',f'/api/v1/regions/{rid}/research/cached')
+    assert len(fake.calls)==1
+    status,result=api.handle('GET',detail['ndvi_retrieval']['poll_url'])
+    assert status==200 and 'detail' in result and len(fake.calls)==1
+    status,result=api.handle('POST',f'/api/v1/regions/{rid}/research',{})
+    assert status==202 and len(api.jobs.calls)==1 and len(fake.calls)==1
+    changed=deepcopy(data);changed['research_context']['dataset_version']='new-source'
+    monkeypatch.setattr(api,'_global_native',lambda region_id:changed)
+    status,result=api.handle('GET',detail['ndvi_retrieval']['poll_url'])
+    assert status==409 and result['error']['code']=='native_data_source_changed'
+    fake.close=lambda:None
+
+
+def test_completed_batch_tile_precedes_on_demand_and_preserves_scope(api,monkeypatch,tmp_path):
+    import src.global_cell_modis as modis
+    api._registered_fine=True
+    monkeypatch.setattr(api,'_registered_native',lambda rid:False)
+    monkeypatch.setattr(modis,'batch_tile_directory',lambda rid:tmp_path/'batch')
+    monkeypatch.setattr(api,'_global_native',lambda rid:pytest.fail('Completed batch must not trigger source scan or EE'))
+    status,detail=api.handle('GET','/api/v1/regions/gldas025_r448_c0800')
+    assert status==200
+    assert detail.get('ndvi_retrieval') is None
+    # Detail transport mock has no screening; source metadata is still marked.
+    assert api.jobs.calls==[]
+
+
+def test_persisted_screened_listing_is_bounded_and_never_starts_data_jobs(api,monkeypatch):
+    import src.global_cell_modis as modis
+    calls=[]
+    monkeypatch.setattr(modis,'all_screened_summaries',lambda **kwargs:(calls.append(kwargs) or {'features':[],'total':0,'has_more':False}))
+    assert api.handle('GET','/api/v1/global-screened-cells?limit=1000&offset=0')[0]==200
+    assert calls[0]['limit']==1000
+    for query in ('limit=1001','offset=-1','limit=NaN','url=bad'):
+        assert api.handle('GET','/api/v1/global-screened-cells?'+query)[0]==400
+    assert api.jobs.calls==[]

@@ -12,6 +12,7 @@ export function mapRegion(feature: any): SelectedLocation {
     name: (fine ? `${Math.abs(lat).toFixed(3)}°${lat < 0 ? 'S' : 'N'}, ${Math.abs(lng).toFixed(3)}°${lng < 0 ? 'W' : 'E'}` : LABELS[p.region_id] || p.name || p.region_id) + (fine ? ' · 0.25° cell' : ' · 10° overview'), lat, lng,
     bbox: p.bbox, resolutionDegrees: fine ? 0.25 : 10,
     pairedYearCount: p.paired_year_count || 0,
+    isExploratoryScreening: typeof p.family_scope === 'string' && p.family_scope.includes('exploratory'),
     hasObservationalData: Object.keys(p.indicators || {}).length > 0,
     isSyntheticDemo: false, screeningStatus: p.classification,
     description: `${p.region_id} · ${p.classification}. Source QA review pending.`,

@@ -123,7 +123,7 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
       {regions.filter(r => r.hasObservationalData || r.isTileNavigation).map(region => (
         <mesh key={region.id} position={latLngToVector3(region.lat, region.lng, 1.012)}
           onPointerDown={event => { event.stopPropagation(); onSelectCoordinate({lat: region.lat, lng: region.lng}); }}>
-          <sphereGeometry args={[region.isTileNavigation ? 0.009 : region.resolutionDegrees === 0.25 ? 0.0009 : 0.006, 8, 8]} />
+          {region.isExploratoryScreening ? <octahedronGeometry args={[0.003, 0]} /> : <sphereGeometry args={[region.isTileNavigation ? 0.009 : region.resolutionDegrees === 0.25 ? 0.0009 : 0.006, 8, 8]} />}
           <meshBasicMaterial color={region.isTileNavigation ? '#ffffff' : region.screeningStatus === 'supported_signal' ? '#f59e0b' : region.screeningStatus === 'uncertain_signal' ? '#a78bfa' : '#00e5ff'} />
         </mesh>
       ))}
