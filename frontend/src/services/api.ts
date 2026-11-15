@@ -18,16 +18,20 @@ export const apiService = {
       analysis: DEMO_ANALYSIS, statusMessage: 'Synthetic demonstration; not NASA observations.'
     };
     if (!location.regionId?.startsWith('grid_r') && !location.regionId?.startsWith('gldas025_')) return {
-      hasData: false, isSynthetic: false, statusMessage: 'Select a registered grid cell for real observations.'
+      hasData: false, isSynthetic: false, statusMessage: 'This point is outside the available GLDAS land grid. Select another location.'
     };
     try {
       const detail: RegionalDetail = await apiJson(`/api/v1/regions/${encodeURIComponent(location.regionId)}`);
       const analysis = detail.available_indicator_analysis || detail.paired_analysis || undefined;
-      return { hasData: detail.observations.some(o => o.value !== null), isSynthetic: false,
+      const hasData = detail.observations.some(o => o.value !== null);
+      return { hasData, isSynthetic: false,
         observations: detail.observations, analysis, detail,
-        statusMessage: 'Real NASA-derived observations · source QA review pending. ' +
-          `Paired screening: ${detail.screening?.classification || 'unavailable'}.` };
-    } catch { return { hasData: false, isSynthetic: false,
-      statusMessage: 'Real-data service unavailable. Start the regional API on port 8000; no synthetic data substituted.' }; }
+        statusMessage: hasData ? 'Real NASA-derived data · source QA review pending. ' +
+          `Paired screening: ${detail.screening?.classification || 'unavailable'}.` :
+          'No valid GLDAS land-model values are available for this cell. Ocean, ice and other masked areas can be unsupported.' };
+    } catch (error) { return { hasData: false, isSynthetic: false,
+      statusMessage: error instanceof Error && error.message.includes('(429)')
+        ? 'Another cell is loading. Select this point again in a few seconds.'
+        : 'Real-data service unavailable. Start the regional API on port 8000; no synthetic data substituted.' }; }
   },
 };

@@ -264,3 +264,13 @@ Next after team review: B validates common spatial support, coverage thresholds 
 
 
 Milestone verification: **272 Python tests and 68 subtests passed**. The production frontend build passed with the existing bundle-size warning. Headless Chrome selected real cells in all six areas, retained the 96-cell/160-test family display, and reported no page errors. Navigation and selection made zero research requests; only the research button initiated cache/start routes, with the live POST intercepted during testing. Actual data passed the staged collection audit before publication. Stop after commit/push for human team review.
+
+
+### Global native GLDAS interaction
+
+A click inside the native GLDAS grid resolves to its actual 0.25° source cell. Outside the six precomputed joint-analysis tiles, the backend extracts two monthly soil series directly from the 264 local GLDAS source files: the native 0–10 cm layer and the sum of the three native layers covering 0–100 cm, preserving missing months, source hashes, quality flags, product units and geographic boundary candidates. Verified on-demand caches and bounded concurrency keep repeated selections responsive; missing local source files return a service error and ocean/model-masked cells remain unsupported. Points south of 60°S are outside this GLDAS grid. No source-provider or policy/AI call runs on selection.
+
+The existing six tiles retain their jointly adjusted paired statistics. Other cells show an exploratory standalone soil diagnostic only: their fine NDVI and paired greening/drying screening remain pending. Do not reuse 10° or whole-Earth vegetation averages as native-cell measurements, and do not present per-cell exploratory significance as globally adjusted. Further native MODIS acquisition, common-footprint validation and scientific review remain necessary for worldwide paired screening. The user's request to stop after each milestone remains in effect.
+
+
+Verification: **290 Python tests and 68 subtests passed**; the frontend production build passed. Browser testing clicked an unregistered land cell and displayed its real NASA-derived data with zero research requests and no page errors. Independent API smoke checks covered a land cell, a fully masked ocean cell and a point south of the GLDAS envelope. Cached and concurrent identical requests are deduplicated; unrelated overlapping cold scans return a retryable busy status. Stop after commit and push for team review.

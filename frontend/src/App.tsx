@@ -65,15 +65,17 @@ export const App: React.FC = () => {
       const latStr = coord.lat >= 0 ? `${coord.lat.toFixed(2)}°N` : `${Math.abs(coord.lat).toFixed(2)}°S`;
       const lngStr = coord.lng >= 0 ? `${coord.lng.toFixed(2)}°E` : `${Math.abs(coord.lng).toFixed(2)}°W`;
 
+      const nativeId = fineMode ? fineGridId(coord.lat, coord.lng) : null;
       setSelectedLocation({
-        id: `coord-${coord.lat.toFixed(2)}-${coord.lng.toFixed(2)}`,
+        id: nativeId || `coord-${coord.lat.toFixed(2)}-${coord.lng.toFixed(2)}`,
+        regionId: nativeId || undefined,
         name: `Point (${latStr}, ${lngStr})`,
         lat: coord.lat,
         lng: coord.lng,
         hasObservationalData: false,
         isSyntheticDemo: false,
         country: 'Global Surface Point',
-        description: fineMode ? 'Fine-cell data for this location have not been processed yet. Choose a downloaded 0.25° cell from the menu.' : 'No observations available for this location.',
+        description: nativeId ? 'Native 0.25° GLDAS cell at this point. Vegetation data and paired analysis may be pending.' : 'This point is outside the available native GLDAS grid.',
       });
     }
   }, [visibleRegions, fineMode, tiles, tileId, navigateTile]);
@@ -138,8 +140,8 @@ export const App: React.FC = () => {
           </select>
         </label>}
         {fineMode && tileLoading && <p className="mt-2">Loading native cells…</p>}
-        {fineMode && family && <p className="mt-2 text-slate-400">Analysis covers {family.catalog_regions} declared cells and {family.family_size} tests. This view shows one tile.</p>}
-        {fineMode && <p className="mt-2 text-slate-400">White globe markers navigate between areas. Worldwide fine coverage is pending.</p>}
+        {fineMode && family && <p className="mt-2 text-slate-400">The six marked areas have {family.catalog_regions} declared cells and {family.family_size} tests. The grid below shows one area; cells elsewhere are not in this family.</p>}
+        {fineMode && <p className="mt-2 text-slate-400">Click land between 60°S and 90°N for its 0.25° soil history. Paired vegetation results are currently available in the six marked areas. Oceans and some land cells have no GLDAS values.</p>}
         {fineMode && fineError && <p>Fine data for this area are unavailable.</p>}
         {fineMode && fineRegions.length > 0 && <>
           <p className="mt-2">{currentTile ? `${currentTile.bbox.join(', ')} · north ↑` : 'Native cells · north ↑'}</p>

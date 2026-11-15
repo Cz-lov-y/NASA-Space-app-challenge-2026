@@ -19,6 +19,10 @@ results, 15 insufficient cells and one unsupported cell; none meets the supporte
 signal gates. Results remain provisional and the collection is exploratory.
 Worldwide fine coverage and scientific review remain next.
 
+### Click worldwide land cells
+
+Click any point inside the native GLDAS envelope (60°S–90°N) to load the original 0.25° soil-water cell directly from the existing local NASA monthly files. The first load takes a few seconds; subsequent selections reuse a verified local cache. Country candidates use coarse Natural Earth boundaries. The six prepared areas retain their joint MODIS/GLDAS paired screening. Outside those areas, soil-only statistics are exploratory and native NDVI/paired screening remain pending. Oceans, masked cells and areas south of 60°S return an explicit unavailable state; no values are invented. Local raw GLDAS files are required for on-demand cells.
+
 ### Run the real-data globe locally
 
 Use Python 3.12 with `requirements-data.txt` and Node 22. From the repository root,
@@ -51,8 +55,7 @@ All 132 current-method annual files have been retrieved, validated, archived and
 The joint collection audit passes while preserving source-QA gaps and unsupported model cells. The old coarse export batch was retired after the resolution change.
 
 Cloud tooling needs optional `requirements-earthengine.txt` and authorized
-Earth Engine access. Daily demonstration reads need only the checked-in processed
-data and local API. Polar acquisition and worldwide fine tiles remain future work.
+Earth Engine access. The six prepared areas read checked-in processed data; on-demand land cells additionally require the checked-in raw GLDAS files and data dependencies. Polar acquisition and worldwide fine tiles remain future work.
 
 ### Existing Streamlit demonstration
 

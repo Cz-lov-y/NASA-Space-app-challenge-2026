@@ -171,7 +171,8 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
                   <HelpCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                   <div className="space-y-1">
                     <p className="text-xs font-mono font-semibold text-slate-200">
-                      No Observational Records for Selected Point
+                      {dataStatus?.statusMessage?.startsWith('Another cell') || dataStatus?.statusMessage?.startsWith('Real-data service')
+                        ? 'Cell data temporarily unavailable' : 'No Data Available for Selected Point'}
                     </p>
                     <p className="text-xs text-slate-400 leading-relaxed font-mono">
                       {dataStatus?.statusMessage}
@@ -203,7 +204,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
             )}
 
             {dataStatus?.detail && <div className="space-y-2 text-xs font-mono">
-              <p className="text-amber-200">{dataStatus.detail.screening?.category || 'Paired screening pending'} · source QA review pending</p>
+              <p className="text-amber-200">{dataStatus.detail.screening?.category || (dataStatus.detail.screening?.classification === 'unsupported' ? 'Outside GLDAS model coverage' : 'Paired screening pending')} · source QA review pending</p>
               <p className="text-slate-400">Cyan dots identify cells with observations. They do not by themselves indicate environmental risk.</p>
               <details className="rounded-lg border border-slate-700 p-3"><summary>NASA source and processing provenance</summary>
                 <pre className="whitespace-pre-wrap text-[10px] mt-2">{JSON.stringify(dataStatus.detail.provenance, null, 2)}</pre>

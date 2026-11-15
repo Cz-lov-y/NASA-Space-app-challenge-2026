@@ -1,11 +1,14 @@
 """Local JSON API for the human-built globe; reading data never starts research."""
+from collections import OrderedDict
 from copy import deepcopy
 from functools import lru_cache
 import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import math
 from pathlib import Path
 import re
+from threading import Event, Lock
 from urllib.parse import parse_qs, urlsplit
 
 from src.regional_research import load_cached_report, qualitative_context_key, research_context_key
@@ -50,16 +53,89 @@ class RegionalAPI:
     multi-user API. Live POST access requires explicit server enablement.
     """
     def __init__(self, *, directory=REGIONAL, cache_dir=None, report_dir=None,
-                 settings=None, live_enabled=False, jobs=None, fine_directory=None, tile_index=None):
+                 settings=None, live_enabled=False, jobs=None, fine_directory=None, tile_index=None,
+                 global_raw_directory=None, global_cache_directory=None, global_wait_seconds=30):
         self.directory = Path(directory)
         self.fine_directory = Path(fine_directory or ROOT / "data/processed/fine/central_us")
         self._registered_fine = fine_directory is None
         self.tile_index = Path(tile_index or ROOT / 'data/processed/fine/tiles.json')
+        self.global_raw_directory = Path(global_raw_directory or ROOT/'data/raw/gldas')
+        self.global_cache_directory = Path(global_cache_directory or ROOT/'.cache/global_cells')
+        if not isinstance(global_wait_seconds,(int,float)) or not math.isfinite(global_wait_seconds) or global_wait_seconds<=0:
+            raise ValueError('Global wait must be finite and positive')
+        self._global_wait_seconds=global_wait_seconds
+        self._global_inflight=None
+        self._global_cache_guard = Lock()
+        self._global_memory = OrderedDict()
         self.cache_dir = Path(cache_dir or ROOT / '.cache/regional_research')
         self.report_dir = Path(report_dir or ROOT / 'data/research')
         self._settings = {key: value for key,value in (settings or {}).items() if key in SETTINGS}
         self.live_enabled = bool(live_enabled)
         self.jobs = jobs if jobs is not None else ResearchJobs()
+
+    def _global_source_signature(self):
+        files=sorted(self.global_raw_directory.glob('*.nc4'))
+        boundary=ROOT/'data/processed/regional/naturalearth_countries.geojson'
+        if boundary.exists():
+            files.append(boundary)
+        return tuple((str(path.resolve()),path.stat().st_mtime_ns,path.stat().st_size) for path in files)
+
+    def _global_native(self,region_id):
+        from src.global_cell_data import load_global_cell
+        from src.global_cell_analysis import analyze_global_cell
+        signature=self._global_source_signature()
+        key=(region_id,signature)
+        with self._global_cache_guard:
+            if key in self._global_memory:
+                self._global_memory.move_to_end(key)
+                return deepcopy(self._global_memory[key])
+            record=self._global_inflight
+            owner=record is None
+            if owner:
+                record={'key':key,'event':Event(),'result':None,'error':(503,'global_cell_unavailable')}
+                self._global_inflight=record
+            elif record['key']!=key:
+                raise APIError(429,'global_cell_busy')
+        if not owner:
+            # React development reruns and repeated clicks share the physical
+            # scan. They must not overwrite success with an artificial busy error.
+            if not record['event'].wait(self._global_wait_seconds):
+                raise APIError(503,'global_cell_wait_timeout')
+            if record['error']:
+                raise APIError(*record['error'])
+            return deepcopy(record['result'])
+        try:
+            raw=load_global_cell(region_id,raw_directory=self.global_raw_directory,
+                                 cache_directory=self.global_cache_directory)
+            result=analyze_global_cell(raw)
+            if self._global_source_signature()!=signature:
+                raise APIError(409,'global_source_changed_retry')
+            with self._global_cache_guard:
+                self._global_memory[key]=deepcopy(result)
+                self._global_memory.move_to_end(key)
+                while len(self._global_memory)>16:
+                    self._global_memory.popitem(last=False)
+                record['result']=deepcopy(result)
+                record['error']=None
+            return result
+        except APIError as exc:
+            record['error']=(exc.status,exc.code)
+            raise
+        except Exception:
+            record['error']=(503,'global_cell_unavailable')
+            raise APIError(503,'global_cell_unavailable') from None
+        finally:
+            with self._global_cache_guard:
+                self._global_inflight=None
+                record['event'].set()
+
+    def _registered_native(self,region_id):
+        from src.fine_grid import cell_bbox,parse_cell_id
+        from src.fine_workflow import load_tile_index
+        bbox=cell_bbox(*parse_cell_id(region_id))
+        registry=load_tile_index(index_path=self.tile_index)
+        return any(t['bbox'][0]<=bbox[0] and t['bbox'][1]<=bbox[1]
+                   and t['bbox'][2]>=bbox[2] and t['bbox'][3]>=bbox[3] for t in registry['tiles'])
 
     def _bundle(self, region_id):
         fine = region_id.startswith('gldas025_')
@@ -69,9 +145,14 @@ class RegionalAPI:
                 raise APIError(404,'unknown_region')
         try:
             if fine:
-                if self._registered_fine and self.tile_index.is_file():
-                    from src.fine_workflow import load_registered_fine_region
-                    bundle = load_registered_fine_region(region_id,index_path=self.tile_index)
+                if self._registered_fine:
+                    from src.fine_grid import parse_cell_id
+                    parse_cell_id(region_id)
+                    if self.tile_index.is_file() and self._registered_native(region_id):
+                        from src.fine_workflow import load_registered_fine_region
+                        bundle = load_registered_fine_region(region_id,index_path=self.tile_index)
+                    else:
+                        bundle = self._global_native(region_id)
                 else:
                     from src.fine_workflow import load_fine_region
                     bundle = load_fine_region(region_id, directory=self.fine_directory)
@@ -116,13 +197,29 @@ class RegionalAPI:
             raise APIError(400,'invalid_target')
         path = url.path
         query = parse_qs(url.query,keep_blank_values=True)
-        if path != '/api/v1/fine-regions' and not path.startswith('/api/v1/jobs/') and query:
+        if path not in ('/api/v1/fine-regions','/api/v1/cell') and not path.startswith('/api/v1/jobs/') and query:
             raise APIError(400,'unexpected_query')
         if method == 'GET' and path in ('/health','/api/v1/health'):
             return 200, {'status':'ok','api_version':'v1','live_enabled':self.live_enabled,
                 'configured':{key:bool(self._settings.get(key)) for key in SETTINGS},
                 'release_files_present':all((self.directory/name).is_file() for name in
                     ('catalog.json','monthly_timeseries.csv','screening.json','map_screening.geojson'))}
+        if method == 'GET' and path == '/api/v1/cell':
+            if set(query)!={'lon','lat'} or any(len(v)!=1 or not v[0] for v in query.values()):
+                raise APIError(400,'longitude_and_latitude_required')
+            try:
+                lon,lat=float(query['lon'][0]),float(query['lat'][0])
+                if not math.isfinite(lon) or not math.isfinite(lat) or not -180<=lon<=180 or not -90<=lat<=90:
+                    raise ValueError('Invalid coordinate')
+                from src.global_cell_data import locate_cell
+                found=locate_cell(lon,lat)
+            except ValueError:
+                raise APIError(400,'invalid_coordinate') from None
+            region=found.get('region_id')
+            return 200, {'schema_version':'global-cell-lookup-1',**found,
+                'coordinates':{'lon':lon,'lat':lat},
+                'detail_url':f'/api/v1/regions/{region}' if region else None,
+                'limitations':['Cell geometry does not establish product availability; inspect actual cell observations.']}
         if method == 'GET' and path == '/api/v1/fine-tiles':
             if not self._registered_fine or not self.tile_index.is_file():
                 raise APIError(404,'tile_registry_unavailable')
@@ -159,6 +256,11 @@ class RegionalAPI:
             if method == 'GET' and suffix is None:
                 detail = build_region_detail(bundle)
                 detail['research'] = self._descriptor(bundle)
+                if 'availability' in bundle:
+                    detail['availability']=deepcopy(bundle['availability'])
+                if 'status' in bundle:
+                    detail['status']=bundle['status']
+                detail['hasData']=bool(bundle['observations']['value'].notna().any()) if 'value' in bundle['observations'] else False
                 return 200,detail
             if method == 'GET' and suffix == '/research/cached':
                 context = bundle['research_context']

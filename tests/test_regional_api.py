@@ -236,7 +236,138 @@ def test_registered_detail_stale_source_manifest_returns_rebuild_conflict(api,mo
     def stale(*a,**kwargs):
         raise workflow.FineCollectionStale('private input path must not leak')
     monkeypatch.setattr(workflow,'load_registered_fine_region',stale)
+    monkeypatch.setattr(api,'_registered_native',lambda region_id:True)
     status,payload=api.handle('GET','/api/v1/regions/gldas025_r388_c0328')
     assert status==409
     assert payload['error']['code']=='fine_collection_rebuild_required'
     assert 'private' not in str(payload)
+
+
+def test_global_native_fallback_and_ocean_status_never_start_research(api,monkeypatch):
+    api._registered_fine=True
+    monkeypatch.setattr(api,'_registered_native',lambda region_id:False)
+    rid='gldas025_r300_c1000'
+    data=bundle();data['region_id']=rid;data['research_context']['region_id']=rid
+    data['observations']=pd.DataFrame({'value':[float('nan')]})
+    data['status']='unsupported_gldas';data['availability']={'status':'unsupported_gldas','ndvi_status':'pending_native_aggregation'}
+    calls=[]
+    def loaded(region_id):
+        calls.append(region_id)
+        return deepcopy(data)
+    monkeypatch.setattr(api,'_global_native',loaded)
+    status,result=api.handle('GET',f'/api/v1/regions/{rid}')
+    assert status==200 and not result['hasData']
+    assert result['status']=='unsupported_gldas'
+    assert result['availability']['ndvi_status']=='pending_native_aggregation'
+    assert calls==[rid] and api.jobs.calls==[]
+
+
+def test_coordinate_lookup_bounds_and_antimeridian_are_geometry_only(api):
+    for query in ('lon=0&lat=-70','lon=180&lat=0','lon=-180&lat=0'):
+        status,result=api.handle('GET','/api/v1/cell?'+query)
+        assert status==200
+        if query=='lon=0&lat=-70':
+            assert result['region_id'] is None and result['status']=='outside_gldas_extent'
+        else:
+            assert result['region_id']=='gldas025_r240_c0000'
+    for query in ('lon=NaN&lat=0','lon=0&lat=91','lon=181&lat=0','lon=0&lat=0&lat=1','lon=0','lon=0&lat=0&url=x'):
+        assert api.handle('GET','/api/v1/cell?'+query)[0]==400
+    assert api.jobs.calls==[]
+
+
+def test_global_scan_is_serialized_deduplicated_and_cache_bounded(api,monkeypatch):
+    from threading import Event,Thread
+    import src.global_cell_data as source
+    import src.global_cell_analysis as stats
+    started,release=Event(),Event()
+    calls=[]
+    def loaded(region_id,**kwargs):
+        calls.append(region_id)
+        started.set()
+        assert release.wait(2)
+        return {'region_id':region_id}
+    monkeypatch.setattr(source,'load_global_cell',loaded)
+    monkeypatch.setattr(stats,'analyze_global_cell',lambda data:deepcopy(data))
+    monkeypatch.setattr(api,'_global_source_signature',lambda:('version-one',))
+    results=[]
+    thread=Thread(target=lambda:results.append(api._global_native('one')))
+    thread.start();assert started.wait(1)
+    try:
+        with pytest.raises(module.APIError) as exc:
+            api._global_native('different-cell')
+        assert exc.value.status==429
+        release.set();thread.join(timeout=2)
+        assert api._global_native('one')=={'region_id':'one'} and calls==['one']
+        for i in range(20):api._global_native(str(i))
+        assert len(api._global_memory)==16
+    finally:
+        release.set();thread.join(timeout=2)
+
+
+def test_registered_cell_never_falls_back_when_joint_collection_is_stale(api,monkeypatch):
+    import src.fine_workflow as workflow
+    api._registered_fine=True
+    api.tile_index=api.cache_dir.parent/'test_registry.json';api.tile_index.write_text('{}')
+    monkeypatch.setattr(api,'_registered_native',lambda region_id:True)
+    monkeypatch.setattr(api,'_global_native',lambda region_id:pytest.fail('Global fallback would bypass joint-family guard'))
+    def stale(*a,**kwargs):raise workflow.FineCollectionStale('changed')
+    monkeypatch.setattr(workflow,'load_registered_fine_region',stale)
+    assert api.handle('GET','/api/v1/regions/gldas025_r388_c0328')[0]==409
+
+
+@pytest.mark.parametrize('failure',[False,True])
+def test_duplicate_cell_requests_share_one_scan_and_propagate_result(api,monkeypatch,failure):
+    from threading import Event,Thread
+    import src.global_cell_data as source
+    import src.global_cell_analysis as stats
+    started,release=Event(),Event()
+    calls=[];results=[]
+    def loaded(region_id,**kwargs):
+        calls.append(region_id);started.set()
+        assert release.wait(2)
+        if failure:raise ValueError('private source failure')
+        return {'region_id':region_id}
+    monkeypatch.setattr(source,'load_global_cell',loaded)
+    monkeypatch.setattr(stats,'analyze_global_cell',lambda data:deepcopy(data))
+    monkeypatch.setattr(api,'_global_source_signature',lambda:('stable-version',))
+    def request():
+        try:results.append((200,api._global_native('same-cell')))
+        except module.APIError as exc:results.append((exc.status,exc.code))
+    first=Thread(target=request);first.start();assert started.wait(1)
+    second=Thread(target=request);second.start()
+    try:
+        time.sleep(.02)
+        assert second.is_alive()
+        release.set();first.join(timeout=2);second.join(timeout=2)
+        assert len(calls)==1 and len(results)==2
+        if failure:
+            assert results==[(503,'global_cell_unavailable')]*2
+            assert 'private' not in str(results)
+        else:
+            assert all(status==200 and data['region_id']=='same-cell' for status,data in results)
+    finally:
+        release.set();first.join(timeout=2);second.join(timeout=2)
+
+
+def test_duplicate_wait_is_bounded_without_cancelling_owner_scan(api,monkeypatch):
+    from threading import Event,Thread
+    import src.global_cell_data as source
+    import src.global_cell_analysis as stats
+    started,release=Event(),Event()
+    def loaded(region_id,**kwargs):
+        started.set();assert release.wait(2)
+        return {'region_id':region_id}
+    monkeypatch.setattr(source,'load_global_cell',loaded)
+    monkeypatch.setattr(stats,'analyze_global_cell',lambda data:deepcopy(data))
+    monkeypatch.setattr(api,'_global_source_signature',lambda:('stable-version',))
+    api._global_wait_seconds=.02
+    results=[]
+    first=Thread(target=lambda:results.append(api._global_native('same-cell')))
+    first.start();assert started.wait(1)
+    try:
+        with pytest.raises(module.APIError) as exc:api._global_native('same-cell')
+        assert exc.value.status==503 and exc.value.code=='global_cell_wait_timeout'
+        release.set();first.join(timeout=2)
+        assert api._global_native('same-cell')=={'region_id':'same-cell'}
+    finally:
+        release.set();first.join(timeout=2)
