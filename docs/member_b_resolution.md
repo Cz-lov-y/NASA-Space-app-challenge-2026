@@ -34,7 +34,7 @@ Outputs are separate from the existing 10° data:
 | --- | --- |
 | `data/processed/fine/grid_definition.json` | Lazy native global-grid envelope and indexing definition |
 | `data/processed/fine/central_us/catalog.json` | Sixteen exact native cell boundaries, indices, availability and geographic country candidates |
-| `data/processed/fine/central_us/monthly_timeseries.csv` | Actual native GLDAS monthly observations; NDVI remains pending |
+| `data/processed/fine/central_us/monthly_timeseries.csv` | Combined actual native GLDAS and fine-cell NDVI observations after explicit import |
 | `data/processed/fine/central_us/gldas_monthly_timeseries.csv` | Reusable native GLDAS source extraction |
 | `data/processed/fine/central_us/source_manifest.json` | Original monthly input paths and SHA-256 hashes |
 | `data/processed/fine/central_us/metadata.json` | Product/version, layer semantics, scaling, missing rules and limitations |
@@ -45,7 +45,7 @@ Outputs are separate from the existing 10° data:
 
 The native extraction has completed: **264 real monthly source files, 16 cells, 8,448 output rows, all finite**. Every cell has 264 months for each soil depth. Native centers are latitudes 37.125, 37.375, 37.625 and 37.875°N and longitudes −97.875, −97.625, −97.375 and −97.125°E.
 
-A separate netCDF4 scalar-index check compared three source months, four tile corners and both depths against the xarray vector-indexed CSV output: 24 checks, maximum absolute difference **0.0 kg m-2**. `validation_report.json` records this evidence. This verifies indexing, layer sums and preserved source values; it does not establish independent scientific validation of the model or MODIS. All fine-cell NDVI remains pending until an actual export is checked and integrated.
+A separate netCDF4 scalar-index check compared three source months, four tile corners and both depths against the xarray vector-indexed CSV output: 24 checks, maximum absolute difference **0.0 kg m-2**. `validation_report.json` records this evidence. This verifies indexing, layer sums and preserved source values; it does not establish independent scientific validation of the model or MODIS. At the initial GLDAS extraction stage, fine-cell NDVI was pending; subsequent actual retrieval and integration are recorded below.
 
 ## Native MODIS aggregation into those exact cells
 
@@ -67,10 +67,66 @@ The controller can explicitly submit one pilot using the already authorized OAut
 
 The controller submitted the fine pilot as `DDCABQK6DQS4LU2TMPYCBK4S`; last recorded state READY. See `data/requests/fine_earth_engine_tasks.json`. No fine annual batch has been submitted. Account authorization alone does not verify the new fine-cell output. Task IDs are stored in ignored `.cache/fine_modis_tasks.json`; duplicate tile/catalog/date submissions are guarded. Inspect status with `--status`. Only after pilot review, the controller can use `--mode years --submit` for the 22 annual tasks or `--mode month --month YYYY-MM-01 --submit` for a single retry. Outputs go to Drive folder `NASA_member_B_fine`, with prefix `mod13a3_gldas025_central_us_1deg_`.
 
-The existing 10° importer does not accept fine-grid IDs. Fine exports need fine-grid source validation and integration before they can join the soil series. Whole-Earth and 10° NDVI means cannot be reused as fine-cell NDVI. Existing coarse processed artifacts are retained independently.
+The existing 10° importer does not accept fine-grid IDs. Fine exports use the dedicated strict fine-grid validator and incremental importer described below before joining the soil series. Whole-Earth and 10° NDVI means cannot be reused as fine-cell NDVI. Existing coarse processed artifacts are retained independently.
 
 ## Expansion after the pilot
 
 Use bounded, native-aligned tiles and viewport/catalog paging. A 1° tile contains 16 source cells; tile jobs can read existing monthly GLDAS files by native indices, request only the corresponding MODIS aggregates, and store per-tile provenance/completeness. Dataset-level statistics must disclose their actual tested region family; a one-tile preview must not be presented as global multiple-testing validation.
 
 The GLDAS envelope includes the north pole. The prior full-world MODIS reduction has a documented polar-bounds failure. This midlatitude pilot does not resolve that issue, and no polar cell is clipped or silently reclassified. Global native-grid delivery needs explicit handling and validation of every supported tile, including those touching the pole, plus independent MODIS source-pixel and footprint review.
+
+## Fine MODIS validation and incremental import
+
+`scripts/merge_fine_modis.py` supports a read-only pilot check by default:
+
+```sh
+.venv/bin/python scripts/merge_fine_modis.py /actual/path/fine_pilot.csv --expected-month 2003-01-01
+```
+
+The validator checks the exact canonical 0.25° target IDs, cell geometry and area, requested tile ID, target resolution, complete requested cell set for every included month, dates, units, scaled NDVI range, source asset/month, QA rules, valid areas and the original native MODIS projection. Source image counts and missing-image flags must agree. The pilot should normally remain validation-only: annual requests can have a different configuration timestamp, and changed source provenance on overlapping January rows deliberately raises a conflict.
+
+Explicitly ingest actual accepted source CSVs:
+
+```sh
+.venv/bin/python scripts/merge_fine_modis.py --ingest /actual/path/annual2003.csv /actual/path/annual2004.csv
+```
+
+Imports preserve all previously accepted dates. Identical repeated observations are idempotent; a changed value or provenance field requires `--replace`, which changes only overlapping rows. All 264 month slots are retained for every requested cell, with unexported observations blank/NaN and flagged `pending_export`. Exported missing/no-valid-pixel months remain distinct. Every NDVI row, including pending rows, carries the native grid row/column and positive full-cell area denominator.
+
+Exact input bytes are retained under SHA-256 filenames in `data/raw/modis_earth_engine/fine/`. The cumulative `modis_source_manifest.json` records archive paths, original filenames and hashes. `accepted_modis_observations.csv` links each authoritative accepted row to its source file hash; this also identifies accepted replacements without requiring arbitrary archive-file ordering. GLDAS source CSVs and their original source manifest are never rewritten. Catalog geometry stays fixed; availability counts/variables update, and quality reports/provenance are refreshed. Rebuild statistical outputs and the frontend data bundle after an import.
+
+Export identity now hashes only the target tile/IDs/geometry/areas rather than mutable availability fields. Legacy and current duplicate-export guards match project/tile/date range, so updating NDVI availability cannot accidentally authorize another identical export.
+
+## Bounded direct retrieval for the small fine tile
+
+The controller verified that the same fine-cell aggregation graph can return a small interactive response using the existing authorized account/project. `scripts/fetch_fine_modis.py` retrieves that unchanged graph for **at most 16 cells**, one month or calendar year per request. It creates no batch export tasks, changes no account/project to avoid a limit, disables automatic client retries, and stops on service/quota errors. Every request has a maximum 30-second deadline.
+
+Preview without network calls:
+
+```sh
+.venv/bin/python scripts/fetch_fine_modis.py --project earthrisk-greenmirage --mode years
+```
+
+Explicitly retrieve the 22 annual requests after pilot review:
+
+```sh
+.venv/bin/python scripts/fetch_fine_modis.py --project earthrisk-greenmirage --mode years --fetch
+```
+
+Use `--first-year` and `--last-year` to request a smaller frozen-period subset. The default cache is ignored `.cache/fine_modis_direct/`. Exact raw service responses are saved **before** validation; failed checks therefore remain replayable without another account call. Successful responses must cover every requested native cell/month and pass source/QA/projection checks before they become completed source CSVs. Immutable CSV/raw-response hashes and request receipts support resuming: verified completed years are reused, and an incomplete request is not marked complete. Tampered cached bytes cause an error. `--refresh --fetch` explicitly retrieves a new version while preserving existing source files. Retrieval does not ingest data automatically.
+
+## Native monthly mosaic origins
+
+The actual 2003 annual response exposed a valid source-grid variation: November and December have native mosaic origins shifted south by 1,200 and 2,400 pixels. Their sinusoidal CRS and approximately 926.625 m native pixel spacing are unchanged. Cropped monthly tile inventories need not share the full-world mosaic's upper-left origin.
+
+Validation now accepts only complete **1,200-pixel MODIS tile translations** on that original lattice, within the MODLAND horizontal/vertical tile extent. It still rejects half-pixel shifts, partial-tile shifts, changed pixel spacing, shear and out-of-range tile origins. The actual source transform is retained exactly; it is never relabeled as the reference origin or used to justify resampling.
+
+Evidence is retained in `data/raw/modis_earth_engine/fine_validation/annual2003_native_projection_response.json` with its hash and all 12 monthly source transforms in `data/processed/fine/central_us/modis_projection_validation.json`. Replaying that real response through the corrected validator accepted 192 rows, all finite. This is a projection/metadata consistency check, not independent source-pixel scientific validation. The tile-lattice reference is NASA's [MODLAND grid](https://modis-land.gsfc.nasa.gov/MODLAND_grid.html).
+
+The controller's actual retrieval completed all 22 calendar-year requests, each returning 192 fine-cell rows. The batch pilot had remained queued while the project reported a noncommercial quota restriction, but the service permitted these bounded interactive requests. Retrieval used the same authorized account, the same project and the unchanged native aggregation graph. It did not open another account/project, submit replacement batch tasks, retry rejected calls automatically, or change resolution/QA. Future calls remain subject to service-enforced quotas and stop if rejected. The controller owns final ingestion and the resulting release audit; source-pixel/model scientific review remains a separate requirement.
+
+## Current integrated fine release
+
+The controller completed the actual fine release: **12,672 rows** comprising 8,448 native GLDAS observations and 4,224 received NDVI month/cell slots. NDVI has **4,222 valid values and two source-QA gaps**. Those missing values are preserved; no interpolation or invented replacement was applied. All 16 cells have paired data sufficient for the configured statistical preview, with a 32-test tile-scoped family. The result contains 12 cells with no detected divergence, four uncertain cells and zero supported signals. The pipeline does not manufacture hotspots to populate the map.
+
+The fine release audit passed 1,110 integrity checks. This confirms the documented source/archive, grid, temporal and interface consistency; it does not establish globally validated fine-cell coverage, independent adjacent-cell observations, or completed ecological/source-pixel scientific review. The real fine observations currently cover only the explicitly documented Central-US tile.

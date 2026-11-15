@@ -17,6 +17,7 @@ export interface SelectedLocation {
   screeningStatus?: string;
   bbox?: [number, number, number, number];
   resolutionDegrees?: number;
+  pairedYearCount?: number;
 }
 
 export type ModalType = 'intro' | 'instructions' | 'methodology' | null;

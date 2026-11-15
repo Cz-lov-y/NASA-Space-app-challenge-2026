@@ -102,7 +102,7 @@ export const App: React.FC = () => {
 
       <div className="fixed top-20 left-4 z-30 rounded-lg bg-space-900/95 border border-cyan-500/30 p-3 text-xs text-cyan-100 max-w-xs">
         <label className="flex items-center gap-2"><input type="checkbox" checked={fineMode} onChange={e => { setFineMode(e.target.checked); handleDeselect(); }} />Native 0.25° cells</label>
-        <p className="mt-2 text-slate-300">{fineMode ? `${fineRegions.length} real cells · Central US pilot · 2003–2024. Vegetation pairing pending. Select a cell from the menu.` : '10° legacy overview. Fine coverage is being prepared.'}</p>
+        <p className="mt-2 text-slate-300">{fineMode ? `${fineRegions.length} real cells · Central US pilot · 2003–2024. ${fineRegions.filter(r => (r.pairedYearCount || 0) >= 8).length} cells with sufficient paired years. Source QA review pending.` : '10° legacy overview. Fine coverage is being prepared.'}</p>
         {fineMode && fineError && <p>Fine data service unavailable.</p>}
         {fineMode && fineRegions.length > 0 && <>
           <p className="mt-2">37–38°N, 98–97°W · north ↑</p>

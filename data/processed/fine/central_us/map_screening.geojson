@@ -1,8 +1,8 @@
 {
   "type": "FeatureCollection",
   "schema_version": "regional-map-1",
-  "dataset_version": "aaf8068a02db7183d53f133fd912c2049dfa58318bf2319c04f81b76a87ba424",
-  "input_sha256": "aaf8068a02db7183d53f133fd912c2049dfa58318bf2319c04f81b76a87ba424",
+  "dataset_version": "0c8ae16ead490f8b252ef2a215f2d34e7b3cdb0515f53965a02a3d1396b9c2cb",
+  "input_sha256": "0c8ae16ead490f8b252ef2a215f2d34e7b3cdb0515f53965a02a3d1396b9c2cb",
   "observation_period": {
     "start": "2003-01-01",
     "end": "2024-12-31"
@@ -18,16 +18,17 @@
   },
   "multiple_testing": {
     "method": "benjamini_hochberg",
-    "family_size": 0,
-    "eligible_regions": 0,
+    "family_size": 32,
+    "eligible_regions": 16,
     "catalog_regions": 16,
     "supported_regions": 16,
-    "pending_regions": 16,
+    "pending_regions": 0,
     "insufficient_regions": 0,
-    "complete_period_regions": 0,
+    "complete_period_regions": 14,
     "provisional": true,
     "family_definition": "Both finite primary-indicator MK tests for every region with sufficient common complete years; no direction/significance/reliability selection.",
-    "scope": "Only this frozen fine pilot catalog; never a worldwide or coarse-grid family."
+    "scope": "Only this frozen fine pilot catalog; never a worldwide or coarse-grid family.",
+    "family_id": "fine-pilot-22510e0c963f2b70d889a0213b3ee4bf32ebe846533d7adb9aaedebc64849919"
   },
   "limitations": [
     "Provisional statistical screening; source QA and common spatial footprints remain unreviewed.",
@@ -85,36 +86,47 @@
           -97.875,
           37.125
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "no_detected_divergence",
+        "category": "No Detected Divergence",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 21,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "required_opposing_directions_absent"
         ],
         "quality_flags": [
-          "coverage_review_required"
+          "coverage_review_required",
+          "no_valid_pixels"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.0007691139666618145,
+            "sen_slope_per_year": -0.0009270329178141936,
+            "n_years": 21,
+            "source_coverage_year_count": 21,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.4133946944717642,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
-            "slope_per_year": -1.2592112629422132,
-            "sen_slope_per_year": -1.3838682098994184,
-            "n_years": 22,
+            "slope_per_year": -1.2308386580040052,
+            "sen_slope_per_year": -1.304585786329377,
+            "n_years": 21,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.4691536061387796,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -163,27 +175,37 @@
           -97.625,
           37.125
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "no_detected_divergence",
+        "category": "No Detected Divergence",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 22,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "required_opposing_directions_absent"
         ],
         "quality_flags": [
           "coverage_review_required"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.0004896802942361704,
+            "sen_slope_per_year": -0.0007200281564379388,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.4133946944717642,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
             "slope_per_year": -1.4625581929895939,
@@ -191,8 +213,8 @@
             "n_years": 22,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.3277391839935764,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -241,27 +263,37 @@
           -97.375,
           37.125
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "no_detected_divergence",
+        "category": "No Detected Divergence",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 22,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "required_opposing_directions_absent"
         ],
         "quality_flags": [
           "coverage_review_required"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.0007515649223077526,
+            "sen_slope_per_year": -0.0007518190020413113,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
             "slope_per_year": -1.9357567829262754,
@@ -269,8 +301,8 @@
             "n_years": 22,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -319,27 +351,37 @@
           -97.125,
           37.125
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "no_detected_divergence",
+        "category": "No Detected Divergence",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 22,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "required_opposing_directions_absent"
         ],
         "quality_flags": [
           "coverage_review_required"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.0006686808712337786,
+            "sen_slope_per_year": -0.0007493610106950952,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.4133946944717642,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
             "slope_per_year": -2.3869011108201708,
@@ -347,8 +389,8 @@
             "n_years": 22,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -397,27 +439,39 @@
           -97.875,
           37.375
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "uncertain_signal",
+        "category": "Uncertain Signal",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 22,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established",
+          "quality_or_robustness_checks_failed"
         ],
         "quality_flags": [
           "coverage_review_required"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.00040471013176010935,
+            "sen_slope_per_year": -0.00034802157932861173,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": false,
+            "worldwide_adjusted_p_value": 0.8656490997057351,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
             "slope_per_year": -1.297102198770395,
@@ -425,8 +479,8 @@
             "n_years": 22,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.4133946944717642,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -475,27 +529,37 @@
           -97.625,
           37.375
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "no_detected_divergence",
+        "category": "No Detected Divergence",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 22,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "required_opposing_directions_absent"
         ],
         "quality_flags": [
           "coverage_review_required"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.001104901182705252,
+            "sen_slope_per_year": -0.0008886588833843072,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.4133946944717642,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
             "slope_per_year": -1.5623626231518974,
@@ -503,8 +567,8 @@
             "n_years": 22,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.3277391839935764,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -553,27 +617,37 @@
           -97.375,
           37.375
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "no_detected_divergence",
+        "category": "No Detected Divergence",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 22,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "required_opposing_directions_absent"
         ],
         "quality_flags": [
           "coverage_review_required"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.0005559085583183168,
+            "sen_slope_per_year": -0.0004336046311311459,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.5093869894394736,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
             "slope_per_year": -2.1020641401396083,
@@ -581,8 +655,8 @@
             "n_years": 22,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -631,27 +705,37 @@
           -97.125,
           37.375
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "no_detected_divergence",
+        "category": "No Detected Divergence",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 22,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "required_opposing_directions_absent"
         ],
         "quality_flags": [
           "coverage_review_required"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.0005218401545661106,
+            "sen_slope_per_year": -0.0003605813020692973,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.5296791774145132,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
             "slope_per_year": -2.463318458815966,
@@ -659,8 +743,8 @@
             "n_years": 22,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -709,27 +793,37 @@
           -97.875,
           37.625
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "no_detected_divergence",
+        "category": "No Detected Divergence",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 22,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "required_opposing_directions_absent"
         ],
         "quality_flags": [
           "coverage_review_required"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.0006990215203288174,
+            "sen_slope_per_year": -0.0005332380702089412,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.4691536061387796,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
             "slope_per_year": -1.6022994580655676,
@@ -737,8 +831,8 @@
             "n_years": 22,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -787,27 +881,37 @@
           -97.625,
           37.625
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "no_detected_divergence",
+        "category": "No Detected Divergence",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 22,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "required_opposing_directions_absent"
         ],
         "quality_flags": [
           "coverage_review_required"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.001056160493356789,
+            "sen_slope_per_year": -0.0010024089955709692,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
             "slope_per_year": -1.7156396308861586,
@@ -815,8 +919,8 @@
             "n_years": 22,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -865,27 +969,39 @@
           -97.375,
           37.625
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "uncertain_signal",
+        "category": "Uncertain Signal",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 22,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established",
+          "quality_or_robustness_checks_failed"
         ],
         "quality_flags": [
           "coverage_review_required"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.00020580099469926598,
+            "sen_slope_per_year": -0.00015954888096386677,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": false,
+            "worldwide_adjusted_p_value": 0.8030548483938498,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
             "slope_per_year": -1.482355080103215,
@@ -893,8 +1009,8 @@
             "n_years": 22,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -943,27 +1059,39 @@
           -97.125,
           37.625
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "uncertain_signal",
+        "category": "Uncertain Signal",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 22,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established",
+          "quality_or_robustness_checks_failed"
         ],
         "quality_flags": [
           "coverage_review_required"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.00020895535311530236,
+            "sen_slope_per_year": -0.00012716019050164616,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": false,
+            "worldwide_adjusted_p_value": 0.7647027711671532,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
             "slope_per_year": -2.402173763880415,
@@ -971,8 +1099,8 @@
             "n_years": 22,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -1021,27 +1149,37 @@
           -97.875,
           37.875
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "no_detected_divergence",
+        "category": "No Detected Divergence",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 22,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "required_opposing_directions_absent"
         ],
         "quality_flags": [
           "coverage_review_required"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.0008898124141241508,
+            "sen_slope_per_year": -0.0011091120569910304,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
             "slope_per_year": -1.7187950336930888,
@@ -1049,8 +1187,8 @@
             "n_years": 22,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -1099,27 +1237,37 @@
           -97.625,
           37.875
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "no_detected_divergence",
+        "category": "No Detected Divergence",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 22,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "required_opposing_directions_absent"
         ],
         "quality_flags": [
           "coverage_review_required"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.0011381207026393938,
+            "sen_slope_per_year": -0.0012010122653280891,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
             "slope_per_year": -1.7455569390588261,
@@ -1127,8 +1275,8 @@
             "n_years": 22,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -1177,36 +1325,47 @@
           -97.375,
           37.875
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "no_detected_divergence",
+        "category": "No Detected Divergence",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 21,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "required_opposing_directions_absent"
         ],
         "quality_flags": [
-          "coverage_review_required"
+          "coverage_review_required",
+          "no_valid_pixels"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.0009766907523424777,
+            "sen_slope_per_year": -0.0010885257377484057,
+            "n_years": 21,
+            "source_coverage_year_count": 21,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
-            "slope_per_year": -2.08835068831398,
-            "sen_slope_per_year": -2.3222710927327457,
-            "n_years": 22,
+            "slope_per_year": -2.05758965042732,
+            "sen_slope_per_year": -2.0405404350974337,
+            "n_years": 21,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.3277391839935764,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
@@ -1255,27 +1414,39 @@
           -97.125,
           37.875
         ],
-        "status": "pending",
-        "classification": "pending",
-        "category": null,
+        "status": "eligible",
+        "classification": "uncertain_signal",
+        "category": "Uncertain Signal",
         "provisional": true,
         "qa_reviewed": false,
         "synthetic_demo": false,
-        "analysis_kind": "available_indicator",
+        "analysis_kind": "paired",
         "analysis_period": {
           "start": "2003-01-01",
           "end": "2024-12-31",
           "aggregation": "annual_mean"
         },
-        "paired_year_count": 0,
-        "available_year_count": 22,
+        "paired_year_count": 22,
+        "available_year_count": 0,
         "reasons": [
-          "missing_primary_variable:ndvi"
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established",
+          "quality_or_robustness_checks_failed"
         ],
         "quality_flags": [
           "coverage_review_required"
         ],
         "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.00021752267901233697,
+            "sen_slope_per_year": -0.00015278123946294852,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": false,
+            "worldwide_adjusted_p_value": 0.8030548483938498,
+            "worldwide_significant": false
+          },
           "soil_water_0_100cm": {
             "unit": "kg m-2",
             "slope_per_year": -2.210261926573817,
@@ -1283,14 +1454,14 @@
             "n_years": 22,
             "source_coverage_year_count": 22,
             "reliable": true,
-            "worldwide_adjusted_p_value": null,
-            "worldwide_significant": null
+            "worldwide_adjusted_p_value": 0.3171404989935105,
+            "worldwide_significant": false
           }
         },
         "native_resolution_degrees": 0.25
       }
     }
   ],
-  "source_csv_sha256": "097d945a9b4b351b8568e0c485721afb80561c1ec81c362ceab5f2f890bacded",
-  "source_catalog_sha256": "4e390b92d38cc39aaa677a809ab1f9360610dc1f99a18a8ebebd13b2fde2b45b"
+  "source_csv_sha256": "0ddefebc3b99c68e512b0be036470ffc423b65d1c3383ca9580935ddf62965a1",
+  "source_catalog_sha256": "270ea1fe4a3c65f6fdca6003f171927caa2a5db86a80fc6f2eda666d576ab929"
 }

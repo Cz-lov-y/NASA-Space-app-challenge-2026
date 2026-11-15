@@ -18,21 +18,31 @@ NATIVE_AFFINE = {'elt_0_0':926.625433055833, 'elt_0_2':-20015109.354,
 
 
 def native_transform_matches(text):
-    """Validate EE Projection.transform() WKT against the retained native grid."""
-    parameters = dict(re.findall(r'PARAMETER\["(elt_\d_\d)",\s*([-+0-9.eE]+)\]',str(text)))
-    return (all(key in parameters and np.isclose(float(parameters[key]),value,rtol=0,atol=1e-6)
-                for key,value in NATIVE_AFFINE.items())
-            and all(key not in parameters or float(parameters[key])==0 for key in ('elt_0_1','elt_1_0')))
+    """Accept native1km MODIS lattice, including cropped1200-pixel tile origins.
+
+    Monthly mosaics can omit empty northern/western tiles. Their original origin
+    then shifts by complete MODIS tiles; scale, shear and lattice are unchanged.
+    """
+    parameters = dict(re.findall(r'PARAMETER\["(elt_\d_\d)",\s*([-+0-9.eE]+)\s*\]',str(text)))
+    if not all(key in parameters for key in NATIVE_AFFINE):return False
+    if not all(np.isclose(float(parameters[key]),NATIVE_AFFINE[key],rtol=0,atol=1e-6) for key in ('elt_0_0','elt_1_1')):return False
+    if not all(key not in parameters or float(parameters[key])==0 for key in ('elt_0_1','elt_1_0')):return False
+    for origin,scale,max_tile in [('elt_0_2','elt_0_0',35),('elt_1_2','elt_1_1',17)]:
+        tiles=(float(parameters[origin])-NATIVE_AFFINE[origin])/(NATIVE_AFFINE[scale]*1200)
+        tile=round(tiles)
+        if not 0<=tile<=max_tile or not np.isclose(tiles,tile,rtol=0,atol=1e-9):return False
+    return True
 
 
-def validate_modis(frame):
+def validate_modis(frame, region_areas=None):
     required={'date','region_id','variable','value','unit','source','valid_area_fraction','valid_area_m2','region_area_m2','quality_flag','source_image_count','source_asset_id','source_time_start','source_crs','source_transform','qa_rule','configured_at_utc'}
     if not required.issubset(frame.columns): raise ValueError(f'Missing columns: {sorted(required-set(frame.columns))}')
     if frame.empty: raise ValueError('Export contains no regional rows')
     frame=frame.copy(); dates=pd.to_datetime(frame.date,errors='raise')
     if not ((dates.dt.day==1)&(dates==dates.dt.normalize())&(dates.dt.year>=2003)&(dates.dt.year<=2024)).all(): raise ValueError('Dates must be month starts in2003-2024')
     frame['date']=dates.dt.strftime('%Y-%m-%d')
-    valid_ids={f['id']:f['properties']['region_area_m2'] for f in make_grid()['features']}
+    valid_ids=({f['id']:f['properties']['region_area_m2'] for f in make_grid()['features']}
+               if region_areas is None else dict(region_areas))
     if not frame.region_id.isin(valid_ids).all(): raise ValueError('Unknown region')
     if frame.duplicated(['region_id','date']).any(): raise ValueError('Duplicate regional month')
     if not ((frame.variable=='ndvi')&(frame.unit.astype(str)=='1')&(frame.source=='MOD13A3.061')).all(): raise ValueError('Wrong MODIS variable,unit,source')

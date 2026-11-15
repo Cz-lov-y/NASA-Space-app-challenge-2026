@@ -30,7 +30,12 @@ def load_request(path):
         if list(p['bbox'])!=list(cell_bbox(row,col)):raise ValueError('Catalog cell boundary differs from native GLDAS grid')
         if p.get('native_resolution_degrees',.25)!=.25:raise ValueError('Target must be native0.25degree GLDAS')
     if len(set(ids))!=len(ids):raise ValueError('Duplicate fine cell IDs')
-    return request,catalog,hashlib.sha256(catalog_path.read_bytes()).hexdigest()
+    target={'tile_id':tile,'source':'MODIS/061/MOD13A3','target_grid':'gldas025','cells':sorted(
+        [{'region_id':f['properties']['region_id'],'bbox':f['properties']['bbox'],
+          'region_area_m2':f['properties']['region_area_m2'],'geometry':f['geometry']} for f in features],key=lambda c:c['region_id'])}
+    # Availability/provenance changes must not make a duplicate export look new.
+    digest=hashlib.sha256(json.dumps(target,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+    return request,catalog,digest
 
 
 def build_collection(ee,catalog,start,end,configured,tile_id):
@@ -72,7 +77,7 @@ def submit(ee,project,request,catalog,catalog_sha,plan,manifest_path,force=False
     tile=request['tile_id']
     if not force:
         for item in plan:
-            if any(r.get('project')==project and r.get('tile_id')==tile and r.get('catalog_sha256')==catalog_sha and
+            if any(r.get('project')==project and r.get('tile_id')==tile and
                 r.get('start')==item['start'] and r.get('end_exclusive')==item['end'] and r.get('status') not in {'FAILED','CANCELLED'} for r in records):
                 raise ValueError('Fine export already recorded; poll status or explicitly --force an intentional retry')
     ee.Initialize(project=project);configured=datetime.now(timezone.utc).isoformat().replace('+00:00','Z');new=[]
@@ -82,7 +87,7 @@ def submit(ee,project,request,catalog,catalog_sha,plan,manifest_path,force=False
             description=name,folder='NASA_member_B_fine',fileNamePrefix=name,fileFormat='CSV',
             selectors=COLUMNS+['tile_id','target_resolution_degrees'])
         task.start()
-        record={'task_id':task.id,'description':name,'project':project,'tile_id':tile,'catalog_sha256':catalog_sha,
+        record={'task_id':task.id,'description':name,'project':project,'tile_id':tile,'catalog_sha256':catalog_sha,'target_geometry_sha256':catalog_sha,
             'start':item['start'],'end_exclusive':item['end'],'region_count':len(catalog['features']),
             'scope':'native_gldas025_tile','status':'SUBMITTED','submitted_at_utc':configured}
         records.append(record);new.append(record);manifest_path.parent.mkdir(parents=True,exist_ok=True)

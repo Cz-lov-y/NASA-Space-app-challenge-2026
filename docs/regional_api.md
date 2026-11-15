@@ -118,3 +118,20 @@ Run:
 ```
 
 Tests cover scientific transport delegation, no-network reads, unknown/synthetic IDs, source-hash staleness, server-only provider settings, empty-body enforcement, queue limits, guarded polling, cached numerical refresh and actual local HTTP CORS/Host/preflight behavior. Provider jobs are mocked. A real-release offline smoke check returned 648 map cells, real Canadian detail and the matching genuine cached report. No paid provider requests were made for this API milestone.
+
+## Audit a fine release before serving newly imported NDVI
+
+After importing actual fine MODIS exports, rebuild the fine statistics, then run the read-only audit:
+
+```sh
+.venv/bin/python scripts/prepare_fine_backend.py --directory data/processed/fine/central_us
+.venv/bin/python scripts/audit_fine_release.py --directory data/processed/fine/central_us
+```
+
+The audit prints JSON and exits nonzero on integrity failure. By default it writes no files and never contacts a provider. An explicit `--output /path/to/report.json` saves the audit result. Run it after each incremental annual import so a valid partial release can be distinguished from a stale or inconsistent one.
+
+Checks cover canonical native IDs/geometry/bounding boxes, unchanged soil storage units and values, full monthly indexes with missing slots preserved, coverage arithmetic and report counts, all GLDAS source hashes, archived MODIS hashes and authoritative ledger rows, source/projection/QA semantics through B's importer validator, current map/statistical source fingerprints, and a testing family restricted to this fine pilot. An accepted ledger row must match the actual archived bytes named by its source hash; changing both ledger and combined output cannot bypass that check. Statistical analyzed years must independently have twelve usable source months; diagnostic p-values must not become paired map significance.
+
+Read `integrity_passed`, `full_required_period_complete`, `full_export_index_received`, `ndvi_pending_rows`, `ndvi_valid_rows` and `paired_eligible_cells` separately. For example, a genuine soil-only release can pass integrity while remaining incomplete for NDVI. One imported month keeps the remaining monthly slots pending and cannot support a paired trend. A fully received export can still contain valid missing/QA-rejected months; these are preserved and reviewed, not filled with invented values. Complete temporal coverage is still not independent source-pixel validation, common-footprint review, proof of environmental damage or worldwide screening coverage.
+
+The audit does not refit numerical models or change the statistical family to force a supported signal. Its test fixtures include explicitly synthetic NDVI in temporary directories to exercise partial/full ingestion and corruption detection; those fixtures are never shipped as NASA observations. Run `tests/test_fine_audit.py` for the integrity regressions.

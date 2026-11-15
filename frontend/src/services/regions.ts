@@ -11,6 +11,7 @@ export function mapRegion(feature: any): SelectedLocation {
   return { id: p.region_id, regionId: p.region_id,
     name: (fine ? `${lat.toFixed(3)}°N, ${lng.toFixed(3)}°E` : LABELS[p.region_id] || p.name || p.region_id) + (fine ? ' · 0.25° cell' : ' · 10° overview'), lat, lng,
     bbox: p.bbox, resolutionDegrees: fine ? 0.25 : 10,
+    pairedYearCount: p.paired_year_count || 0,
     hasObservationalData: Object.keys(p.indicators || {}).length > 0,
     isSyntheticDemo: false, screeningStatus: p.classification,
     description: `${p.region_id} · ${p.classification}. Source QA review pending.`,

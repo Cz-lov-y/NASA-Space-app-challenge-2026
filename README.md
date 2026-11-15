@@ -8,11 +8,12 @@ measurements to verifiable government policy and conservation evidence.
 
 ## Current status
 
-The 3D globe now loads the real regional catalog and NASA-derived soil observations
-through the local Python API. Cyan markers show cells with observations; paired
-greening/drying screening remains pending until sufficient regional NDVI arrives.
-The existing human-designed globe, drawer and charts are retained. The Scientific
-Audit displays stored backend annual results rather than a client-side monthly fit.
+The globe now defaults to sixteen real native 0.25° GLDAS cells paired with MODIS
+NDVI for 2003–2024. All requested months have arrived; two QA-masked NDVI values
+remain missing. Preliminary results are twelve cells with no detected divergence
+and four uncertain signals. No cell meets the supported-signal gates. Coverage
+is the Central US pilot, with source review pending; worldwide fine coverage is next.
+The Scientific Audit shows stored annual results and the actual included years.
 
 ### Run the real-data globe locally
 
@@ -31,29 +32,24 @@ npm ci
 npm run dev -- --host 127.0.0.1
 ```
 
-Open http://127.0.0.1:3000/ and select **Real data regions → Canadian interior**
-or **Central US**. The menu and cyan dots use actual grid IDs, with source QA and
-paired-analysis limitations visible. Globe clicks resolve to the containing 10°
-cell; a cell average is not a measurement of the clicked point.
+Open http://127.0.0.1:3000/ and select a **0.25° cell** from the left-hand pilot
+grid or the real-data menu. The native tile spans 37–38°N, 98–97°W. The checkbox
+also offers the historical 10° overview. Measurements belong to cell footprints.
 
-The default API permits offline exact-context cached research only. To enable
-automatic live research after region selection, restart the backend with
-`--enable-live`; it reads private local `.env` settings server-side. An uncached
-selection can use up to six basic searches and one model request. Credentials
-never go to browser code. See [the HTTP API guide](docs/regional_api.md).
+Policy/scientific research requires clicking **Get policy & scientific context**.
+The default API permits saved research only. To permit external research after
+that click, restart the backend with `--enable-live`; private `.env` settings stay
+server-side. Saved reports and source queries are reused before new requests.
+Selecting a cell never launches a search or model call. See [the HTTP API guide](docs/regional_api.md).
 
-All 22 annual nonpolar MODIS exports (2003–2024) have been submitted to Earth
-Engine. Their completion is asynchronous. To retrieve completed annual files,
-then rebuild the local backend artifacts:
+Fine-cell acquisition and validation commands are in [the pipeline guide](docs/fine_data_pipeline.md).
+All 22 annual pilot files have been retrieved, validated, archived and imported.
+The release audit passes integrity checks and explicitly preserves two missing
+observations. The old coarse export batch was retired after the resolution change.
 
-```sh
-.venv/bin/python scripts/sync_regional_modis_drive.py --poll-tasks --ingest
-.venv/bin/python scripts/prepare_regional_backend.py
-```
-
-Cloud tooling needs the optional `requirements-earthengine.txt` and authorized
-Earth Engine/Drive access. The known polar export defect leaves 16 supported
-northern cells pending NDVI; the full 648-cell catalog remains available.
+Cloud tooling needs optional `requirements-earthengine.txt` and authorized
+Earth Engine access. Daily demonstration reads need only the checked-in processed
+data and local API. Polar acquisition and worldwide fine tiles remain future work.
 
 ### Existing Streamlit demonstration
 
@@ -61,8 +57,8 @@ The coordinated regional backend work is described in [the team delivery plan](d
 Real regional GLDAS observations now cover 301 supported 10° cells for 2003–2024;
 the catalog retains all 648 worldwide cells. Regional NDVI exports are still required
 before paired regional screening can run. The new optional research backend supports
-DeepSeek configuration and a separate Tavily search key. The human team owns the
-forthcoming globe frontend; the existing dashboard below has not been changed.
+DeepSeek configuration and a separate Tavily search key. The human team supplied the
+globe frontend; the existing dashboard below has not been changed.
 
 An interactive **Streamlit frontend demo** exists with:
 
@@ -147,8 +143,11 @@ deployment checklists.
 
 ### Native-cell product update
 
-The default globe now uses the available **0.25° GLDAS native-cell pilot** (16 cells at 37–38°N, 98–97°W); the 10° view is a labeled legacy overview. Each cell has original monthly soil storage for 2003–2024. Fine-cell MODIS pairing and worldwide fine coverage are pending. See [the updated team plan](docs/team_demo_plan.md) and [resolution specification](docs/fine_resolution.md).
+The default globe now uses the available **0.25° GLDAS native-cell pilot** (16 cells at 37–38°N, 98–97°W); the 10° view is a labeled legacy overview. Each cell now has original monthly soil storage and MODIS NDVI for 2003–2024. All 4,224 NDVI slots were retrieved; two QA-masked months remain missing. All 16 cells support provisional paired analysis over 21–22 complete years. Worldwide fine coverage remains pending. See [the updated team plan](docs/team_demo_plan.md) and [resolution specification](docs/fine_resolution.md).
 
 Policy/scientific research requires clicking **Get policy & scientific context**. Saved reports and source searches are reused on disk, including stale context with visible retrieval dates; selecting a cell never starts external research. Keep `.cache/regional_research` between server restarts to retain this cache. Qualitative reports remain machine-generated and unreviewed.
 
 Rebuild the fine pilot offline with `.venv/bin/python scripts/process_fine_gldas.py` followed by `.venv/bin/python scripts/prepare_fine_backend.py`. Cloud acquisition commands and remaining validation are in [B's fine-resolution handoff](docs/member_b_resolution.md).
+
+
+The fine pilot acquisition, strict importer, resumable direct retrieval and Drive synchronization are documented in [the fine-data pipeline](docs/fine_data_pipeline.md). The current release has 12 cells with no detected divergence and four uncertain signals; none pass the supported-signal gates. These are scoped pilot statistics with source review pending.

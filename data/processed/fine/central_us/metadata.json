@@ -24,7 +24,19 @@
   "fill_missing": "CF source fills becomeNaN/blank CSV; no imputation; missing source months retained",
   "coverage": "For one native GLDAS cell valid area fraction is1or0; this is model support, not independent within-cell measurement coverage",
   "quality_rules": "Finite values remain coverage_review_required; negative values flagged; never automatically certify scientificQA",
-  "ndvi": "Pending native MODIS pixel-area weighted aggregation into exact0.25-degree GLDAS footprints; no upsampling of soil data",
+  "ndvi": {
+    "dataset_version": "MOD13A3.061",
+    "unit": "1",
+    "target_resolution_degrees": 0.25,
+    "method": "Original native sinusoidal MODIS pixel-area weighted means into unchanged native GLDAS cell footprints; scale0.0001once",
+    "qa": "Intersect source NDVI/DetailedQA/SummaryQA masks; raw NDVI[-2000,10000]; (DetailedQA&3)==0;SummaryQA==0",
+    "missing": "Unexported264-month slots remainNaN with pending_export; exported no_valid_pixels/missing retained without imputation",
+    "scientific_validation": "Source metadata/QA/projection/index checks passed; independent source-pixel and common-footprint scientific review pending",
+    "valid_imported_observations": 4222,
+    "expected_observations": 4224,
+    "source_archive": "modis_source_manifest.json; accepted_modis_observations.csv retains per-row file hashes",
+    "reproduce": "python scripts/merge_fine_modis.py --ingest <source CSVs>; use per-row source_file_sha256 in accepted_modis_observations.csv to select authoritative rows from archived bytes"
+  },
   "limitations": [
     "Native model resolution is not a guarantee of independent observations between adjacent cells.",
     "Fine-tile findings cannot establish global hotspot coverage.",
@@ -35,5 +47,10 @@
     "file": "data/processed/regional/naturalearth_countries.geojson",
     "sha256": "6866c877d39cba9c357620878839b336d569f8c662d3cfab4cb1dbe2d39c977f",
     "status": "coarse geographic candidates only"
-  }
+  },
+  "dataset_versions": [
+    "GLDAS_NOAH025_M.2.1",
+    "MOD13A3.061"
+  ],
+  "dataset_fingerprint": "a6783d9883d719bd5af123ad88bbe4ba83e7c022a4b36c8da85b7026f2ea394f"
 }

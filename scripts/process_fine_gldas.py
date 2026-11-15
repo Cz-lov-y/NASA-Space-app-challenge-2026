@@ -38,6 +38,8 @@ def extract_layers(ds,rows,cols,month):
 
 
 def main(raw,out,bbox=BBOX,tile_id='central_us_1deg'):
+    if (Path(out)/'accepted_modis_observations.csv').exists():
+        raise ValueError('This fine release contains accepted MODIS data. Rebuild GLDAS into a separate --out directory and reimport archived MODIS sources before replacing the release.')
     from src.fine_grid import build_tile_catalog,parse_cell_id
     catalog=build_tile_catalog(bbox)
     if not 1<=len(catalog['features'])<=4096: raise ValueError('Process a bounded tile of at most4096native cells')

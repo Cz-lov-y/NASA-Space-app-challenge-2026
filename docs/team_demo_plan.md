@@ -232,3 +232,17 @@ Next milestone after team review: validate the fine MODIS pilot, implement stric
 
 
 Milestone verification: **203 Python tests and 68 subtests passed**, the production frontend build passed, and headless Chrome showed the real native-cell series with no page errors. The browser recorded zero research requests on cell selection, then a cache GET and research POST only after the button click (POST blocked in the test, so no paid research call). Offline HTTP checks confirmed 16 cells, 528 observations per cell and 22 annual fitted coordinates. The existing frontend bundle-size warning remains.
+
+
+### Fine vegetation pairing milestone — November 15, 2026
+
+The native pilot now contains all requested NDVI exports: 22 annual source CSVs, 4,224 monthly slots and 4,222 finite values. Together with the existing soil observations this produces 12,672 records. Two genuine QA-masked NDVI months remain gaps. B implemented strict incremental fine ingestion, native tile-lattice validation and resumable bounded direct retrieval; the controller added Drive synchronization and rebuilt the release. Exact source bytes, per-row hashes and source manifests are committed. No fine annual batch was necessary.
+
+A independently compared original MODIS pixels for one January 2003 cell, documenting a small NDVI/boundary-coverage difference and preserving unreviewed status. C's audit independently checks archive-ledger correspondence, all 264 GLDAS source hashes, geometry, units, monthly completeness, current statistics and provisional scope. It passes 1,110 checks. The sixteen-cell paired family has 32 tests over 21–22 complete common years: twelve no-detected-divergence and four uncertain classifications; zero supported signals. Source scientific review remains pending.
+
+The configured project's noncommercial quota was exhausted. Seventeen unfinished obsolete coarse exports were retired while terminal tasks/files were retained. Small direct requests using the unchanged calculation graph and the same project succeeded under restricted mode; no account tier or billing settings changed. The earlier fine batch pilot also completed and was preserved. Live policy/model calls were not used for this work, and the frontend still requires an explicit research-button click.
+
+Next after human milestone review: B expands native aligned tiles and validates common footprints/coverage, A defines the expanded testing family and reviews dependence/reliability, C reviews actual source applicability and deployment cache persistence, and D/controller adds viewport tile loading and a practical geographic navigation flow. Worldwide coverage and independent scientific review remain outstanding. Retain missing values and do not pick new locations solely to obtain a supported signal.
+
+
+Verification for this milestone: **237 Python tests and 68 subtests passed**; frontend production build passed with its existing bundle-size warning; headless Chrome verified native NDVI/soil charts and scientific audit with zero page errors. Selection/tab changes made zero research calls; only clicking the research button reached the cache/start routes (live POST mocked during browser checks, no paid research call). The completed original batch pilot was downloaded with checksum validation and its sixteen NDVI values matched direct retrieval exactly. All source CSVs and pixel-validation evidence are retained. Stop after commit/push for human team review.

@@ -22,6 +22,10 @@ def prepare(directory):
     report['source_csv_sha256'] = hashlib.sha256(csv_bytes).hexdigest()
     report['source_catalog_sha256'] = hashlib.sha256(catalog_bytes).hexdigest()
     report['multiple_testing']['scope'] = 'Only this frozen fine pilot catalog; never a worldwide or coarse-grid family.'
+    identity={'regions':sorted(f['properties']['region_id'] for f in catalog['features']),
+              'period':['2003-01-01','2024-12-31'],'variables':['ndvi','soil_water_0_100cm'],
+              'grid':'gldas025'}
+    report['multiple_testing']['family_id']='fine-pilot-'+hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()
     report['limitations'].append('Fine pilot only; neighboring native model cells may be spatially dependent. Worldwide fine coverage remains pending.')
     summary = build_screening_summary(report)
     for feature in summary['features']:

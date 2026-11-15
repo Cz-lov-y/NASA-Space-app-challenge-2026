@@ -355,3 +355,20 @@ def test_drive_download_hash_failure_and_duplicate_names_need_explicit_ids(tmp_p
     monkeypatch.setattr(mod,'ingest_exports',lambda *a,**kw:pytest.fail('ambiguous files must not import'))
     with pytest.raises(ValueError,match='Different Drive files'):
         mod.sync(Session(),tmp_path/'duplicates',ingest=True)
+
+
+
+def test_native_modis_mosaic_tile_origins_allow_only_whole1200pixel_translations():
+    mod=load('merge_regional_timeseries')
+    def affine(h=0,v=0,extra_x_pixels=0,scale_change=0,shear=0):
+        p=dict(mod.NATIVE_AFFINE)
+        p['elt_0_2']+=(1200*h+extra_x_pixels)*p['elt_0_0']
+        p['elt_1_2']+=1200*v*p['elt_1_1']
+        p['elt_0_0']+=scale_change;p['elt_0_1']=shear
+        return 'PARAM_MT["Affine", '+', '.join(f'PARAMETER["{k}", {v}]' for k,v in p.items())+']'
+    assert mod.native_transform_matches(affine())
+    assert mod.native_transform_matches(affine(h=5,v=1))
+    assert mod.native_transform_matches(affine(v=2))
+    for bad in [affine(extra_x_pixels=.5),affine(extra_x_pixels=600),affine(scale_change=.1),
+                affine(shear=.001),affine(h=36),affine(v=18)]:
+        assert not mod.native_transform_matches(bad)
