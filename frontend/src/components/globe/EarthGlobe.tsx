@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
-import { useFrame, useLoader, ThreeEvent } from '@react-three/fiber';
+import { useFrame, useLoader, useThree, ThreeEvent } from '@react-three/fiber';
 import { Atmosphere } from './Atmosphere';
 import { LocationPin } from './LocationPin';
 import { vector3ToLatLng, latLngToVector3 } from '../../utils/coordinates';
@@ -12,6 +12,8 @@ interface EarthGlobeProps {
   onSelectCoordinate: (coord: GeoCoordinate) => void;
   selectedCoordinate: GeoCoordinate | null;
   isInteracting: boolean;
+  northUpRequest: number;
+  resetRequest: number;
 }
 
 export const EarthGlobe: React.FC<EarthGlobeProps> = ({
@@ -19,11 +21,26 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
   onSelectCoordinate,
   selectedCoordinate,
   isInteracting,
+  northUpRequest,
+  resetRequest,
 }) => {
   const earthGroupRef = useRef<THREE.Group>(null);
   const earthMeshRef = useRef<THREE.Mesh>(null);
   const focusTime = useRef(0);
-  useEffect(() => { focusTime.current = selectedCoordinate ? 1.8 : 0; }, [selectedCoordinate]);
+  const focusTarget = useRef<GeoCoordinate | null>(null);
+  const camera = useThree(state => state.camera);
+  useEffect(() => { focusTarget.current = selectedCoordinate; focusTime.current = selectedCoordinate ? 1.8 : 0; }, [selectedCoordinate]);
+  useEffect(() => {
+    if (!northUpRequest || !earthGroupRef.current) return;
+    const local = earthGroupRef.current.worldToLocal(camera.getWorldPosition(new THREE.Vector3()));
+    focusTarget.current = vector3ToLatLng(local);
+    focusTime.current = 1.8;
+  }, [northUpRequest, camera]);
+  useEffect(() => {
+    if (!resetRequest || !earthGroupRef.current) return;
+    focusTime.current=0; focusTarget.current=null;
+    earthGroupRef.current.quaternion.identity();
+  }, [resetRequest]);
 
   // Load authentic NASA Blue Marble textures from public folder
   const [dayMap, normalMap, specularMap, cloudsMap, landMask] = useLoader(THREE.TextureLoader, [
@@ -42,14 +59,15 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
 
   // Rotate to the selected location; otherwise the Earth stays still.
   useFrame((state, delta) => {
-    if (earthGroupRef.current && selectedCoordinate && focusTime.current > 0 && !isInteracting) {
-      const localPoint = latLngToVector3(selectedCoordinate.lat, selectedCoordinate.lng, 1).normalize();
+    if (earthGroupRef.current && focusTarget.current && focusTime.current > 0 && !isInteracting) {
+      const target = focusTarget.current;
+      const localPoint = latLngToVector3(target.lat, target.lng, 1).normalize();
       const towardCamera = state.camera.getWorldPosition(new THREE.Vector3()).sub(earthGroupRef.current.getWorldPosition(new THREE.Vector3())).normalize();
       // Map both the selected surface normal and its north tangent to the
       // camera-facing normal and screen-up tangent. Aligning only the normals
       // leaves an arbitrary roll, especially after a tilted orbit.
       const localNorth = new THREE.Vector3(0, 1, 0).addScaledVector(localPoint, -localPoint.y);
-      if (localNorth.lengthSq() < 1e-12) localNorth.set(0, 0, selectedCoordinate.lat >= 0 ? -1 : 1);
+      if (localNorth.lengthSq() < 1e-12) localNorth.set(0, 0, target.lat >= 0 ? -1 : 1);
       localNorth.normalize();
       const localEast = new THREE.Vector3().crossVectors(localNorth, localPoint).normalize();
       const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(state.camera.getWorldQuaternion(new THREE.Quaternion()));
@@ -57,8 +75,8 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
       const screenNorth = new THREE.Vector3().crossVectors(towardCamera, screenEast).normalize();
       const source = new THREE.Matrix4().makeBasis(localEast, localNorth, localPoint);
       const destination = new THREE.Matrix4().makeBasis(screenEast, screenNorth, towardCamera);
-      const target = new THREE.Quaternion().setFromRotationMatrix(destination.multiply(source.invert()));
-      earthGroupRef.current.quaternion.slerp(target, 1 - Math.exp(-5 * delta));
+      const targetOrientation = new THREE.Quaternion().setFromRotationMatrix(destination.multiply(source.invert()));
+      earthGroupRef.current.quaternion.slerp(targetOrientation, 1 - Math.exp(-5 * delta));
       focusTime.current -= delta;
     }
 

@@ -20,6 +20,7 @@ import { TimeseriesChart } from '../charts/TimeseriesChart';
 import { ZScoreChart } from '../charts/ZScoreChart';
 import { IndicatorFilter } from '../charts/IndicatorFilter';
 import { StatisticalAudit } from '../charts/StatisticalAudit';
+import { PlainLanguageSummary } from './PlainLanguageSummary';
 
 interface SlidingPanelProps {
   location: SelectedLocation | null;
@@ -199,7 +200,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-          className="fixed top-0 right-0 z-40 h-full w-full max-w-md md:max-w-xl lg:max-w-2xl glass-panel flex flex-col shadow-2xl overflow-hidden border-l border-cyan-500/30 font-sans"
+          className="fixed top-16 right-0 z-40 h-[calc(100%-4rem)] w-full max-w-md md:max-w-xl lg:max-w-2xl glass-panel flex flex-col shadow-2xl overflow-hidden border-l border-cyan-500/30 font-sans"
         >
           {/* Top Panel Bar */}
           <div className="flex items-center justify-between p-3.5 px-5 border-b border-cyan-500/20 bg-space-950/80">
@@ -284,6 +285,8 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
                 </div>}
               </div>
             )}
+
+            {dataStatus?.hasData && dataStatus.detail && <PlainLanguageSummary detail={dataStatus.detail} />}
 
             {retrieval && ['queued', 'loading'].includes(retrieval.state) && <p className="text-xs text-slate-400">Loading vegetation history…</p>}
             {retrieval && ['failed', 'busy', 'unavailable'].includes(retrieval.state) && <p className="text-xs text-amber-200">Vegetation data are temporarily unavailable. Soil data can still be viewed.</p>}

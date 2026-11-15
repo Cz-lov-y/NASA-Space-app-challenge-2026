@@ -10,6 +10,7 @@ import { RegionalDetail } from './types/contracts';
 import { cachedMapRegions, forgetMapRegion, rememberMapRegion } from './services/mapCache';
 import { Geography, loadGeography, placeLabel } from './services/geography';
 import { SIGNAL_COLORS } from './utils/signalColors';
+import { SearchPlace, searchPlaceLabel } from './components/hud/LocationSearch';
 
 export const App: React.FC = () => {
   const [selectedCoordinate, setSelectedCoordinate] = useState<GeoCoordinate | null>(null);
@@ -21,6 +22,7 @@ export const App: React.FC = () => {
   const [restoredRegions] = useState(cachedMapRegions);
   const [analyzedRegions, setAnalyzedRegions] = useState<SelectedLocation[]>(restoredRegions);
   const analyzedIds = useRef(new Set<string>());
+  const lastSelectedPlaceCell = useRef(new Map<string, string>());
   const [catalogError, setCatalogError] = useState(false);
   const [geography, setGeography] = useState<Geography | null>(null);
   const [geographyError, setGeographyError] = useState(false);
@@ -114,6 +116,14 @@ export const App: React.FC = () => {
     });
   }, [geography]);
 
+  const handleSearchSelect = useCallback((place: SearchPlace) => {
+    const regionId=fineGridId(place.lat,place.lng);
+    setSelectedCoordinate({lat:place.lat,lng:place.lng});
+    setSelectedLocation({id:regionId || `search-${place.lat}-${place.lng}`,regionId:regionId || undefined,
+      name:searchPlaceLabel(place),lat:place.lat,lng:place.lng,hasObservationalData:false,isSyntheticDemo:false,
+      country:place.country});
+  }, []);
+
   const handleSelectLocation = useCallback((location: SelectedLocation) => {
     const place = geography?.lookup(location.lat, location.lng);
     setSelectedCoordinate({ lat: location.lat, lng: location.lng });
@@ -159,20 +169,28 @@ export const App: React.FC = () => {
     .map(region => ({ ...region, screeningStatus: 'pending' }));
   const mapRegions = [...liveRegions, ...pendingRegions];
   const redRegions = liveRegions.filter(r => r.screeningStatus === 'supported_signal');
-  const redPlaces = new Map<string, { location: SelectedLocation; count: number }>();
+  const redPlaces = new Map<string, SelectedLocation[]>();
   redRegions.forEach(region => {
     const place = geography?.lookup(region.lat, region.lng);
     const label = place ? placeLabel(place) : (region.country && region.country !== 'Regional NASA observations' ? region.country : 'Land location');
-    const existing = redPlaces.get(label);
-    if (existing) existing.count++;
-    else redPlaces.set(label, { location: region, count: 1 });
+    const cells = redPlaces.get(label) || [];
+    cells.push(region);
+    redPlaces.set(label, cells);
   });
+  const cyclePlace = (label: string, regions: SelectedLocation[]) => {
+    const ordered = [...regions].sort((a, b) => a.id.localeCompare(b.id));
+    const lastId = lastSelectedPlaceCell.current.get(label);
+    const previous = ordered.findIndex(region => region.id === lastId);
+    const next = ordered[(previous + 1) % ordered.length];
+    lastSelectedPlaceCell.current.set(label, next.id);
+    handleSelectLocation(next);
+  };
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-space-950 font-sans">
       <EarthCanvas selectedCoordinate={selectedCoordinate} onSelectCoordinate={handleSelectCoordinate}
         onDeselect={handleDeselect} regions={mapRegions} />
-      <HeaderHUD onOpenModal={setActiveModal} selectedCoordinate={selectedCoordinate} />
+      <HeaderHUD onOpenModal={setActiveModal} selectedCoordinate={selectedCoordinate} onSearchSelect={handleSearchSelect} />
       <div className="fixed top-20 left-4 z-30 w-56 max-w-[calc(100vw-2rem)] rounded-xl border border-cyan-500/20 bg-space-900/95 p-3 text-xs text-slate-200 shadow-lg backdrop-blur">
         <p className="font-semibold text-white">Explore Earth</p>
         <p className="mt-1 text-slate-400">{geographyError ? 'Land map unavailable. Refresh to try again.' : geography ? 'Select a place on land to see its data.' : 'Loading land map…'}</p>
@@ -189,13 +207,13 @@ export const App: React.FC = () => {
         <div className="mt-3 border-t border-slate-700 pt-2">
           <p className="font-semibold text-white">Places with a stronger signal</p>
           {redPlaces.size ? <ul className="mt-2 max-h-40 divide-y divide-slate-200 overflow-y-auto">
-            {Array.from(redPlaces, ([label, item]) => <li key={label}><button type="button"
-              onClick={() => handleSelectLocation(item.location)}
-              title={item.count > 1 ? `View one of ${item.count} matching locations` : `View ${label}`}
+            {Array.from(redPlaces, ([label, cells]) => <li key={label}><button type="button"
+              onClick={() => cyclePlace(label, cells)}
+              title={cells.length > 1 ? `Cycle through ${cells.length} matching locations` : `View ${label}`}
               className="flex w-full items-center gap-2 rounded-md px-1 py-2 text-left text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600">
               <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-red-600" />
               <span className="min-w-0 flex-1">{label}</span>
-              {item.count > 1 && <span className="text-slate-500">{item.count}</span>}
+              {cells.length > 1 && <span className="text-slate-500">{cells.length}</span>}
             </button></li>)}
           </ul> : <p className="mt-1 text-slate-400">No stronger signals identified yet.</p>}
         </div>

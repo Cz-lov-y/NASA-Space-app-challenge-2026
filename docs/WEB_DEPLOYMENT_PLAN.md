@@ -1,6 +1,6 @@
 # Deploying the live EarthRisk demo
 
-Status: preparation plan, not a deployment. The React frontend and Python API currently run locally. The existing API explicitly binds to loopback, enforces local Host/Origin checks, uses in-process job queues, and is documented for a trusted local user. It is not ready to expose publicly as-is. Do not forward it through a public tunnel or proxy without first implementing and testing the public-service controls below.
+Status: deployed on 2026-11-15 as a passcode-protected demo at https://34-31-40-122.sslip.io/. The React frontend and Python API now run on the Google Cloud VM; the previous local API still serves its older local snapshot. The existing API explicitly binds to loopback, enforces local Host/Origin checks, uses in-process job queues, and is documented for a trusted local user. It is not ready to expose publicly as-is. Do not forward it through a public tunnel or proxy without first implementing and testing the public-service controls below.
 
 ## Recommended hackathon architecture
 
@@ -23,10 +23,21 @@ The first-page limit is a material constraint: most completed cells will eventua
 
 For a more scalable deployment, package the API separately for Cloud Run, place immutable tile releases and versioned manifests in Cloud Storage, and run acquisition in a separate durable worker/job with a single-writer protocol. Publish the manifest only after all tile objects are uploaded. Cloud Run containers use disposable filesystems; persistent data and caches need external storage, and its ingress container must listen on the injected `PORT` on `0.0.0.0`. Cloud Storage volume mounts and object storage are not a drop-in replacement for all current POSIX file writes, locks, `Path.replace`, source absolute paths, or in-process job state; adapt and test those semantics. [Cloud Run overview](https://docs.cloud.google.com/run/docs/overview/what-is-cloud-run), [Cloud Run container contract](https://docs.cloud.google.com/run/docs/container-contract), [Cloud Storage consistency](https://docs.cloud.google.com/storage/docs/consistency).
 
-## Human inputs needed before deployment
+## Remaining human decisions
 
-Choose who may access the demo (public or team-only), the budget and alert recipients, the desired public domain (or accept a provider address), and who owns project IAM/billing. Authorize the production hosting and any related charges. The human decisions do not replace implementing the public-service boundary and storage/cutover work above.
+The current demo uses a shared passcode and a temporary provider hostname. The team can later choose a team-controlled domain, budget alerts and ownership for ongoing operation.
 
-## Browser connection status (2026-11-15)
+## Earlier browser preparation (before deployment)
 
 The user enabled Chrome's Apple Events JavaScript control, switched the Cloud Console to the account with access to `tactical-attic-456217-t0`, and selected a passcode-protected demo. Compute Engine API was enabled, and the VM creation form was opened for inspection. No VM, public endpoint, passcode, or deployment was created in this step. A production HTTPS/authentication boundary, rate limits, durable data transfer and single-writer worker cutover still need implementation and testing before creating or publishing the service. Preserve the ongoing local data worker until the migration is ready. Do not store passcodes, OAuth tokens or API credentials in Git.
+
+
+## Active deployment (2026-11-15)
+
+The `earthrisk-demo` VM in `us-central1-a` runs the local API, passcode gateway, HTTPS Caddy proxy and the sole global acquisition worker as systemd services. The static external IP is reserved. The gateway requires a passcode, uses a signed secure cookie, checks POST origins and applies bounded login, data and research request rates. Provider credentials and passcode/session secrets live in root-managed `/etc/earthrisk/` files and must not be added to Git. The user's local generated passcode copy is in ignored `.cache/deployment/private.env`. The local world worker was stopped at cutover; do not restart it against the live dataset.
+
+The initial data snapshot and a final 12-tile delta were copied with checksum verification. The VM worker uses its attached `earthrisk-demo` service account, not the user's local OAuth token, and prioritizes southern Prairies then Canada. New tile data stays on the VM; the older local data copy is not automatically synchronized. To inspect services, use `gcloud compute ssh earthrisk-demo --project=tactical-attic-456217-t0 --zone=us-central1-a --command='systemctl is-active earthrisk-api earthrisk-gateway earthrisk-worker caddy'`. To see acquisition status, inspect the worker journal and `/opt/earthrisk/data/processed/fine/global/index.json` as the `earthrisk` user.
+
+To publish frontend-only changes, build `frontend/` and run `deploy/publish_frontend.sh` from an authenticated workstation. This publishes assets first and switches the HTML entrypoint last, retaining older hashed assets for existing sessions. Server-side code, credentials, and datasets are not updated by that command.
+
+The VM, persistent disk, reserved IP, network transfer and provider requests can incur charges. Stopping the VM interrupts acquisition and serving; the persistent disk and reserved address may still incur charges. The demo uses a third-party `sslip.io` DNS hostname and automatic public TLS; use a team-controlled domain for a durable deployment. The current first-1,000-cell map limitation and non-calibrated modeled screening caveats remain.

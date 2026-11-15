@@ -6,6 +6,8 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { EarthGlobe } from './EarthGlobe';
 import { Starfield } from './Starfield';
 import { GeoCoordinate, SelectedLocation } from '../../types/globe';
+import { Compass, Plus, Minus, RotateCcw } from 'lucide-react';
+import { latLngToVector3 } from '../../utils/coordinates';
 
 interface EarthCanvasProps {
   regions: SelectedLocation[];
@@ -20,6 +22,8 @@ interface SceneRigProps {
   selectedCoordinate: GeoCoordinate | null;
   onSelectCoordinate: (coord: GeoCoordinate) => void;
   isInteracting: boolean;
+  northUpRequest: number;
+  resetRequest: number;
 }
 
 const SceneRig: React.FC<SceneRigProps> = ({
@@ -27,6 +31,8 @@ const SceneRig: React.FC<SceneRigProps> = ({
   selectedCoordinate,
   onSelectCoordinate,
   isInteracting,
+  northUpRequest,
+  resetRequest,
 }) => {
   const globeRootRef = useRef<THREE.Group>(null);
   const cameraOffset = useRef(new THREE.Vector3());
@@ -63,6 +69,8 @@ const SceneRig: React.FC<SceneRigProps> = ({
         onSelectCoordinate={onSelectCoordinate}
         selectedCoordinate={selectedCoordinate}
         isInteracting={isInteracting}
+        northUpRequest={northUpRequest}
+        resetRequest={resetRequest}
       />
     </group>
   );
@@ -76,6 +84,22 @@ export const EarthCanvas: React.FC<EarthCanvasProps> = ({
 }) => {
   const [isInteracting, setIsInteracting] = useState(false);
   const controlsRef = useRef<OrbitControlsImpl>(null);
+  const [northUpRequest, setNorthUpRequest] = useState(0);
+  const [resetRequest, setResetRequest] = useState(0);
+  const zoom = (factor: number) => {
+    const controls=controlsRef.current;
+    if (!controls) return;
+    const offset=controls.object.position.clone().sub(controls.target);
+    offset.clampLength(controls.minDistance, controls.maxDistance);
+    offset.setLength(THREE.MathUtils.clamp(offset.length()*factor, controls.minDistance, controls.maxDistance));
+    controls.object.position.copy(controls.target).add(offset);
+    controls.update();
+  };
+  const resetView = () => {
+    onDeselect();
+    controlsRef.current?.reset();
+    setResetRequest(value => value+1);
+  };
 
   // Deselect when clicking background empty space
   const handleMissedClick = () => {
@@ -87,7 +111,7 @@ export const EarthCanvas: React.FC<EarthCanvasProps> = ({
   return (
     <div className="w-full h-full absolute inset-0 z-0">
       <Canvas
-        camera={{ position: [0, 0, 2.5], fov: 45, near: 0.1, far: 1000 }}
+        camera={{ position: latLngToVector3(45, -105, 2.5).toArray(), fov: 45, near: 0.1, far: 1000 }}
         onPointerMissed={handleMissedClick}
         gl={{
           antialias: true,
@@ -125,6 +149,8 @@ export const EarthCanvas: React.FC<EarthCanvasProps> = ({
             selectedCoordinate={selectedCoordinate}
             onSelectCoordinate={onSelectCoordinate}
             isInteracting={isInteracting}
+            northUpRequest={northUpRequest}
+            resetRequest={resetRequest}
           />
         </Suspense>
 
@@ -142,6 +168,12 @@ export const EarthCanvas: React.FC<EarthCanvasProps> = ({
           onEnd={() => setIsInteracting(false)}
         />
       </Canvas>
+      <div className="fixed bottom-5 left-4 z-30 flex items-center gap-1 rounded-xl border border-slate-300 bg-white/95 p-1 shadow-lg" aria-label="Globe controls">
+        <button type="button" onClick={() => setNorthUpRequest(value => value+1)} className="flex items-center gap-1 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100" title="Turn north up"><Compass size={16} />North up</button>
+        <button type="button" onClick={() => zoom(0.75)} className="rounded-lg p-2 text-slate-700 hover:bg-slate-100" aria-label="Zoom in" title="Zoom in"><Plus size={16} /></button>
+        <button type="button" onClick={() => zoom(1.33)} className="rounded-lg p-2 text-slate-700 hover:bg-slate-100" aria-label="Zoom out" title="Zoom out"><Minus size={16} /></button>
+        <button type="button" onClick={resetView} className="rounded-lg p-2 text-slate-700 hover:bg-slate-100" aria-label="Reset view" title="Reset view"><RotateCcw size={16} /></button>
+      </div>
     </div>
   );
 };
