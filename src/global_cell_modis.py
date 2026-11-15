@@ -9,6 +9,7 @@ from datetime import datetime,timezone
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 from threading import RLock
 import uuid
@@ -22,7 +23,7 @@ from scripts.export_regional_modis_earth_engine import export_plan
 from scripts.fetch_fine_modis import fetch
 from scripts.merge_fine_modis import validate_frame
 
-PROJECT='earthrisk-greenmirage'
+PROJECT=os.environ.get('EARTH_ENGINE_PROJECT', 'tactical-attic-456217-t0').strip()
 CACHE=ROOT/'.cache/global_modis'
 
 
@@ -100,7 +101,7 @@ def cached_native_modis(bundle,*,cache_directory=CACHE):
 
 def retrieve_native_modis(bundle,*,cache_directory=CACHE,project=PROJECT,progress=None,ee_module=None):
     """Fetch/resume22one-year requests, preserve receipts and never invent values."""
-    if project!=PROJECT:raise ValueError('Use the existing authorized Earth Engine project only')
+    if not isinstance(project,str) or not project.strip():raise ValueError('Earth Engine project must be nonempty')
     ready=cached_native_modis(bundle,cache_directory=cache_directory)
     if ready is not None:return ready
     if not bundle['observations'].value.notna().any():

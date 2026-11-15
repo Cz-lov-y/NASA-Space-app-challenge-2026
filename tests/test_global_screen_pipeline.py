@@ -91,3 +91,18 @@ def test_service_quota_failure_stops_without_attempting_remaining_tiles(tmp_path
     result=mod.run(fetch=True,cache_directory=tmp_path/'cache')
     assert len(calls)==1 and result['stop_reason']=='source_or_service_blocked'
     assert not result['worldwide_paired_complete']
+
+
+def test_country_priority_orders_actual_country_intersections_first(tmp_path):
+    from shapely.geometry import box, mapping
+    path=tmp_path/'countries.json'
+    path.write_text(json.dumps({'type':'FeatureCollection','features':[
+        {'type':'Feature','properties':{'ISO_A3':code},'geometry':mapping(box(x,0,x+1,1))}
+        for code,x in [('CAN',-100),('USA',-90),('PRI',-60)]
+    ]}))
+    jobs=[{'id':'other','bbox':[10,10,11,11]},
+          {'id':'us','bbox':[-90,0,-89,1]},
+          {'id':'canada','bbox':[-100,0,-99,1]}]
+    ordered,count=mod.prioritize_north_america(jobs,path)
+    assert [j['id'] for j in ordered]==['us','canada','other']
+    assert count==2

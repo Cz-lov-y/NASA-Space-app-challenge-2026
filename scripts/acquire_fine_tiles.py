@@ -150,7 +150,7 @@ def acquire(registry_path,project,*,fetch_requested=False,selected=None,cache=No
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--registry',type=Path,default=ROOT/'data/processed/fine/tiles.json')
-    p.add_argument('--project',default='earthrisk-greenmirage');p.add_argument('--tile',action='append')
+    p.add_argument('--project',default='tactical-attic-456217-t0');p.add_argument('--tile',action='append')
     p.add_argument('--years-per-request',type=int,default=1);p.add_argument('--fetch',action='store_true');p.add_argument('--reprocess',action='store_true');p.add_argument('--replace',action='store_true');p.add_argument('--cache',type=Path,default=ROOT/'.cache/fine_modis_direct')
     args=p.parse_args(argv)
     if not args.project.strip():p.error('--project must be nonempty')

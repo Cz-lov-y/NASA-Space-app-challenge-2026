@@ -67,15 +67,32 @@ def iter_tiles(supported,bbox=None):
             'bbox':bounds,'directory':f'data/processed/fine/global/global_r{r:03d}_c{c:03d}'}
 
 
+
+def prioritize_north_america(jobs, boundary_path):
+    """Visit tiles intersecting Canada or the US before all remaining tiles."""
+    from shapely.geometry import shape, box
+    from shapely.ops import unary_union
+    from shapely.prepared import prep
+    collection=json.loads(Path(boundary_path).read_text())
+    features=[shape(f['geometry']) for f in collection['features']
+              if f.get('properties',{}).get('ISO_A3') in {'CAN','USA','PRI'}]
+    if len(features)!=3:
+        raise ValueError('Canada, US, or Puerto Rico boundary is missing')
+    boundary=prep(unary_union(features))
+    priority=[];remaining=[]
+    for job in jobs:
+        (priority if boundary.intersects(box(*job['bbox'])) else remaining).append(job)
+    return priority+remaining, len(priority)
+
 def existing_tiles(registry):
     path=Path(registry)
     if not path.exists():return {}
     return {tuple(t['bbox']):t for t in json.loads(path.read_text()).get('tiles',[])}
 
 
-def run(*,project='earthrisk-greenmirage',raw_directory=ROOT/'data/raw/gldas',
+def run(*,project='tactical-attic-456217-t0',raw_directory=ROOT/'data/raw/gldas',
         cache_directory=ROOT/'.cache/global_screen',fetch=False,bbox=None,max_tiles=None,
-        reprocess=False,replace=False,min_free_gib=20,years_per_request=1):
+        reprocess=False,replace=False,min_free_gib=20,years_per_request=1,priority_north_america=False):
     if not np.isfinite(min_free_gib) or min_free_gib<0:raise ValueError('--min-free-gib must be finite and nonnegative')
     if max_tiles is not None and max_tiles<1:raise ValueError('--max-tiles must be positive')
     if reprocess and not (fetch and replace):raise ValueError('--reprocess requires --fetch --replace')
@@ -83,10 +100,15 @@ def run(*,project='earthrisk-greenmirage',raw_directory=ROOT/'data/raw/gldas',
     supported,support=supported_tiles(raw_directory,cache_directory)
     existing=existing_tiles(ROOT/'data/processed/fine/tiles.json')
     jobs=list(iter_tiles(supported,bbox))
+    priority_count=0
+    if priority_north_america:
+        jobs,priority_count=prioritize_north_america(jobs,ROOT/'data/processed/regional/naturalearth_countries.geojson')
     report={'mode':'acquire' if fetch else 'dry_plan','project':project,'calculation_version':CALCULATION_VERSION,
         'grid':'Native GLDAS0.25degrees; exact16cell1degree jobs','native_envelope':[-180,-60,180,90],
         'support':support,'selected_supported_tiles':len(jobs),'annual_requests_before_cache':len(jobs)*request_count,'years_per_request':years_per_request,
         'pilot_requests_before_cache':len(jobs),'max_tiles_this_run':max_tiles,'export_tasks_submitted':0,
+        'priority':'Canada, US and Puerto Rico first' if priority_north_america else 'native grid order',
+        'priority_tiles':priority_count,
         'worldwide_paired_complete':False,'worldwide_testing_family_complete':False,
         'statistical_scope':'Per-tile provisional screening; no worldwide BH claim or risk probability',
         'completed_tiles':[],'failed_tiles':[],'stop_reason':None,'minimum_free_gib':min_free_gib,'release_audit_status':'deferred_for_demo','reused_index_tiles':0}
@@ -167,17 +189,17 @@ def run(*,project='earthrisk-greenmirage',raw_directory=ROOT/'data/raw/gldas',
 
 
 def main(argv=None):
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--project',default='earthrisk-greenmirage')
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--project',default='tactical-attic-456217-t0')
     p.add_argument('--raw',type=Path,default=ROOT/'data/raw/gldas');p.add_argument('--cache',type=Path,default=ROOT/'.cache/global_screen')
     p.add_argument('--fetch',action='store_true');p.add_argument('--max-tiles',type=int);p.add_argument('--bbox',type=float,nargs=4)
-    p.add_argument('--years-per-request',type=int,default=1);p.add_argument('--reprocess',action='store_true');p.add_argument('--replace',action='store_true');p.add_argument('--min-free-gib',type=float,default=20)
+    p.add_argument('--priority-north-america',action='store_true');p.add_argument('--years-per-request',type=int,default=1);p.add_argument('--reprocess',action='store_true');p.add_argument('--replace',action='store_true');p.add_argument('--min-free-gib',type=float,default=20)
     a=p.parse_args(argv)
     if not a.project.strip():p.error('--project must be nonempty')
     if a.bbox is not None:
         w,s,e,n=a.bbox
         if not(-180<=w<e<=180 and -60<=s<n<=90):p.error('--bbox must be a positive rectangle inside the GLDAS native envelope')
     result=run(project=a.project,raw_directory=a.raw,cache_directory=a.cache,fetch=a.fetch,bbox=a.bbox,
-        max_tiles=a.max_tiles,reprocess=a.reprocess,replace=a.replace,min_free_gib=a.min_free_gib,years_per_request=a.years_per_request)
+        max_tiles=a.max_tiles,reprocess=a.reprocess,replace=a.replace,min_free_gib=a.min_free_gib,years_per_request=a.years_per_request,priority_north_america=a.priority_north_america)
     print(json.dumps(result,indent=2))
 
 if __name__=='__main__':main()
