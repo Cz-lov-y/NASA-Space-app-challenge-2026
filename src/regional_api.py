@@ -63,6 +63,8 @@ class RegionalAPI:
         self.tile_index = Path(tile_index or ROOT / 'data/processed/fine/tiles.json')
         self.global_raw_directory = Path(global_raw_directory or ROOT/'data/raw/gldas')
         self.global_cache_directory = Path(global_cache_directory or ROOT/'.cache/global_cells')
+        from src.nearest_native_cell import NearestNativeCell
+        self.nearest_native=NearestNativeCell(raw_directory=self.global_raw_directory)
         if not isinstance(global_wait_seconds,(int,float)) or not math.isfinite(global_wait_seconds) or global_wait_seconds<=0:
             raise ValueError('Global wait must be finite and positive')
         self._global_wait_seconds=global_wait_seconds
@@ -292,7 +294,7 @@ class RegionalAPI:
             raise APIError(400,'invalid_target')
         path = url.path
         query = parse_qs(url.query,keep_blank_values=True)
-        if path not in ('/api/v1/fine-regions','/api/v1/cell','/api/v1/global-screened-cells') and not path.startswith(('/api/v1/jobs/','/api/v1/data-jobs/')) and query:
+        if path not in ('/api/v1/fine-regions','/api/v1/cell','/api/v1/cell/nearest','/api/v1/global-screened-cells') and not path.startswith(('/api/v1/jobs/','/api/v1/data-jobs/')) and query:
             raise APIError(400,'unexpected_query')
         if method == 'GET' and path in ('/health','/api/v1/health'):
             return 200, {'status':'ok','api_version':'v1','live_enabled':self.live_enabled,
@@ -327,6 +329,19 @@ class RegionalAPI:
                 else:
                     state['detail']=self._detail(self._bundle(rid),start_native=False)
             return (404 if state['state']=='unknown' else 409 if state['state']=='stale' else 200),state
+        if method=='GET' and path=='/api/v1/cell/nearest':
+            if set(query)!={'lon','lat'} or any(len(v)!=1 or not v[0] for v in query.values()):
+                raise APIError(400,'longitude_and_latitude_required')
+            try:
+                lon,lat=float(query['lon'][0]),float(query['lat'][0])
+                if not math.isfinite(lon) or not math.isfinite(lat) or not -180<=lon<=180 or not -90<=lat<=90:
+                    raise APIError(400,'invalid_coordinate')
+            except ValueError:raise APIError(400,'invalid_coordinate') from None
+            try:
+                return 200,self.nearest_native.nearest(lon,lat)
+            except TimeoutError:raise APIError(429,'native_support_index_busy') from None
+            except (OSError,ValueError,KeyError,TypeError):
+                raise APIError(503,'native_support_unavailable') from None
         if method == 'GET' and path == '/api/v1/cell':
             if set(query)!={'lon','lat'} or any(len(v)!=1 or not v[0] for v in query.values()):
                 raise APIError(400,'longitude_and_latitude_required')

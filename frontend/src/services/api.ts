@@ -1,5 +1,4 @@
 import { LocationData, RegionalDetail } from '../types/contracts';
-import { DEMO_ANALYSIS, DEMO_TIMESERIES } from '../mock/mockData';
 import { SelectedLocation } from '../types/globe';
 import { computeLiveScreening } from './liveScreening';
 
@@ -23,10 +22,6 @@ export const apiService = {
   async getGlobalScreenedCells(offset = 0) { return apiJson(`/api/v1/global-screened-cells?limit=1000&offset=${offset}`); },
   async getFineRegions(tileId?: string) { return apiJson('/api/v1/fine-regions' + (tileId ? '?tile_id=' + encodeURIComponent(tileId) : '')); },
   async getLocationData(location: SelectedLocation): Promise<LocationData> {
-    if (location.regionId === 'demo-region') return {
-      hasData: true, isSynthetic: true, observations: DEMO_TIMESERIES,
-      analysis: DEMO_ANALYSIS, statusMessage: 'Synthetic demonstration; not NASA observations.'
-    };
     if (!location.regionId?.startsWith('grid_r') && !location.regionId?.startsWith('gldas025_')) return {
       hasData: false, isSynthetic: false, statusMessage: 'This point is outside the available GLDAS land grid. Select another location.'
     };
@@ -41,6 +36,6 @@ export const apiService = {
     } catch (error) { return { hasData: false, isSynthetic: false,
       statusMessage: error instanceof Error && error.message.includes('(429)')
         ? 'Another cell is loading. Select this point again in a few seconds.'
-        : 'Real-data service unavailable. Start the regional API on port 8000; no synthetic data substituted.' }; }
+        : 'Location data are temporarily unavailable. Please try again shortly.' }; }
   },
 };

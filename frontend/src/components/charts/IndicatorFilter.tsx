@@ -75,7 +75,7 @@ export const IndicatorFilter: React.FC<IndicatorFilterProps> = ({
                 ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
                 : 'border-slate-800 bg-space-950 text-slate-400 hover:text-slate-200'
             }`}
-            title="Exploratory OLS lines are available for synthetic demonstrations only"
+            title="Trend information is available in Details"
           >
             {showTrendline ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
             <span>{!allowTrendline ? 'Trend details in Details' : showTrendline ? 'Trendlines On' : 'Trendlines Off'}</span>

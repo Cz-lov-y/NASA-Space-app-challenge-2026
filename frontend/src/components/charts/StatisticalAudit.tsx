@@ -14,7 +14,7 @@ const INDICATOR_NAMES: Record<string, string> = {
   ndvi: 'Vegetation Greenness (NDVI)',
   soil_water_0_100cm: 'Soil Water Storage (0–100 cm)',
   soil_water_0_10cm: 'Soil Water Storage (0–10 cm)',
-  soil_moisture: 'Soil Moisture (Synthetic Demo)',
+  soil_moisture: 'Soil Moisture',
   temperature: 'Surface Temperature',
   precipitation: 'Monthly Precipitation',
 };
@@ -114,7 +114,6 @@ export const StatisticalAudit: React.FC<StatisticalAuditProps> = ({
         <div className="flex items-center gap-2 text-slate-400 uppercase text-[10px] tracking-wider"><Activity className="w-3.5 h-3.5 text-nasa-cyan" /><span>Data Quality & Provenance Attribution</span></div>
         <div className="grid grid-cols-2 gap-2 text-[11px]">
           <div><span className="text-slate-400 block text-[10px]">Source QA Reviewed:</span><span className="text-slate-300">{analysis?.data_quality.qa_reviewed === true ? 'Marked reviewed by source pipeline' : 'Review pending'}</span></div>
-          <div><span className="text-slate-400 block text-[10px]">Synthetic Data:</span><span className="text-slate-300">{analysis?.data_quality.synthetic_demo ? 'Yes — demonstration only' : 'No synthetic input declared'}</span></div>
           <div className="col-span-2">
             <span className="text-slate-400 block text-[10px]">Attributed Sources:</span>
             <div className="flex flex-wrap gap-1.5 mt-1">{sources.length ? sources.map((src) => <span key={src} className="px-2 py-0.5 rounded bg-space-950 border border-cyan-800/40 text-[10px] text-cyan-300">{src}</span>) : <span>Unavailable</span>}</div>

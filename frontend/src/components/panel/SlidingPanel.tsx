@@ -3,11 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
   Compass,
-  AlertTriangle,
   CheckCircle2,
   HelpCircle,
   RotateCcw,
-  Sparkles,
   BarChart3,
   FileSpreadsheet,
   Copy, Printer, Share2, Download,
@@ -41,6 +39,8 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
 
   const [isLoading, setIsLoading] = useState(false);
   const [actionStatus, setActionStatus] = useState('');
+  const [nearest, setNearest] = useState<{region_id: string; bbox: [number, number, number, number]; distance_km: number} | null>(null);
+  const [nearestLoading, setNearestLoading] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'visualize' | 'audit'>('visualize');
 
@@ -84,6 +84,23 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
       isMounted = false;
     };
   }, [location]);
+
+  useEffect(() => {
+    setNearest(null);
+    if (!location || isLoading || !dataStatus || dataStatus.hasData ||
+        dataStatus.statusMessage?.startsWith('Another cell') ||
+        dataStatus.statusMessage?.startsWith('Location data are temporarily unavailable')) {
+      setNearestLoading(false);
+      return;
+    }
+    let active = true;
+    setNearestLoading(true);
+    apiJson(`/api/v1/cell/nearest?lat=${encodeURIComponent(location.lat)}&lon=${encodeURIComponent(location.lng)}`)
+      .then(result => { if (active) setNearest(result); })
+      .catch(() => { if (active) setNearest(null); })
+      .finally(() => { if (active) setNearestLoading(false); });
+    return () => { active = false; };
+  }, [location, dataStatus, isLoading]);
 
   const retrieval = dataStatus?.detail?.ndvi_retrieval;
   useEffect(() => {
@@ -225,21 +242,6 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
               <div className="p-3 rounded-lg bg-space-900/50 border border-slate-800 animate-pulse text-xs font-mono text-cyan-300">
                 Loading location data…
               </div>
-            ) : dataStatus?.hasData && dataStatus.isSynthetic ? (
-              <div className="px-3.5 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-200 flex items-center justify-between text-xs font-mono">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                  <div>
-                    <span className="font-bold text-amber-300 uppercase">Synthetic Demonstration Record</span>
-                    <span className="block text-[10px] text-amber-200/80">
-                      10-year illustrative test series (2015–2024) · Not NASA observations
-                    </span>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-[10px] font-semibold text-amber-300 shrink-0">
-                  Candidate Green Mirage
-                </span>
-              </div>
             ) : dataStatus?.hasData ? (
               <div className={`p-3 rounded-lg border flex items-center gap-2 text-xs font-mono ${dataStatus.detail?.screening?.classification === 'supported_signal' ? 'bg-red-50 border-red-200 text-red-700' : dataStatus.detail?.screening?.classification === 'no_detected_divergence' ? 'bg-green-50 border-green-200 text-green-800' : dataStatus.detail?.screening?.classification === 'uncertain_signal' ? 'bg-yellow-50 border-yellow-200 text-yellow-800' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -251,7 +253,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
                   <HelpCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                   <div className="space-y-1">
                     <p className="text-xs font-mono font-semibold text-slate-200">
-                      {dataStatus?.statusMessage?.startsWith('Another cell') || dataStatus?.statusMessage?.startsWith('Real-data service')
+                      {dataStatus?.statusMessage?.startsWith('Another cell') || dataStatus?.statusMessage?.startsWith('Location data are temporarily unavailable')
                         ? 'Cell data temporarily unavailable' : 'No Data Available for Selected Point'}
                     </p>
                     <p className="text-xs text-slate-400 leading-relaxed font-mono">
@@ -259,27 +261,27 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
                     </p>
                   </div>
                 </div>
-                <div className="pt-2 border-t border-slate-800">
+                {nearestLoading && <p className="text-xs text-slate-500">Finding the nearest location with soil data…</p>}
+                {nearest && <div className="pt-2 border-t border-slate-200">
                   <button
-                    onClick={() =>
-                      onSelectPreset({
-                        id: 'demo-region',
-                        name: 'Synthetic Demo Region',
-                        lat: 36.7783,
-                        lng: -119.4179,
-                        hasObservationalData: true,
-                        isSyntheticDemo: true,
-                        regionId: 'demo-region',
-                        country: 'Global / Fictitious',
-                        description: 'Scaffold demonstration dataset for testing the opposing NDVI/soil-moisture trend interface.',
-                      })
-                    }
-                    className="w-full py-2 px-3 rounded-lg bg-nasa-blue/30 hover:bg-nasa-blue/50 border border-cyan-500/40 text-xs font-mono text-cyan-200 flex items-center justify-center gap-2 transition-colors"
+                    type="button"
+                    onClick={() => onSelectPreset({
+                      id: nearest.region_id,
+                      name: 'Nearby location',
+                      lat: (nearest.bbox[1] + nearest.bbox[3]) / 2,
+                      lng: (nearest.bbox[0] + nearest.bbox[2]) / 2,
+                      bbox: nearest.bbox,
+                      hasObservationalData: true,
+                      isSyntheticDemo: false,
+                      regionId: nearest.region_id,
+                    })}
+                    className="w-full py-2.5 px-3 rounded-lg bg-cyan-700 hover:bg-cyan-800 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-nasa-cyan" />
-                    <span>Load Demo Region with Test Observations</span>
+                    <Compass className="w-4 h-4" />
+                    Explore nearest location with soil data · {Math.round(nearest.distance_km).toLocaleString()} km away
                   </button>
-                </div>
+                  <p className="mt-2 text-xs text-slate-500">Vegetation data may still need to load for this location.</p>
+                </div>}
               </div>
             )}
 
@@ -324,10 +326,10 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
                       onToggleIndicator={handleToggleIndicator}
                       yearRange={yearRange}
                       minYear={dataYears[0]}
-                      allowTrendline={!!dataStatus.isSynthetic}
+                      allowTrendline={false}
                       maxYear={dataYears[1]}
                       onChangeYearRange={setYearRange}
-                      showTrendline={showTrendline && !!dataStatus.isSynthetic}
+                      showTrendline={false}
                       onToggleTrendline={() => setShowTrendline(!showTrendline)}
                       chartMode={chartMode}
                       onChangeChartMode={setChartMode}
@@ -350,7 +352,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
                           observations={dataStatus.observations}
                           selectedIndicators={selectedIndicators}
                           yearRange={yearRange}
-                          showTrendline={showTrendline && !!dataStatus.isSynthetic}
+                          showTrendline={false}
                         />
                       ) : (
                         <ZScoreChart

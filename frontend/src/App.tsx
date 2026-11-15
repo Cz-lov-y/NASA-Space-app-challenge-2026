@@ -187,7 +187,7 @@ export const App: React.FC = () => {
           <label className="mt-2 flex items-center gap-2"><input type="checkbox" checked={fineMode} onChange={e => { setFineMode(e.target.checked); handleDeselect(); }} /> Native 0.25° cells</label>
         </details>
       </div>
-      {catalogError && <div className="fixed bottom-4 left-4 z-40 bg-space-900 p-3 text-amber-200 text-xs">Regional API unavailable; synthetic demonstration remains available.</div>}
+      {catalogError && <div className="fixed bottom-4 left-4 z-40 bg-space-900 p-3 text-amber-200 text-xs">Location data are temporarily unavailable. Please try again shortly.</div>}
 
       {/* Sliding Right-side Telemetry & Information Panel */}
       <SlidingPanel

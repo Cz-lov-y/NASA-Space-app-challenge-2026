@@ -96,9 +96,9 @@ export const InfoModal: React.FC<InfoModalProps> = ({ type, isOpen, onClose }) =
                       3
                     </div>
                     <div>
-                      <p className="font-medium text-white text-sm">Target Hotspots</p>
+                      <p className="font-medium text-white text-sm">Explore a place</p>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        Use the "Hotspots" dropdown in the top HUD to jump directly to benchmark ecological transition zones (such as the Synthetic Demo Region, Aral Sea, or Sahel).
+                        Choose an example location to explore its environmental history, or select a point on the globe.
                       </p>
                     </div>
                   </div>
@@ -131,7 +131,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({ type, isOpen, onClose }) =
                 <div>
                   <h4 className="text-white font-medium mb-1">Zero Coordinate Fabrication Guarantee</h4>
                   <p className="text-xs text-slate-300">
-                    In compliance with NASA Space Apps standards, clicking arbitrary points on Earth reveals their exact geographic coordinates, but will never hallucinate or invent synthetic environmental observations for unvalidated regions. Only registered regions with verified pipelines will display trend data.
+                    Select a location to explore available NASA-derived environmental observations. Where observations are unavailable, explore the nearest location with soil data.
                   </p>
                 </div>
 
