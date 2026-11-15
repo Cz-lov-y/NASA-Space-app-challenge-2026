@@ -126,7 +126,7 @@ export const EarthCanvas: React.FC<EarthCanvasProps> = ({
           ref={controlsRef}
           enableDamping
           dampingFactor={0.05}
-          minDistance={1.35}
+          minDistance={1.015}
           maxDistance={4.2}
           enablePan={false}
           rotateSpeed={0.65}

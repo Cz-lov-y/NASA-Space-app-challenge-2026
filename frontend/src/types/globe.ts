@@ -15,6 +15,8 @@ export interface SelectedLocation {
   description?: string;
   climateZone?: string;
   screeningStatus?: string;
+  bbox?: [number, number, number, number];
+  resolutionDegrees?: number;
 }
 
 export type ModalType = 'intro' | 'instructions' | 'methodology' | null;

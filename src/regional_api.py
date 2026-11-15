@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 from urllib.parse import parse_qs, urlsplit
 
-from src.regional_research import load_cached_report, research_context_key
+from src.regional_research import load_cached_report, qualitative_context_key, research_context_key
 from src.regional_workflow import REGIONAL, ROOT, load_region
 from src.region_transport import build_region_detail
 from src.research_jobs import ResearchJobs
@@ -50,8 +50,9 @@ class RegionalAPI:
     multi-user API. Live POST access requires explicit server enablement.
     """
     def __init__(self, *, directory=REGIONAL, cache_dir=None, report_dir=None,
-                 settings=None, live_enabled=False, jobs=None):
+                 settings=None, live_enabled=False, jobs=None, fine_directory=None):
         self.directory = Path(directory)
+        self.fine_directory = Path(fine_directory or ROOT / "data/processed/fine/central_us")
         self.cache_dir = Path(cache_dir or ROOT / '.cache/regional_research')
         self.report_dir = Path(report_dir or ROOT / 'data/research')
         self._settings = {key: value for key,value in (settings or {}).items() if key in SETTINGS}
@@ -59,12 +60,20 @@ class RegionalAPI:
         self.jobs = jobs if jobs is not None else ResearchJobs()
 
     def _bundle(self, region_id):
-        match = REGION_PATTERN.fullmatch(region_id)
-        if not match or int(match[1]) >= 18 or int(match[2]) >= 36:
-            raise APIError(404,'unknown_region')
+        fine = region_id.startswith('gldas025_')
+        if not fine:
+            match = REGION_PATTERN.fullmatch(region_id)
+            if not match or int(match[1]) >= 18 or int(match[2]) >= 36:
+                raise APIError(404,'unknown_region')
         try:
-            bundle = load_region(region_id, directory=self.directory)
-        except (OSError, ValueError, KeyError, TypeError):
+            if fine:
+                from src.fine_workflow import load_fine_region
+                bundle = load_fine_region(region_id, directory=self.fine_directory)
+            else:
+                bundle = load_region(region_id, directory=self.directory)
+        except ValueError:
+            raise APIError(404,'unknown_region') from None
+        except (OSError, KeyError, TypeError):
             raise APIError(503,'regional_release_unavailable') from None
         if bundle['screening_status'] != 'current':
             raise APIError(409,'screening_rebuild_required')
@@ -105,6 +114,9 @@ class RegionalAPI:
                 'configured':{key:bool(self._settings.get(key)) for key in SETTINGS},
                 'release_files_present':all((self.directory/name).is_file() for name in
                     ('catalog.json','monthly_timeseries.csv','screening.json','map_screening.geojson'))}
+        if method == 'GET' and path == '/api/v1/fine-regions':
+            from src.fine_workflow import fine_map
+            return 200, fine_map(directory=self.fine_directory)
         if method == 'GET' and path == '/api/v1/regions':
             self._bundle('grid_r00_c00')
             payload = json.loads((self.directory/'map_screening.geojson').read_text())
@@ -124,10 +136,11 @@ class RegionalAPI:
                 context = bundle['research_context']
                 key = research_context_key(context)
                 candidates = (self.cache_dir/(key+'.json'),
+                              self.cache_dir/'contexts'/(qualitative_context_key(context)+'.json'),
                               self.report_dir/(bundle['region_id']+'_context_brief.json'))
                 for candidate in candidates:
                     try:
-                        report = load_cached_report(candidate,_analysis(bundle),context)
+                        report = load_cached_report(candidate,_analysis(bundle),context,allow_data_revision=True)
                         if not (bundle.get('screening') or {}).get('analysis'):
                             report['limitations'].append('Paired regional analysis is unavailable; research provides jurisdiction context only.')
                         return 200,report

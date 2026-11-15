@@ -5,6 +5,7 @@ chat/completions endpoint. Existing reviewed-evidence interfaces are unchanged.
 """
 from __future__ import annotations
 
+from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import hashlib
@@ -12,6 +13,10 @@ import json
 import os
 from pathlib import Path
 import re
+import tempfile
+from weakref import WeakValueDictionary
+from threading import Lock
+import fcntl
 from urllib.parse import urlparse
 
 import requests
@@ -83,6 +88,91 @@ def _context(context):
             "period": context.get("period"), "query_version": QUERY_VERSION}
 
 
+
+_QUERY_LOCKS = WeakValueDictionary()
+_QUERY_LOCKS_GUARD = Lock()
+
+
+@contextmanager
+def _disk_lock(path):
+    """Serialize matching cache fills across threads and local POSIX processes."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with _QUERY_LOCKS_GUARD:
+        lock = _QUERY_LOCKS.setdefault(str(path.resolve()), Lock())
+    with lock, path.open('a') as stream:
+        fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+
+
+def _write_json(path, payload):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    name = None
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', dir=path.parent, prefix=path.name, suffix='.tmp', delete=False) as stream:
+            name = stream.name
+            stream.write(json.dumps(payload, indent=2, allow_nan=False))
+        Path(name).replace(path)
+    finally:
+        if name and Path(name).exists():
+            Path(name).unlink()
+
+
+def qualitative_context_key(region_context):
+    """Reuse only qualitative context across numeric revisions of the same cell."""
+    context = _context(region_context)
+    context['dataset_version'] = None
+    return hashlib.sha256(json.dumps(context, sort_keys=True, allow_nan=False).encode()).hexdigest()
+
+
+def _cached_search(query, *, domains, api_key, search, cache_dir, now, refresh=False):
+    identity = {'query':query, 'domains':sorted(set(domains)), 'query_version':QUERY_VERSION,
+                'search_depth':'basic', 'max_results':2}
+    key = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
+    path = Path(cache_dir)/'sources'/(key+'.json')
+    with _disk_lock(path.with_suffix('.lock')):
+        if not refresh:
+            try:
+                saved = json.loads(path.read_text())
+                stamp = datetime.fromisoformat(saved['retrieved_at'])
+                if saved['identity'] != identity or not stamp.tzinfo or stamp > now:
+                    raise ValueError('Invalid search cache context')
+                records = saved['results']
+                if not isinstance(records,list) or len(records)>2:
+                    raise ValueError('Invalid search cache results')
+                for item in records:
+                    if (not isinstance(item,dict) or not _url(item.get('url'))
+                            or not isinstance(item.get('title'),str) or not item['title'].strip()
+                            or not isinstance(item.get('raw_content'),str) or not item['raw_content'].strip()):
+                        raise ValueError('Invalid search cache source')
+                records = deepcopy(records)
+                for item in records:
+                    item['_retrieved_at'] = stamp.isoformat()
+                return records, {'cache_key':key,'status':'cached','stale':now-stamp>CACHE_TTL,
+                                 'retrieved_at':stamp.isoformat()}
+            except (OSError,ValueError,KeyError,TypeError):
+                pass
+        records = search(query, domains=domains, api_key=api_key)
+        if not isinstance(records,list):
+            raise ValueError('Search must return a list')
+        clean=[]
+        for item in records[:2]:
+            if not isinstance(item,dict) or not _url(item.get('url')) or not isinstance(item.get('title'),str):
+                continue
+            text=item.get('raw_content') or item.get('content')
+            if not isinstance(text,str) or not text.strip() or not item['title'].strip():
+                continue
+            clean.append({'title':item['title'][:500], 'url':item['url'], 'raw_content':text[:MAX_TEXT]})
+        _write_json(path, {'identity':identity, 'retrieved_at':now.isoformat(), 'results':clean})
+        for item in clean:
+            item['_retrieved_at']=now.isoformat()
+        return clean, {'cache_key':key,'status':'live','stale':False,'retrieved_at':now.isoformat()}
+
+
 def _search(query, *, api_key, domains):
     payload = {"query": query, "search_depth": "basic", "max_results": 2,
                "include_raw_content": True, "include_answer": False}
@@ -144,7 +234,7 @@ def research_context_key(region_context):
     return hashlib.sha256(json.dumps(_context(region_context), sort_keys=True, allow_nan=False).encode()).hexdigest()
 
 
-def load_cached_report(path, analysis, region_context, *, now=None, allow_stale=True):
+def load_cached_report(path, analysis, region_context, *, now=None, allow_stale=True, allow_data_revision=False):
     """Load an exact-context machine report without credentials or network.
 
     Validate structure, source/citation correspondence and unreviewed labels.
@@ -161,10 +251,17 @@ def load_cached_report(path, analysis, region_context, *, now=None, allow_stale=
         if analysis.get('data_quality', {}).get('synthetic_demo'):
             raise ValueError('Synthetic region cannot use real research cache')
         report = json.loads(Path(path).read_text())
-        if (report['cache_key'] != key or report['region_id'] != context['region_id']
+        revised = report['cache_key'] != key
+        original_context = report.get('run_context')
+        if revised:
+            if (not allow_data_revision or not original_context
+                    or report['cache_key'] != research_context_key(original_context)
+                    or qualitative_context_key(original_context) != qualitative_context_key(region_context)):
+                raise ValueError('Research context mismatch')
+        if (report['region_id'] != context['region_id']
                 or report['verification_status'] != 'machine_generated_unreviewed'):
             raise ValueError('Research context or review label mismatch')
-        if report.get('run_context') and research_context_key(report['run_context']) != key:
+        if original_context and research_context_key(original_context) != report['cache_key']:
             raise ValueError('Stored context mismatch')
         stamp = datetime.fromisoformat(report['retrieved_at'])
         if not stamp.tzinfo or stamp > now:
@@ -211,6 +308,12 @@ def load_cached_report(path, analysis, region_context, *, now=None, allow_stale=
             raise ValueError('Invalid limitations')
         report.update(status='cached', cache_stale=stale, quantitative_analysis=deepcopy(analysis),
                       cache_validation='exact_context_and_structure_only')
+        report['qualitative_reused_across_data_revision'] = revised
+        if revised:
+            report['original_cache_key'] = report['cache_key']
+            report['cache_key'] = key
+            report['run_context'] = deepcopy(region_context)
+            report['limitations'].append('Qualitative context reused for unchanged geography; numerical analysis refreshed from the current dataset.')
         if stale:
             report['limitations'].append('Cached research is older than twenty-four hours; current source status is unverified.')
         return report
@@ -218,8 +321,8 @@ def load_cached_report(path, analysis, region_context, *, now=None, allow_stale=
         raise ValueError('Research cache is unavailable or incompatible with this selection') from None
 
 
-def research_region(analysis, region_context, *, cache_dir=None, search=None,
-                    generator=None, now=None, environ=None):
+def _research_region(analysis, region_context, *, cache_dir=None, search=None,
+                    generator=None, now=None, environ=None, refresh=False):
     """Return regional source candidates and an optional cited, unreviewed draft.
 
     Injected search(query, *, api_key, domains) returns a list of source dicts;
@@ -238,7 +341,8 @@ def research_region(analysis, region_context, *, cache_dir=None, search=None,
     report = {"region_id": region, "status": "unavailable", "verification_status": "unreviewed",
               "quantitative_analysis": deepcopy(analysis), "qualitative": None,
               "candidate_sources": [], "citations": [], "cache_key": key,
-              "retrieved_at": now.isoformat(), "jurisdictions": context["jurisdictions"][:3],
+              "retrieved_at": now.isoformat(), "run_context": deepcopy(region_context), "source_searches": [],
+              "jurisdictions": context["jurisdictions"][:3],
               "omitted_jurisdictions": context["jurisdictions"][3:], "limitations": [
                   "Machine research requires independent review; citation matching does not establish claim support.",
                   "Search absence does not establish policy absence. Policy applicability and current status remain unknown."]}
@@ -250,17 +354,20 @@ def research_region(analysis, region_context, *, cache_dir=None, search=None,
         report["limitations"].append("Synthetic demonstration regions cannot support genuine regional research.")
         return report
     cached = None
-    if path and path.exists():
-        try:
-            cached = load_cached_report(path, analysis, region_context, now=now)
-            if not cached['cache_stale']:
-                return cached
-        except ValueError:
-            pass
+    if path:
+        candidates = (path, Path(cache_dir)/'contexts'/(qualitative_context_key(region_context)+'.json'))
+        for candidate in candidates:
+            try:
+                cached = load_cached_report(candidate, analysis, region_context, now=now, allow_data_revision=True)
+                if not refresh:
+                    return cached  # Age is visible; it never silently triggers paid refresh.
+                break
+            except ValueError:
+                pass
     def fallback(reason):
         if cached:
             result = deepcopy(cached)
-            result.update(status="cached", cache_stale=True, quantitative_analysis=deepcopy(analysis))
+            result.update(status="cached", quantitative_analysis=deepcopy(analysis))
             result["limitations"].append(reason)
             return result
         report["limitations"].append(reason)
@@ -273,9 +380,14 @@ def research_region(analysis, region_context, *, cache_dir=None, search=None,
         for kind, query in (("policy_candidate", "official government water conservation vegetation land restoration policy"),
                             ("research_or_news", "vegetation soil water conservation scientific study news")):
             try:
-                records = search(jurisdiction["name"] + " " + query,
-                                 api_key=env.get("POLICY_SEARCH_API_KEY", ""),
-                                 domains=jurisdiction["official_domains"] if kind == "policy_candidate" else [])
+                query_text = jurisdiction["name"] + " " + query
+                domains = jurisdiction["official_domains"] if kind == "policy_candidate" else []
+                if cache_dir:
+                    records, source_status = _cached_search(query_text, api_key=env.get("POLICY_SEARCH_API_KEY", ""),
+                        domains=domains, search=search, cache_dir=cache_dir, now=now, refresh=refresh)
+                    report['source_searches'].append(source_status)
+                else:
+                    records = search(query_text, api_key=env.get("POLICY_SEARCH_API_KEY", ""), domains=domains)
                 if not isinstance(records, list):
                     raise ValueError("Search must return a list")
                 for item in records[:2]:
@@ -294,13 +406,15 @@ def research_region(analysis, region_context, *, cache_dir=None, search=None,
                         "url": url, "text": text[:MAX_TEXT], "jurisdiction": jurisdiction["name"],
                         "source_type": kind, "official_domain_match": official,
                         "policy_status": "unknown", "verification_status": "unverified",
-                        "retrieved_at": now.isoformat(), "evidence_type": "retrieved excerpt; applicability not checked"})
+                        "retrieved_at": item.get("_retrieved_at", now.isoformat()), "evidence_type": "retrieved excerpt; applicability not checked"})
             except (requests.RequestException, ValueError, TypeError, KeyError):
                 failed += 1
     sources = report["candidate_sources"]
     if not sources:
         return fallback("Search returned no usable excerpts; no claim about policy absence is supported.")
     report["status"] = "partial"
+    if any(item["stale"] for item in report["source_searches"]):
+        report["limitations"].append("Stored search excerpts are older than twenty-four hours; reused without paid refresh.")
     if failed:
         report["limitations"].append(f"Some discovery requests failed ({failed}); available sources may be incomplete.")
     if generator is None and not all(env.get(k) for k in ("MODEL_API_KEY", "MODEL_BASE_URL", "MODEL_NAME")):
@@ -333,10 +447,25 @@ def research_region(analysis, region_context, *, cache_dir=None, search=None,
     report.update(status="partial" if failed else "complete", verification_status="machine_generated_unreviewed", cache_stale=False)
     if path:
         try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            temporary = path.with_suffix(".tmp")
-            temporary.write_text(json.dumps(report, indent=2, allow_nan=False))
-            temporary.replace(path)
-        except (OSError, ValueError):
-            report["limitations"].append("Research cache could not be written.")
+            _write_json(path,report)
+            _write_json(Path(cache_dir)/'contexts'/(qualitative_context_key(region_context)+'.json'),report)
+        except (OSError,ValueError):
+            report['limitations'].append('Research cache could not be written.')
     return report
+
+
+def research_region(analysis, region_context, *, cache_dir=None, search=None,
+                    generator=None, now=None, environ=None, refresh=False):
+    """Reuse stored research by default; refresh=True explicitly permits new calls.
+
+    Exact selection keys still bind jobs to the dataset. Qualitative context may
+    survive numeric updates only for identical cell geometry and jurisdiction.
+    Same-country source queries are shared across cells, threads and restarts.
+    """
+    options=dict(cache_dir=cache_dir, search=search, generator=generator, now=now,
+                 environ=environ, refresh=refresh)
+    if cache_dir:
+        key=qualitative_context_key(region_context)
+        with _disk_lock(Path(cache_dir)/'contexts'/(key+'.lock')):
+            return _research_region(analysis,region_context,**options)
+    return _research_region(analysis,region_context,**options)

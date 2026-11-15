@@ -6,7 +6,27 @@ Controller review: 2026-11-14. Target: demo on November 15, followed by scientif
 
 Show a worldwide globe with geographically identified observations. Selecting a region should show dataset-derived quantitative results and automatically request a separately labeled AI research brief about relevant policies and articles. Human Member D owns the design and frontend code; automated frontend work is deferred at the user's request.
 
-The initial regional unit is a 10° latitude/longitude cell: 648 cells covering the Earth. Freeze the demo analysis period at January 2003–December 2024. NDVI and `soil_water_0_100cm` are the primary pair. Surface soil water is available for sensitivity work. Soil water remains `kg m-2`; NDVI is dimensionless. Empty or unsupported cells remain visible in the catalog with explicit status. Never turn a whole-Earth mean into local measurements.
+The historical initial regional unit was a 10° latitude/longitude cell: 648 cells covering the Earth. Freeze the demo analysis period at January 2003–December 2024. NDVI and `soil_water_0_100cm` are the primary pair. Surface soil water is available for sensitivity work. Soil water remains `kg m-2`; NDVI is dimensionless. Empty or unsupported cells remain visible in the catalog with explicit status. Never turn a whole-Earth mean into local measurements.
+
+## Updated product requirements — November 15, 2026
+
+These requirements supersede the initial 10° demo and automatic research behavior described in historical milestone sections below.
+
+- Use the finest defensible cells supported by the current paired datasets: original GLDAS 0.25° cells, with native MODIS pixels aggregated into their exact boundaries. Keep native MODIS (~1 km) vegetation-only views as a later independent layer; never imply finer soil information by repeating one soil estimate in smaller cells. Resolution describes model support, not guaranteed positional accuracy or independent neighboring samples.
+- The worldwide fine lattice is represented lazily and processed in bounded tiles. Start with a reproducible Central US tile [-98,37,-97,38], 16 cells, all 264 months of 2003–2024. This is the first acquisition/validation tile, not a reduction of the worldwide product goal. Fine coverage must be explicit; old 10° data remain a labeled legacy overview.
+- Selection loads measurements and statistics only. A user must click **Get policy & scientific context** before any research activity. After that click, use saved context first; external search/model calls occur only if needed. Never refresh research automatically on selection, remount or data updates.
+- Persist qualitative reports and source-search responses on disk. Reuse identical queries across neighboring cells; reuse a cell's qualitative context across data revisions when geography, jurisdictions, period and query rules are unchanged. Always attach current quantitative results. Preserve URLs, retrieval dates, citation identities and unreviewed/stale labels. No silent paid refresh.
+
+### Revised member work and dependencies
+
+| Member | Next work | Dependency / acceptance |
+| --- | --- | --- |
+| B | Extract native GLDAS tiles; validate one fine MODIS pilot; add strict fine import and automated annual acquisition; expand tiles worldwide | Original NC4 already local; Earth Engine authentication available. Preserve source bytes/hashes, masks and missing months. Independent pixel/coverage review remains pending. |
+| A | Reuse annual statistics on native cells; declare each frozen fine release's testing family; assess spatial dependence and common footprints | Fine GLDAS supplies standalone diagnostics now. Paired results require sufficient fine NDVI. Never transfer 10° classifications or q-values. |
+| C | Persistent report/source caches with concurrency locks, revision-safe narrative reuse and explicit user initiation | Exact query/domain identity and validated reports; no numeric-result cache substitution. Human source/applicability review remains required. |
+| D / controller integration | Default to available native-cell pilot, show exact boundaries and coverage; add research button and saved-context dates; later viewport tile loading | Human design retained. A click is required for external research calls. Fine unavailable locations cannot fall back to coarse or synthetic observations. |
+
+See [fine resolution specification](fine_resolution.md) and [B acquisition steps](member_b_resolution.md). The next milestone is native-cell pilot data, frontend/API integration, persistent context reuse and button-only research; subsequent work completes fine vegetation pairing and geographic expansion. Commit/push and stop for team review at the milestone boundary.
 
 ## Repository review and baseline
 
@@ -198,3 +218,17 @@ verification reused the Canada cache and made no new paid research calls. At the
 last cloud check, three annual tasks were running, 19 were queued, and no annual
 CSV had completed. This is a working real-soil-data demo; paired hotspots await
 sufficient NDVI history and remain scientifically provisional.
+
+
+### Native-cell and explicit research milestone — November 15, 2026
+
+The controller and A/B/C workers implemented the updated requirements on main. The default frontend offers sixteen exact 0.25° native cells in a geographically ordered selection grid, their monthly observations, annual diagnostics and boundaries. The legacy 10° overview remains explicitly selectable. All 8,448 fine soil observations are real and finite, with 264 source hashes; B's independent netCDF4 scalar checks matched 24 selected layer/depth/month values exactly. Source QA remains unreviewed and no paired fine hotspot is claimed.
+
+The fine MODIS January 2003 pilot was submitted as `DDCABQK6DQS4LU2TMPYCBK4S` using existing authorized Earth Engine credentials. Its last recorded state is READY; task snapshot is in `data/requests/fine_earth_engine_tasks.json`. No fine annual batch has been submitted. Existing coarse annual tasks are separate and their results do not satisfy fine-data acquisition.
+
+The research panel starts with a button and sends neither cached-research reads nor live POSTs until it is clicked. Saved qualitative context survives process restarts and data revisions for unchanged geography; current quantitative results replace stored numbers. Persistent exact-query/domain search caches suppress repeated and concurrent searches across neighboring cells. Stale results retain timestamps and are reused without automatic paid refresh. Cross-cell generated drafts remain distinct because local applicability differs. Runtime caches live in ignored `.cache/regional_research`; retain that folder between restarts, and persist the volume for deployment.
+
+Next milestone after team review: validate the fine MODIS pilot, implement strict fine-grid ingestion/Drive synchronization, acquire the 22 annual fine exports, rebuild the frozen fine testing family, and expand native tiles with viewport loading. Complete independent MODIS/common-footprint and source-applicability reviews. Worldwide fine coverage remains outstanding.
+
+
+Milestone verification: **203 Python tests and 68 subtests passed**, the production frontend build passed, and headless Chrome showed the real native-cell series with no page errors. The browser recorded zero research requests on cell selection, then a cache GET and research POST only after the button click (POST blocked in the test, so no paid research call). Offline HTTP checks confirmed 16 cells, 528 observations per cell and 22 annual fitted coordinates. The existing frontend bundle-size warning remains.

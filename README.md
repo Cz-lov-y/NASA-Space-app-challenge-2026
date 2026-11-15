@@ -143,3 +143,12 @@ demo; any future API keys belong in private deployment secrets.
 
 See `docs/frontend.md` for detailed integration, smoke-test, and
 deployment checklists.
+
+
+### Native-cell product update
+
+The default globe now uses the available **0.25° GLDAS native-cell pilot** (16 cells at 37–38°N, 98–97°W); the 10° view is a labeled legacy overview. Each cell has original monthly soil storage for 2003–2024. Fine-cell MODIS pairing and worldwide fine coverage are pending. See [the updated team plan](docs/team_demo_plan.md) and [resolution specification](docs/fine_resolution.md).
+
+Policy/scientific research requires clicking **Get policy & scientific context**. Saved reports and source searches are reused on disk, including stale context with visible retrieval dates; selecting a cell never starts external research. Keep `.cache/regional_research` between server restarts to retain this cache. Qualitative reports remain machine-generated and unreviewed.
+
+Rebuild the fine pilot offline with `.venv/bin/python scripts/process_fine_gldas.py` followed by `.venv/bin/python scripts/prepare_fine_backend.py`. Cloud acquisition commands and remaining validation are in [B's fine-resolution handoff](docs/member_b_resolution.md).

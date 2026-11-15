@@ -1,0 +1,39 @@
+{
+  "tile_id": "central_us_1deg",
+  "bbox": [
+    -98,
+    37,
+    -97,
+    38
+  ],
+  "crs": "EPSG:4326",
+  "native_resolution_degrees": 0.25,
+  "data_kind": "real NASA-derived native model grid cells; no synthetic observations",
+  "dataset_version": "GLDAS_NOAH025_M.2.1",
+  "unit": "kg m-2",
+  "period": [
+    "2003-01-01",
+    "2024-12-01"
+  ],
+  "cell_identity": "gldas025_r{row:03d}_c{col:04d}; row0south=-60; col0west=-180;600rows1440columns",
+  "horizontal_method": "Read original GLDAS cell values by verified native indices; no spatial interpolation or splitting of10-degree means",
+  "temporal_method": "Monthly source time: mean, retained without further temporal aggregation or filling",
+  "soil_water_0_10cm": "Original SoilMoi0_10cm_inst cell",
+  "soil_water_0_100cm": "Sum SoilMoi0_10cm_inst+SoilMoi10_40cm_inst+SoilMoi40_100cm_inst at same native cell; all three must be finite",
+  "scaling": "CF missing values decoded; identity scale and zero offset verified; kgm-2 retained",
+  "fill_missing": "CF source fills becomeNaN/blank CSV; no imputation; missing source months retained",
+  "coverage": "For one native GLDAS cell valid area fraction is1or0; this is model support, not independent within-cell measurement coverage",
+  "quality_rules": "Finite values remain coverage_review_required; negative values flagged; never automatically certify scientificQA",
+  "ndvi": "Pending native MODIS pixel-area weighted aggregation into exact0.25-degree GLDAS footprints; no upsampling of soil data",
+  "limitations": [
+    "Native model resolution is not a guarantee of independent observations between adjacent cells.",
+    "Fine-tile findings cannot establish global hotspot coverage.",
+    "Common GLDAS/MODIS support and independent source-pixel checks remain pending."
+  ],
+  "reproduce": "python scripts/process_fine_gldas.py; source_manifest.json identifies exact original inputs",
+  "country_boundary_source": {
+    "file": "data/processed/regional/naturalearth_countries.geojson",
+    "sha256": "6866c877d39cba9c357620878839b336d569f8c662d3cfab4cb1dbe2d39c977f",
+    "status": "coarse geographic candidates only"
+  }
+}

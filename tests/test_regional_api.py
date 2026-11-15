@@ -95,7 +95,7 @@ def test_live_disabled_unconfigured_or_full_queue(api,monkeypatch):
 
 def test_cached_read_uses_current_numerical_payload_without_network(api,monkeypatch):
     calls=[]
-    def load(path,analysis,context):
+    def load(path,analysis,context,**kwargs):
         calls.append((path,analysis,context))
         return {'status':'cached','verification_status':'machine_generated_unreviewed','limitations':[]}
     monkeypatch.setattr(module,'load_cached_report',load)
@@ -165,7 +165,7 @@ def test_cached_numeric_refresh_keeps_long_diagnostic_when_pair_is_insufficient(
         'available_indicator_analysis':{'region':ID,'variables':['soil_water_0_100cm'],
                                         'observation_period':{'start':'2003-01-01','end':'2024-12-31'}}}
     monkeypatch.setattr(module,'load_region',lambda *a,**k:deepcopy(data))
-    def cached(path,analysis,context):
+    def cached(path,analysis,context,**kwargs):
         assert analysis['variables']==['soil_water_0_100cm']
         assert analysis['observation_period']['start']=='2003-01-01'
         return {'status':'cached','quantitative_analysis':analysis,'limitations':[]}
@@ -173,3 +173,35 @@ def test_cached_numeric_refresh_keeps_long_diagnostic_when_pair_is_insufficient(
     status,report=api.handle('GET',f'/api/v1/regions/{ID}/research/cached')
     assert status==200
     assert report['quantitative_analysis']['variables']==['soil_water_0_100cm']
+
+
+def test_api_cache_permits_only_numeric_revision_reuse(api,monkeypatch):
+    calls=[]
+    def cached(path,analysis,context,**kwargs):
+        calls.append(kwargs)
+        return {'status':'cached','qualitative_reused_across_data_revision':True,'limitations':[]}
+    monkeypatch.setattr(module,'load_cached_report',cached)
+    status,report=api.handle('GET',f'/api/v1/regions/{ID}/research/cached')
+    assert status==200 and calls[0]=={'allow_data_revision':True}
+    assert report['qualitative_reused_across_data_revision']
+
+
+def test_fine_catalog_and_detail_dispatch_are_offline(api,monkeypatch):
+    import src.fine_workflow as fine
+    native_id='gldas025_r400_c400'
+    data=bundle()
+    data['region_id']=native_id
+    data['research_context']['region_id']=native_id
+    data['feature']['properties']['region_id']=native_id
+    calls=[]
+    def load(region_id,**kwargs):
+        calls.append((region_id,kwargs))
+        return deepcopy(data)
+    monkeypatch.setattr(fine,'load_fine_region',load)
+    monkeypatch.setattr(fine,'fine_map',lambda **kwargs:{'type':'FeatureCollection','features':[data['feature']]})
+    status,catalog=api.handle('GET','/api/v1/fine-regions')
+    assert status==200 and catalog['features'][0]['properties']['region_id']==native_id
+    status,detail=api.handle('GET',f'/api/v1/regions/{native_id}')
+    assert status==200 and detail['region_id']==native_id
+    assert calls[0][1]['directory']==api.fine_directory
+    assert api.jobs.calls==[]

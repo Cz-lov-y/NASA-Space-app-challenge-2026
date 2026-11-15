@@ -8,12 +8,21 @@ function safeUrl(value: unknown): string | undefined {
   catch { return undefined; }
 }
 export function ResearchPanel({ detail }: { detail: RegionalDetail }) {
-  const [status, setStatus] = useState('Waiting for regional context…');
+  // Key consent to this exact selection; changing cells or data revokes it.
+  const selection = `${detail.region_id}:${detail.dataset_version}`;
+  const [requested, setRequested] = useState<string | null>(null);
+  const [status, setStatus] = useState('Research starts only when you click below.');
   const [report, setReport] = useState<any>(null);
   useEffect(() => {
     let active = true;
     let pollTimer: ReturnType<typeof setTimeout>;
-    setReport(null); setStatus('Preparing regional research…');
+    setReport(null);
+    if (requested !== selection) {
+      setRequested(null);
+      setStatus('Research starts only when you click below.');
+      return;
+    }
+    setStatus('Checking saved research…');
     const base = `/api/v1/regions/${encodeURIComponent(detail.region_id)}/research`;
     const poll = async (job: any) => {
       try {
@@ -33,13 +42,19 @@ export function ResearchPanel({ detail }: { detail: RegionalDetail }) {
         if (active) await poll(job);
       } catch { if (active) setStatus('Live research unavailable or disabled; source review remains pending.'); }
     };
-    const delay = setTimeout(start, 700);
-    return () => { active = false; clearTimeout(delay); clearTimeout(pollTimer); };
-  }, [detail.region_id, detail.dataset_version]);
+    void start();
+    return () => { active = false; clearTimeout(pollTimer); };
+  }, [detail.region_id, detail.dataset_version, requested, selection]);
   return <section className="rounded-xl border border-cyan-500/25 bg-space-950/70 p-4 space-y-3 font-mono text-xs">
     <h3 className="text-cyan-200 font-bold">Policy &amp; scientific context · AI narrative</h3>
     <p className="text-slate-400">{status}</p>
+    {requested !== selection && <button type="button" onClick={() => setRequested(selection)}
+      className="rounded-lg border border-cyan-400/40 px-3 py-2 text-cyan-200 hover:bg-cyan-950">
+      Get policy &amp; scientific context
+    </button>}
+    <p className="text-slate-400">Saved context is reused first. New research may use search and AI services only after your click.</p>
     {report && <>
+      <p className="text-slate-400">Retrieved: {report.retrieved_at || 'Unknown'}{report.cache_stale ? ' · Saved context may be outdated; no automatic refresh.' : ''}</p>
       <p className="text-amber-200">{report.verification_status} · source applicability and current legal status require review</p>
       {report.qualitative ? <>
         <p>{report.qualitative.summary?.text}</p>

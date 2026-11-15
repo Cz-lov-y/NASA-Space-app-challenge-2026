@@ -96,7 +96,9 @@ def test_cache_exact_context_ttl_and_current_numeric_payload(tmp_path):
     stale = research_region(ANALYSIS, CONTEXT, cache_dir=tmp_path, environ={}, now=NOW + timedelta(days=2))
     assert stale["status"] == "cached" and stale["cache_stale"]
     other = {**CONTEXT, "dataset_version": "different-v2"}
-    assert research_region(ANALYSIS, other, cache_dir=tmp_path, environ={}, now=NOW)["status"] == "unavailable"
+    revised = research_region(ANALYSIS, other, cache_dir=tmp_path, environ={}, now=NOW)
+    assert revised["status"] == "cached"
+    assert revised["qualitative_reused_across_data_revision"]
     other_region = {**CONTEXT, "region_id": "other"}
     assert research_region({"region": "other"}, other_region, cache_dir=tmp_path, environ={}, now=NOW)["status"] == "unavailable"
 
@@ -275,3 +277,109 @@ def test_cli_cached_only_never_loads_keys_or_calls_research(tmp_path,monkeypatch
     assert cli.main(['--region','cell','--cached-only','--report-file',str(path)])==0
     result=json.loads(capsys.readouterr().out)
     assert result['mode']=='cached_only_no_network' and result['status']=='cached'
+
+
+def test_stale_report_never_triggers_paid_refresh_and_data_revision_refreshes_numbers(tmp_path):
+    counts={'search':0,'model':0}
+    def lookup(*a,**k):
+        counts['search']+=1
+        return search(*a,**k)
+    def generate(payload):
+        counts['model']+=1
+        return draft(payload)
+    run(cache_dir=tmp_path,search=lookup,generator=generate)
+    revised={**CONTEXT,'dataset_version':'new-real-observations'}
+    numbers={**ANALYSIS,'trend_slopes':{'ndvi':.25}}
+    cached=research_region(numbers,revised,cache_dir=tmp_path,search=lookup,generator=generate,
+                           environ={},now=NOW+timedelta(days=10))
+    assert counts=={'search':2,'model':1}
+    assert cached['cache_stale'] and cached['qualitative_reused_across_data_revision']
+    assert cached['quantitative_analysis']==numbers
+    assert cached['run_context']['dataset_version']=='new-real-observations'
+    changed={**revised,'bbox':[0,0,10,10]}
+    another=research_region(numbers,changed,cache_dir=tmp_path,search=lookup,generator=generate,
+                            environ={},now=NOW+timedelta(days=10))
+    # The new geometry gets its own draft, but reuses country source searches.
+    assert counts=={'search':2,'model':2}
+    assert another['status']=='complete'
+    assert all(item['status']=='cached' and item['stale'] for item in another['source_searches'])
+    assert {s['retrieved_at'] for s in another['candidate_sources']}=={NOW.isoformat()}
+
+
+def test_shared_source_queries_are_deduplicated_for_concurrent_neighbor_cells(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Lock
+    import time
+    counts={'search':0,'model':0}
+    guard=Lock()
+    def lookup(*a,**k):
+        with guard:
+            counts['search']+=1
+        time.sleep(.02)
+        return search(*a,**k)
+    def generate(payload):
+        with guard:
+            counts['model']+=1
+        return draft(payload)
+    def one(region):
+        ctx={**CONTEXT,'region_id':region}
+        analysis={**ANALYSIS,'region':region}
+        return research_region(analysis,ctx,cache_dir=tmp_path,search=lookup,generator=generate,environ={},now=NOW)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        reports=list(executor.map(one,['neighbor-one','neighbor-two']))
+    assert counts=={'search':2,'model':2}
+    assert {r['region_id'] for r in reports}=={'neighbor-one','neighbor-two'}
+    assert all(r['status']=='complete' for r in reports)
+
+
+def test_source_query_domain_and_version_cache_invalidation(tmp_path,monkeypatch):
+    import src.regional_research as module
+    calls=[]
+    def lookup(query,**kwargs):
+        calls.append((query,kwargs['domains']))
+        return search(query,**kwargs)
+    def lookup_cached(query,domains):
+        return module._cached_search(query,domains=domains,api_key='fake',search=lookup,
+                                     cache_dir=tmp_path,now=NOW)
+    lookup_cached('Canadian water policy',['canada.ca'])
+    lookup_cached('Canadian water policy',['canada.ca'])
+    assert len(calls)==1
+    lookup_cached('Canadian water policy',['gc.ca'])
+    lookup_cached('Canadian wetlands policy',['gc.ca'])
+    assert len(calls)==3
+    monkeypatch.setattr(module,'QUERY_VERSION','test-new-version')
+    lookup_cached('Canadian wetlands policy',['gc.ca'])
+    assert len(calls)==4
+
+
+def test_saved_report_reusable_in_new_python_process_without_provider_calls(tmp_path):
+    import subprocess
+    import sys
+    run(cache_dir=tmp_path,search=search,generator=draft)
+    # A separate interpreter has no in-memory report or lock registry.
+    code='''import json,sys
+from src.regional_research import research_region
+from datetime import datetime,timezone
+analysis=json.loads(sys.argv[2]); context=json.loads(sys.argv[3])
+def fail(*a,**k): raise AssertionError('Provider called on stored report')
+r=research_region(analysis,context,cache_dir=sys.argv[1],environ={},search=fail,generator=fail,now=datetime(2026,11,15,tzinfo=timezone.utc))
+print(r['status'])
+'''
+    import json
+    result=subprocess.run([sys.executable,'-c',code,str(tmp_path),json.dumps(ANALYSIS),json.dumps(CONTEXT)],
+                          capture_output=True,text=True,timeout=5)
+    assert result.returncode==0 and result.stdout.strip()=='cached'
+
+
+def test_explicit_refresh_is_only_path_that_replaces_stored_sources(tmp_path):
+    counts={'search':0,'model':0}
+    def lookup(*a,**k):
+        counts['search']+=1
+        return search(*a,**k)
+    def generate(payload):
+        counts['model']+=1
+        return draft(payload)
+    run(cache_dir=tmp_path,search=lookup,generator=generate)
+    research_region(ANALYSIS,CONTEXT,cache_dir=tmp_path,search=lookup,generator=generate,
+                    environ={},now=NOW+timedelta(days=2),refresh=True)
+    assert counts=={'search':4,'model':2}

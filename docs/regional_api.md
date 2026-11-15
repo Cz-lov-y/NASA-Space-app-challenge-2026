@@ -33,13 +33,14 @@ POST requires `Content-Type: application/json` and a nonempty body no larger tha
 | Method and path | Result | Live research? |
 | --- | --- | --- |
 | `GET /health` or `/api/v1/health` | Server status, live enablement, credential-presence booleans and release-file presence | No |
+| `GET /api/v1/fine-regions` | Native GLDAS-cell pilot GeoJSON from the configured fine release | No |
 | `GET /api/v1/regions` | `regional-map-1` GeoJSON with all 648 cells and existing dataset-derived statuses | No |
 | `GET /api/v1/regions/{region_id}` | `regional-detail-1` transport plus research descriptor | No |
 | `GET /api/v1/regions/{region_id}/research/cached` | Exact-context genuine cached machine report or explicit unavailable error | No |
 | `POST /api/v1/regions/{region_id}/research` | Submit/reuse a bounded background job; empty JSON object required | Yes, if enabled and needed |
 | `GET /api/v1/jobs/{request_id}?region_id=...&context_key=...` | Guarded job snapshot | No new work |
 
-Region IDs are the actual B catalog identifiers, for example `grid_r14_c07`. Unsupported cells remain in the map with their unsupported status. Pending cells remain pending when paired indicators are unavailable. Synthetic demo identifiers are not exposed through these regional routes. The API never assigns a whole-Earth average to a grid cell.
+Region IDs are the actual B catalog identifiers, for example `grid_r14_c07`, or native-cell IDs beginning `gldas025_` from the fine pilot. The default fine release is `data/processed/fine/central_us`; `RegionalAPI(fine_directory=...)` can select a different verified release. The fine map represents a limited coverage pilot, not worldwide fine-resolution screening. Unsupported cells remain in the map with their unsupported status. Pending cells remain pending when paired indicators are unavailable. Synthetic demo identifiers are not exposed through these regional routes. The API never assigns a whole-Earth average to a grid cell.
 
 The map route checks its stored CSV/catalog hashes against the current release. Detail and research routes require a current screening artifact. Changed inputs can therefore return a rebuild-required response rather than stale numerical findings. Refreshing release files externally is supported through the existing workflow's revision-aware loader; partially updated releases should be rebuilt before use.
 
@@ -58,9 +59,9 @@ For country context, the server adds `canada.ca` and `gc.ca` as trusted host suf
 
 ## Research flow for a selected region
 
-1. Load the numeric detail immediately and retain the selected region ID.
-2. Try the cached route. A successful report remains `machine_generated_unreviewed`; a stale matching report retains its original timestamps and `cache_stale=true`.
-3. If there is no matching cache and the server permits live research, POST `{}` to the start URL. The server returns HTTP 202 and a descriptor such as:
+1. Load the numeric detail immediately and retain the selected region ID. Display an explicit research button. Selecting a spot, opening the panel and loading numerical data must not automatically invoke external search/model services.
+2. After the user clicks the research button, try the cached route. A successful report remains `machine_generated_unreviewed`; a stale matching report retains its original timestamps and `cache_stale=true`.
+3. If the user explicitly requested research, there is no compatible stored report and the server permits live research, POST `{}` to the start URL. The server returns HTTP 202 and a descriptor such as:
 
    ```json
    {
@@ -82,7 +83,13 @@ The server initially allows up to two worker threads and four waiting requests, 
 
 ## Cache handling
 
-The cached route first tries `.cache/regional_research/<exact-context-key>.json`, then the committed `data/research/<region_id>_context_brief.json`. It reuses only a compatible, complete machine report, validates source/citation correspondence and unreviewed labels, and replaces stored numerical analysis with the current analysis. It does not fall back to another region. If neither report is valid, the response is `matching_cached_research_unavailable`; this is not evidence that policies are absent.
+The cached route tries `.cache/regional_research/<exact-context-key>.json`, then `contexts/<qualitative-context-key>.json` within that cache directory, then the committed `data/research/<region_id>_context_brief.json`. It reuses only a compatible, complete machine report, validates source/citation correspondence and unreviewed labels, and replaces stored numerical analysis with current backend results. A numerical-data revision may reuse qualitative prose for the identical cell, boundary, period, jurisdiction/domain mapping and query version. Stored original context must be available and valid; `qualitative_reused_across_data_revision=true` discloses reuse. No numerical estimates are ever reused from the report. Different regions/geometry remain isolated. If no stored report is valid, the response is `matching_cached_research_unavailable`; this is not evidence that policies are absent.
+
+Stored reports are reused even after their twenty-four-hour freshness interval, with original retrieval timestamps and `cache_stale=true`. Age does not automatically trigger any provider call. If research is explicitly requested for a cell without a report, persistent source-search entries are shared across neighboring cells by the exact search query, official-domain filter, query version, search depth and result limit. Policy and scientific/news queries stay distinct. Results and excerpt timestamps persist under `sources/`; stale excerpts remain reusable and visibly flagged. A fresh cell may need its own model draft, but it does not repeat identical cached country searches. Drafts are not transferred between cells because source applicability can differ.
+
+Concurrent duplicate cache fills are serialized with thread and POSIX file locks, so neighboring jobs do not both pay for the same missing query. Same-cell qualitative generation is similarly serialized across data revisions. The locks and JSON storage support local Linux/macOS processes; this is not a distributed cache or multi-user authorization system. A process restart retains stored excerpts/reports. Existing job/context keys still include the current dataset fingerprint, so an old asynchronous response cannot replace a new selection's numerical results.
+
+There is no HTTP automatic-refresh parameter: the research body remains `{}`. The Python API supports an explicitly requested `research_region(..., refresh=True)` for a controlled refresh, but this is not exposed by the browser endpoint. No timer, panel opening, background worker or expired timestamp silently refreshes research. Future refresh controls must require their own clear user action.
 
 The genuine committed Canadian report provides national jurisdiction context alongside actual exploratory soil-water statistics. Regional NDVI is still missing in the current release, so it cannot establish paired divergence or ecological risk. Its federal wetland guide is historical and requires current-applicability review; its legislative soil report is distinct from peer-reviewed scientific research. See `docs/member_c_regional_steps.md` for generation history and limitations.
 

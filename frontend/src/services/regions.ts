@@ -7,12 +7,21 @@ const LABELS: Record<string, string> = {
 export function mapRegion(feature: any): SelectedLocation {
   const p = feature.properties;
   const [lng, lat] = p.centroid;
+  const fine = p.region_id.startsWith('gldas025_');
   return { id: p.region_id, regionId: p.region_id,
-    name: (LABELS[p.region_id] || p.name || p.region_id) + ' · 10° cell', lat, lng,
+    name: (fine ? `${lat.toFixed(3)}°N, ${lng.toFixed(3)}°E` : LABELS[p.region_id] || p.name || p.region_id) + (fine ? ' · 0.25° cell' : ' · 10° overview'), lat, lng,
+    bbox: p.bbox, resolutionDegrees: fine ? 0.25 : 10,
     hasObservationalData: Object.keys(p.indicators || {}).length > 0,
     isSyntheticDemo: false, screeningStatus: p.classification,
     description: `${p.region_id} · ${p.classification}. Source QA review pending.`,
     country: LABELS[p.region_id] || 'Regional NASA observations' };
+}
+export function fineGridId(lat: number, lng: number): string | null {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -60 || lat > 90) return null;
+  const row = Math.min(599, Math.floor((lat + 60) / 0.25));
+  const lon = ((lng + 180) % 360 + 360) % 360 - 180;
+  const col = Math.floor((lon + 180) / 0.25);
+  return `gldas025_r${String(row).padStart(3,'0')}_c${String(col).padStart(4,'0')}`;
 }
 export function gridId(lat: number, lng: number): string {
   const row = Math.min(17, Math.max(0, Math.floor((lat + 90) / 10)));

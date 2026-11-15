@@ -1,3 +1,40 @@
+# Member C current execution priorities — 2026-11-15
+
+This current status supersedes the historical review below. The regional research backend, genuine Canadian machine brief, exact-selection job manager, local HTTP API and React integration now exist. Human review of source claims remains outstanding; no machine output has been promoted to human reviewed.
+
+## Current user requirements
+
+- Every external search/model operation must follow an explicit research-button action. Selecting a globe spot or showing numerical data must not start a paid request.
+- Preserve policy/scientific context on disk to avoid repeated calls. Use stored reports and excerpts by default even when stale, showing original timestamps and freshness flags.
+- Keep numerical measurements and statistics current from NASA-derived data. Stored research must never supply stale numerical results.
+- Retain current dataset fingerprints in asynchronous job keys and poll guards. An old job cannot replace the latest dataset/region selection.
+
+## Implemented cache layers and handoff
+
+`src/regional_research.py` now separates three identities:
+
+1. `research_context_key(context)` includes region, geometry, data version, period, jurisdictions/domains and query version. Jobs still use this full selection key.
+2. `qualitative_context_key(context)` excludes only the numerical dataset version. A stored report may be reused across numeric refreshes for an otherwise identical geographic and policy context, with the current analysis copied into the response. Different cells, boundaries, periods, country intersections or query versions do not share prose.
+3. Source-search entries use the exact query, domain filter, query version, basic search depth and result limit. Neighboring cells can reuse those national source excerpts, including after process restart. Policy queries and science/news queries remain distinct. Source timestamps are preserved and stale status is explicit.
+
+JSON files are atomically replaced. Thread and local POSIX file locks serialize matching fills and prevent simultaneous jobs from duplicating identical provider searches. A same-cell context lock also prevents duplicate drafts across concurrent numeric revisions. This cache supports local macOS/Linux deployment, not distributed or user-isolated production hosting.
+
+The user-facing flow is: explicit research button → try compatible stored report → only if absent, submit one bounded job → reuse matching stored source queries → create a cell-specific unreviewed qualitative draft when needed. A stale report is returned without a paid refresh. `refresh=True` is an explicit Python-only option; the HTTP research endpoint still accepts `{}` and exposes no automatic refresh control. No extra live calls were made to implement or test this milestone.
+
+The API also exposes `GET /api/v1/fine-regions` for the bounded native GLDAS pilot and routes `gldas025_...` details/research through the fine release loader. Fine native tiles are a limited coverage pilot while paired MODIS support remains pending; they do not imply worldwide fine-resolution screening. See `docs/regional_api.md` for current routes.
+
+## Remaining C work
+
+- Inspect source claim support, current policy status and geographic applicability for the chosen demo regions; record actual human reviews through the existing reviewed-evidence interface.
+- Validate source-cache behavior in the deployed process/storage environment and decide a deliberate refresh workflow, including budget ownership. No automatic paid refresh should be added.
+- Add server-reviewed official-domain mappings only when supported by authoritative sources. A country overlap or matching host is not legal validation.
+- Keep report/citation labels visible and keep legislative reports distinct from peer-reviewed studies. Number-word or causal hallucinations can evade structural validation, so source review remains required.
+- Rehearse explicit-button/cache behavior and stale-job suppression with D. Avoid adding keys or provider configuration to browser payloads.
+
+## Historical delivery review
+
+The following original plan records the earlier repository state and should not be treated as the current completion status.
+
 # Member C revised delivery plan
 
 ## Repository review and working assumptions

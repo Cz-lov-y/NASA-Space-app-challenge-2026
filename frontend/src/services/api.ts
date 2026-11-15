@@ -10,12 +10,13 @@ export async function apiJson(path: string, init?: RequestInit) {
 }
 export const apiService = {
   async getRegions() { return apiJson('/api/v1/regions'); },
+  async getFineRegions() { return apiJson('/api/v1/fine-regions'); },
   async getLocationData(location: SelectedLocation): Promise<LocationData> {
     if (location.regionId === 'demo-region') return {
       hasData: true, isSynthetic: true, observations: DEMO_TIMESERIES,
       analysis: DEMO_ANALYSIS, statusMessage: 'Synthetic demonstration; not NASA observations.'
     };
-    if (!location.regionId?.startsWith('grid_r')) return {
+    if (!location.regionId?.startsWith('grid_r') && !location.regionId?.startsWith('gldas025_')) return {
       hasData: false, isSynthetic: false, statusMessage: 'Select a registered grid cell for real observations.'
     };
     try {
