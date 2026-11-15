@@ -233,3 +233,8 @@ followed by Phase 2's DeepSeek adapter with mocked tests. Neither requires waiti
 for worldwide policy coverage or local map data. The next team handoffs are A's
 global wrapper, B's documented QA/indicator choice and D's global display/brief/chat
 wiring. The user only needs to configure DeepSeek access before a live model call.
+
+
+## Context panel presentation
+
+The location panel presents sourced AI-generated context with an overview, bullet points grouped by policies, research and conservation approaches, and direct source links. Empty categories are omitted. The retrieval date and stale-cache status are shown where applicable. The user must still explicitly request research, and results are cached. Model-generated claims and candidate citations remain unreviewed; source authenticity, policy applicability, current legal status, and claim support require human assessment. Text is displayed as returned by the backend, without inventing additional claims. No search results do not establish that policies are absent.
