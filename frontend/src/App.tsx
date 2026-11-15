@@ -62,7 +62,7 @@ export const App: React.FC = () => {
     // Pilot cells and other completed paired cells use the same browser
     // computation. Cached-only requests never start Earth Engine retrievals.
     const candidates = [...preparedRegions, ...restoredRegions, ...availableRegions.filter(r =>
-      ['supported_signal', 'uncertain_signal', 'no_detected_divergence'].includes(r.screeningStatus || ''))];
+      ['supported_signal', 'uncertain_signal', 'no_detected_divergence', 'insufficient'].includes(r.screeningStatus || ''))];
     const queued = new Set<string>();
     const unique = candidates.filter(region => {
       if (!region.regionId || analyzedIds.current.has(region.regionId) || queued.has(region.regionId)) return false;
@@ -177,8 +177,8 @@ export const App: React.FC = () => {
         <p className="mt-1 text-slate-400">{geographyError ? 'Land map unavailable. Refresh to try again.' : geography ? 'Select a place on land to see its data.' : 'Loading land map…'}</p>
         <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 border-t border-slate-700 pt-2 text-[11px] text-slate-400" aria-label="Map legend">
           <span><span className="text-red-600">●</span> Stronger signal</span>
-          <span><span className="text-yellow-600">●</span> Uncertain</span>
-          <span><span className="text-green-600">●</span> No signal</span>
+          <span><span className="text-yellow-800">●</span> Uncertain</span>
+          <span><span className="text-green-700">●</span> No signal</span>
           <span><span className="text-slate-500">●</span> Not yet analyzed</span>
         </div>
         <div className="mt-3 border-t border-slate-700 pt-2">

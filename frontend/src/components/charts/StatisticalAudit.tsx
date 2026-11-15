@@ -93,7 +93,7 @@ export const StatisticalAudit: React.FC<StatisticalAuditProps> = ({
               <div className="grid grid-cols-2 gap-2 text-[11px]">
                 <div>
                   <span className="text-slate-400 block text-[10px]">OLS Annual Slope:</span>
-                  <span className={`font-bold ${finite(stat.slope) && stat.slope > 0 ? 'text-emerald-400' : finite(stat.slope) && stat.slope < 0 ? 'text-cyan-400' : 'text-slate-300'}`}>{numeric(stat.slope, true)} {stat.unit}/yr</span>
+                  <span className={`font-bold ${finite(stat.slope) && stat.slope > 0 ? 'text-emerald-700' : finite(stat.slope) && stat.slope < 0 ? 'text-cyan-400' : 'text-slate-300'}`}>{numeric(stat.slope, true)} {stat.unit}/yr</span>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px]">{(stat.confidence * 100).toFixed(0)}% Slope CI:</span>

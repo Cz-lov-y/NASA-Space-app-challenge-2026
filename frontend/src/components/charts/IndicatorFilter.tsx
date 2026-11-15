@@ -17,12 +17,12 @@ interface IndicatorFilterProps {
 }
 
 const INDICATOR_LABELS: Record<string, { label: string; color: string; badge: string }> = {
-  ndvi: { label: 'NDVI (Greenness)', color: 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10', badge: 'bg-emerald-500' },
+  ndvi: { label: 'NDVI (Greenness)', color: 'text-emerald-700 border-emerald-500/40 bg-emerald-500/10', badge: 'bg-emerald-500' },
   soil_water_0_100cm: { label: 'Soil Water (0–100 cm)', color: 'text-cyan-400 border-cyan-500/40 bg-cyan-500/10', badge: 'bg-cyan-500' },
-  soil_water_0_10cm: { label: 'Soil Water (0–10 cm)', color: 'text-purple-400 border-purple-500/40 bg-purple-500/10', badge: 'bg-purple-500' },
+  soil_water_0_10cm: { label: 'Soil Water (0–10 cm)', color: 'text-purple-700 border-purple-500/40 bg-purple-500/10', badge: 'bg-purple-500' },
   soil_moisture: { label: 'Soil Moisture', color: 'text-cyan-400 border-cyan-500/40 bg-cyan-500/10', badge: 'bg-cyan-500' },
-  temperature: { label: 'Surface Temp', color: 'text-amber-400 border-amber-500/40 bg-amber-500/10', badge: 'bg-amber-500' },
-  precipitation: { label: 'Precipitation', color: 'text-blue-400 border-blue-500/40 bg-blue-500/10', badge: 'bg-blue-500' },
+  temperature: { label: 'Surface Temp', color: 'text-amber-800 border-amber-500/40 bg-amber-500/10', badge: 'bg-amber-500' },
+  precipitation: { label: 'Precipitation', color: 'text-blue-700 border-blue-500/40 bg-blue-500/10', badge: 'bg-blue-500' },
 };
 
 export const IndicatorFilter: React.FC<IndicatorFilterProps> = ({

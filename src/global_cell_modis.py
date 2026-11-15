@@ -295,7 +295,9 @@ def all_screened_summaries(*,cache_directory=CACHE,index_path=BATCH_INDEX,limit=
         except (OSError,ValueError,KeyError,TypeError):continue
     batch_offset=max(0,offset-len(paths))
     batch_end=max(0,offset+limit-len(paths))
-    for number,(key,record) in enumerate(sorted(batches.items())):
+    # Newest completed batches first, so polling clients see fresh releases.
+    ordered_batches=sorted(batches.items(),key=lambda item:(str(item[1].get('updated_at_utc') or ''),item[0]),reverse=True)
+    for number,(key,record) in enumerate(ordered_batches):
         start=number*16;end=start+16
         if end<=batch_offset:continue
         if start>=batch_end:break

@@ -106,3 +106,17 @@ def test_country_priority_orders_actual_country_intersections_first(tmp_path):
     ordered,count=mod.prioritize_north_america(jobs,path)
     assert [j['id'] for j in ordered]==['us','canada','other']
     assert count==2
+
+
+def test_southern_alberta_is_first_and_other_priorities_preserve_order(tmp_path):
+    from shapely.geometry import box, mapping
+    path=tmp_path/'geography.json'
+    path.write_text(json.dumps({'regions':[{'name':'Alberta','country':'Canada',
+        'geometry':mapping(box(-120,49,-110,60))}]}))
+    jobs=[{'id':'us','bbox':[-100,35,-99,36]},
+          {'id':'central_alberta','bbox':[-114,53,-113,54]},
+          {'id':'south_alberta','bbox':[-114,50,-113,51]},
+          {'id':'outside','bbox':[-109,50,-108,51]}]
+    ordered,count=mod.prioritize_southern_alberta(jobs,path)
+    assert [j['id'] for j in ordered]==['south_alberta','us','central_alberta','outside']
+    assert count==1

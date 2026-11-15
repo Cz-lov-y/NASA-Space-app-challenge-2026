@@ -188,3 +188,22 @@ def test_raw_and_statistically_annotated_selection_share_native_data_job_key():
     legacy={'region_id':RID,'research_context':{'dataset_version':'statistical-adapter-version',
         'raw_dataset_version':'actual-source-fingerprint'}}
     assert modis.NativeModisJobs._key(raw)==modis.NativeModisJobs._key(legacy)
+
+
+def test_batch_map_pages_show_newest_completed_tile_first(tmp_path, monkeypatch):
+    import src.fine_workflow as workflow
+    from src.fine_grid import cell_feature
+    root=tmp_path/'repository'; directory=root/'data/processed/fine/global';directory.mkdir(parents=True)
+    records={}
+    for name,stamp in [('global_r100_c200','2026-01-01T00:00:00Z'),('global_r101_c200','2026-02-01T00:00:00Z')]:
+        tile=directory/name;tile.mkdir()
+        records[name]={'ready':True,'calculation_version':modis.CALCULATION_VERSION,'directory':str(tile),
+                       'bbox':[20,40,21,41],'updated_at_utc':stamp}
+    index=directory/'index.json';index.write_text(json.dumps({'schema_version':'global-native-tile-index-1','calculation_version':modis.CALCULATION_VERSION,'tiles':records}))
+    monkeypatch.setattr(modis,'ROOT',root)
+    def map_source(**kwargs):
+        row=404 if 'r101' in str(kwargs['directory']) else 400
+        return {'features':[cell_feature(row,col) for col in range(800,804) for _ in range(4)]}
+    monkeypatch.setattr(workflow,'fine_map',map_source)
+    first=modis.all_screened_summaries(cache_directory=tmp_path/'cache',index_path=index,limit=1,offset=0)
+    assert first['features'][0]['properties']['grid_row']==404

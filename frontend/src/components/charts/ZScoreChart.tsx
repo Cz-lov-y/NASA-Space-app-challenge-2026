@@ -136,8 +136,8 @@ export const ZScoreChart: React.FC<ZScoreChartProps> = ({
           smooth: 0.3,
           symbol: 'circle',
           symbolSize: 6,
-          lineStyle: { width: 2.8, color: '#10b981' },
-          itemStyle: { color: '#10b981', borderColor: '#ffffff', borderWidth: 2 },
+          lineStyle: { width: 2.8, color: '#047857' },
+          itemStyle: { color: '#047857', borderColor: '#ffffff', borderWidth: 2 },
           markLine: {
             silent: true,
             symbol: 'none',

@@ -17,7 +17,7 @@ const INDICATOR_CONFIG: Record<
 > = {
   ndvi: {
     label: 'Vegetation (NDVI)',
-    color: '#10b981', // Emerald
+    color: '#047857', // Emerald
     unit: 'index',
     yAxisIndex: 0,
   },
