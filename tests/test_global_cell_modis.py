@@ -181,3 +181,10 @@ def test_corrupt_solo_snapshot_does_not_duplicate_batch_cells_across_pages(tmp_p
     assert [f['id'] for f in first['features']]==[f['id'] for f in features[:2]]
     assert [f['id'] for f in second['features']]==[f['id'] for f in features[2:5]]
     assert not {f['id'] for f in first['features']} & {f['id'] for f in second['features']}
+
+
+def test_raw_and_statistically_annotated_selection_share_native_data_job_key():
+    raw={'region_id':RID,'research_context':{'dataset_version':'actual-source-fingerprint'}}
+    legacy={'region_id':RID,'research_context':{'dataset_version':'statistical-adapter-version',
+        'raw_dataset_version':'actual-source-fingerprint'}}
+    assert modis.NativeModisJobs._key(raw)==modis.NativeModisJobs._key(legacy)

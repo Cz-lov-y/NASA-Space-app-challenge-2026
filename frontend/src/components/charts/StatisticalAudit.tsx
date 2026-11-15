@@ -63,9 +63,9 @@ export const StatisticalAudit: React.FC<StatisticalAuditProps> = ({
 
   return (
     <div className="space-y-4 font-mono text-xs text-slate-300">
-      <div className={`p-4 rounded-xl border ${isSupported ? 'bg-amber-500/10 border-amber-500/30 text-amber-200' : category ? 'bg-space-900/80 border-slate-700/60 text-slate-300' : 'bg-space-900/50 border-slate-800 text-slate-400'}`}>
+      <div className={`p-4 rounded-xl border ${isSupported ? 'bg-red-500/10 border-red-500/30 text-red-700' : isAbsent ? 'bg-green-500/10 border-green-500/30 text-green-800' : category ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-800' : 'bg-space-900/50 border-slate-800 text-slate-400'}`}>
         <div className="flex items-center gap-2 mb-1.5">
-          {isSupported ? <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" /> : isAbsent ? <CheckCircle2 className="w-4 h-4 text-slate-400 shrink-0" /> : <AlertCircle className="w-4 h-4 text-slate-400 shrink-0" />}
+          {isSupported ? <ShieldAlert className="w-4 h-4 text-red-600 shrink-0" /> : isAbsent ? <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" /> : <AlertCircle className="w-4 h-4 text-yellow-600 shrink-0" />}
           <span className="font-bold text-sm tracking-wide">{headline}</span>
         </div>
         <p className="text-[11px] leading-relaxed opacity-90">
@@ -82,7 +82,7 @@ export const StatisticalAudit: React.FC<StatisticalAuditProps> = ({
         <div className="flex items-center gap-2 text-slate-400 uppercase text-[10px] tracking-wider mb-2">
           <Scale className="w-3.5 h-3.5 text-nasa-cyan" /><span>Stored Annual Trend Inference</span>
         </div>
-        <p className="text-[10px] text-slate-400 mb-2">Analyzed period: {periodLabel}. Chart window: {yearRange[0]}–{yearRange[1]}. Changing the chart window does not recompute these statistics.</p>
+        <p className="text-[10px] text-slate-400 mb-2">Analyzed period: {periodLabel}. Chart window: {yearRange[0]}–{yearRange[1]}. {detail?.screening_status === 'current_browser_computation' ? 'Statistics update in your browser when the chart window changes.' : 'Changing the chart window does not recompute these statistics.'}</p>
         <div className="space-y-2.5">
           {activeStats.map((stat) => (
             <div key={stat.variable} className="p-3 rounded-lg bg-space-950/70 border border-slate-800 space-y-2">

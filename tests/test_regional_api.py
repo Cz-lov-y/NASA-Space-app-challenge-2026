@@ -430,3 +430,50 @@ def test_persisted_screened_listing_is_bounded_and_never_starts_data_jobs(api,mo
     for query in ('limit=1001','offset=-1','limit=NaN','url=bad'):
         assert api.handle('GET','/api/v1/global-screened-cells?'+query)[0]==400
     assert api.jobs.calls==[]
+
+
+def test_raw_native_observations_align_missing_ndvi_without_server_statistics(api,monkeypatch):
+    import src.global_cell_modis as modis
+    from src.fine_grid import cell_feature
+    rid='gldas025_r448_c0800'
+    dates=pd.date_range('2003-01-01','2024-12-01',freq='MS')
+    data=bundle();data.update(region_id=rid,feature=cell_feature(448,800),screening_status='pending_ndvi',screening=None)
+    data['research_context']['region_id']=rid
+    # Explicitly synthetic transport-only fixture, never a NASA handoff artifact.
+    data['observations']=pd.DataFrame([{'date':date,'value':20.0,'unit':'kg m-2','variable':variable,
+        'source':'SYNTHETIC_TRANSPORT_FIXTURE','region_id':rid,'quality_flag':'coverage_review_required'}
+        for variable in ('soil_water_0_10cm','soil_water_0_100cm') for date in dates])
+    api._registered_fine=True
+    monkeypatch.setattr(api,'_registered_native',lambda region_id:False)
+    monkeypatch.setattr(api,'_global_raw',lambda region_id:deepcopy(data))
+    monkeypatch.setattr(api,'_global_native',lambda *a,**k:pytest.fail('Raw endpoint must not compute statistics'))
+    monkeypatch.setattr(modis,'cached_native_modis',lambda *a,**k:None)
+    monkeypatch.setattr(module,'build_region_detail',lambda *a,**k:pytest.fail('Raw endpoint must not build fit coordinates'))
+    code,result=api.handle('GET',f'/api/v1/regions/{rid}/observations')
+    assert code==200 and result['schema_version']=='regional-observations-1'
+    assert result['computation']['server_statistics_computed'] is False
+    frame=pd.DataFrame(result['observations'])
+    assert len(frame)==792 and frame.groupby('variable').size().eq(264).all()
+    ndvi=frame.loc[frame.variable=='ndvi']
+    assert ndvi.value.isna().all() and ndvi.quality_flag.eq('pending_export').all()
+    assert set(frame.loc[frame.variable!='ndvi','source'])=={'SYNTHETIC_TRANSPORT_FIXTURE'}
+    assert 'paired_analysis' not in result and 'annual_fits' not in result
+    assert api.jobs.calls==[]
+
+
+def test_raw_data_poll_returns_observations_without_legacy_analysis(api,monkeypatch):
+    from src.global_cell_modis import NativeModisJobs
+    rid='gldas025_r448_c0800'
+    data=bundle();data['region_id']=rid;data['research_context']['region_id']=rid
+    key=NativeModisJobs._key(data)
+    class DataJobs:
+        def poll(self,*a,**k):return {'state':'complete'}
+        def close(self):pass
+    api.native_modis_jobs=DataJobs()
+    monkeypatch.setattr(api,'_global_raw',lambda region_id:data)
+    monkeypatch.setattr(api,'_global_native',lambda *a,**k:pytest.fail('Raw polling must not compute statistics'))
+    monkeypatch.setattr(api,'_bundle',lambda *a,**k:data)
+    monkeypatch.setattr(api,'_raw_observations',lambda *a,**k:{'schema_version':'regional-observations-1'})
+    code,response=api.handle('GET',f'/api/v1/data-jobs/{"c"*32}?region_id={rid}&context_key={key}&format=observations')
+    assert code==200 and response['observations_response']['schema_version']=='regional-observations-1'
+    assert 'detail' not in response

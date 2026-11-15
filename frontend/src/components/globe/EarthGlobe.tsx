@@ -72,7 +72,8 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
   });
 
   // Handle click on the Earth sphere
-  const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
+    if (e.delta > 5 || e.button !== 0) return;
     e.stopPropagation();
     if (!earthMeshRef.current) return;
 
@@ -88,7 +89,7 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
       {/* Main Earth Surface Mesh */}
       <mesh
         ref={earthMeshRef}
-        onPointerDown={handlePointerDown}
+        onClick={handleClick}
       >
         <sphereGeometry args={[1, 64, 64]} />
         <meshStandardMaterial
@@ -122,9 +123,9 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
       })}
       {regions.filter(r => r.hasObservationalData || r.isTileNavigation).map(region => (
         <mesh key={region.id} position={latLngToVector3(region.lat, region.lng, 1.012)}
-          onPointerDown={event => { event.stopPropagation(); onSelectCoordinate({lat: region.lat, lng: region.lng}); }}>
+          onClick={event => { if (event.delta > 5 || event.button !== 0) return; event.stopPropagation(); onSelectCoordinate({lat: region.lat, lng: region.lng}); }}>
           {region.isExploratoryScreening ? <octahedronGeometry args={[0.003, 0]} /> : <sphereGeometry args={[region.isTileNavigation ? 0.009 : region.resolutionDegrees === 0.25 ? 0.0009 : 0.006, 8, 8]} />}
-          <meshBasicMaterial color={region.isTileNavigation ? '#ffffff' : region.screeningStatus === 'supported_signal' ? '#f59e0b' : region.screeningStatus === 'uncertain_signal' ? '#a78bfa' : '#00e5ff'} />
+          <meshBasicMaterial color={region.isTileNavigation ? '#1d4ed8' : region.screeningStatus === 'supported_signal' ? '#dc2626' : region.screeningStatus === 'uncertain_signal' ? '#eab308' : region.screeningStatus === 'no_detected_divergence' ? '#16a34a' : '#64748b'} />
         </mesh>
       ))}
       {/* Animated Location Pin (attached to the rotating Earth coordinate frame) */}

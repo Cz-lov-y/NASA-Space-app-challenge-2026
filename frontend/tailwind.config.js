@@ -5,16 +5,16 @@ export default {
     extend: {
       colors: {
         space: {
-          950: '#020617',
-          900: '#050b1a',
-          850: '#071229',
-          800: '#0b1e3d',
-          700: '#142a54',
+          950: '#f2f8fc',
+          900: '#ffffff',
+          850: '#edf5fa',
+          800: '#e4f0f6',
+          700: '#d2e3ee',
         },
         nasa: {
           blue: '#0B3D91',
           red: '#FC3D21',
-          cyan: '#00E5FF',
+          cyan: '#087a9b',
           teal: '#00B4D8',
           gold: '#FFB703',
         },

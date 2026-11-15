@@ -21,7 +21,7 @@ from src.fine_grid import build_tile_catalog
 from scripts.process_fine_gldas import main as process_native
 from scripts.export_fine_modis_earth_engine import load_request,CALCULATION_VERSION
 from scripts.export_regional_modis_earth_engine import export_plan
-from scripts.fetch_fine_modis import fetch as fetch_sources
+from scripts.fetch_fine_modis import fetch as fetch_sources,grouped_year_plan
 from scripts.merge_fine_modis import checked_catalog,validate,ingest
 from scripts.prepare_fine_backend import prepare
 from scripts.audit_fine_release import audit
@@ -83,20 +83,21 @@ def readiness(tile):
     return state
 
 
-def acquire(registry_path,project,*,fetch_requested=False,selected=None,cache=None,ee_client=None,reprocess=False,replace=False,audit_required=True):
+def acquire(registry_path,project,*,fetch_requested=False,selected=None,cache=None,ee_client=None,reprocess=False,replace=False,audit_required=True,years_per_request=1):
     if reprocess and not fetch_requested:raise ValueError('Explicit reprocessing requires --fetch')
     if reprocess and not replace:raise ValueError('Reprocessing existing source observations requires explicit --replace')
+    grouped_year_plan(years_per_request=years_per_request)
     tiles=load_tiles(registry_path,selected)
     cache=Path(cache) if cache else ROOT/'.cache/fine_modis_direct'
     report={'mode':'acquire' if fetch_requested else 'dry_plan','project':project,'registry':str(registry_path),
         'source_grid_degrees':.25,'selection':'Fixed registry; exploratory selection history disclosed separately. Acquisition never chooses replacements using classifications.','tiles':[],
         'export_tasks_submitted':0,'account_or_project_changes':False,'calculation_version':CALCULATION_VERSION,
-        'reprocess_requested':reprocess,'replacement_authorized':replace,'audit_required':audit_required}
+        'years_per_request':years_per_request,'reprocess_requested':reprocess,'replacement_authorized':replace,'audit_required':audit_required}
     for tile in tiles:
         state=readiness(tile)
         if not fetch_requested:
             report['tiles'].append({**state,'pilot_requests':0 if state['full_export_index_received'] else 1,
-                'annual_requests':0 if state['full_export_index_received'] else 22});continue
+                'annual_requests':0 if state['full_export_index_received'] else len(grouped_year_plan(years_per_request=years_per_request))});continue
         directory=tile['directory']
         if state['stage']=='incomplete_local_release':raise ValueError('Partial local release requires explicit repair; native extraction will not overwrite it')
         if state.get('needs_processing_correction') and not (reprocess and replace):
@@ -131,7 +132,7 @@ def acquire(registry_path,project,*,fetch_requested=False,selected=None,cache=No
             acquisition['pilot_finite_rows']=sum(source['finite_values'] for source in pilot['files'])
             # A valid winter pilot can have no valid pixels. Never choose a new
             # month or a new tile based on finding a desired statistical signal.
-            annual=fetch_sources(ee_client,project,request,catalog,digest,export_plan('years'),cache)
+            annual=fetch_sources(ee_client,project,request,catalog,digest,grouped_year_plan(years_per_request=years_per_request),cache)
             acquisition['annual_source_files']=len(annual['files'])
             acquisition['ingestion']=ingest([source['path'] for source in annual['files']],directory,replace=replace)
         acquisition['statistics']=prepare(directory)
@@ -150,11 +151,11 @@ def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--registry',type=Path,default=ROOT/'data/processed/fine/tiles.json')
     p.add_argument('--project',default='earthrisk-greenmirage');p.add_argument('--tile',action='append')
-    p.add_argument('--fetch',action='store_true');p.add_argument('--reprocess',action='store_true');p.add_argument('--replace',action='store_true');p.add_argument('--cache',type=Path,default=ROOT/'.cache/fine_modis_direct')
+    p.add_argument('--years-per-request',type=int,default=1);p.add_argument('--fetch',action='store_true');p.add_argument('--reprocess',action='store_true');p.add_argument('--replace',action='store_true');p.add_argument('--cache',type=Path,default=ROOT/'.cache/fine_modis_direct')
     args=p.parse_args(argv)
     if not args.project.strip():p.error('--project must be nonempty')
     if args.reprocess and not (args.fetch and args.replace):p.error('--reprocess requires --fetch --replace')
     if args.replace and not args.fetch:p.error('--replace requires --fetch')
-    print(json.dumps(acquire(args.registry,args.project,fetch_requested=args.fetch,selected=args.tile,cache=args.cache,reprocess=args.reprocess,replace=args.replace),indent=2))
+    print(json.dumps(acquire(args.registry,args.project,fetch_requested=args.fetch,selected=args.tile,cache=args.cache,reprocess=args.reprocess,replace=args.replace,years_per_request=args.years_per_request),indent=2))
 
 if __name__=='__main__':main()

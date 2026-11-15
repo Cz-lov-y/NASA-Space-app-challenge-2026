@@ -114,6 +114,7 @@ export interface RegionalDetail {
 export interface LocationData {
   hasData: boolean;
   isSynthetic: boolean;
+  rawObservations?: any;
   observations?: TimeSeriesObservation[];
   analysis?: RegionalAnalysis;
   detail?: RegionalDetail;

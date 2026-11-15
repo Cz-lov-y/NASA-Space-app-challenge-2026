@@ -21,14 +21,14 @@ const INDICATOR_CONFIG: Record<
     yAxisIndex: 0,
   },
   soil_water_0_100cm: {
-    label: 'Soil Water (0–100 cm)', color: '#00e5ff', unit: 'kg m-2', yAxisIndex: 1,
+    label: 'Soil Water (0–100 cm)', color: '#1675b9', unit: 'kg m-2', yAxisIndex: 1,
   },
   soil_water_0_10cm: {
     label: 'Soil Water (0–10 cm)', color: '#a855f7', unit: 'kg m-2', yAxisIndex: 1,
   },
   soil_moisture: {
     label: 'Soil Moisture',
-    color: '#00e5ff', // Electric Cyan
+    color: '#1675b9', // Electric Cyan
     unit: 'kg/m²',
     yAxisIndex: 1,
   },
@@ -114,7 +114,7 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
         },
         itemStyle: {
           color: config.color,
-          borderColor: '#020617',
+          borderColor: '#ffffff',
           borderWidth: 2,
         },
         areaStyle: {
@@ -169,26 +169,26 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
       animationDuration: 750,
       tooltip: {
         trigger: 'axis',
-        backgroundColor: 'rgba(2, 6, 23, 0.92)',
+        backgroundColor: 'rgba(255, 255, 255, 0.97)',
         borderColor: 'rgba(0, 229, 255, 0.3)',
         borderWidth: 1,
         padding: [10, 14],
         textStyle: {
-          color: '#f8fafc',
+          color: '#17334a',
           fontFamily: 'ui-monospace, monospace',
           fontSize: 12,
         },
         formatter: (params: any[]) => {
           if (!params || params.length === 0) return '';
-          let tip = `<div style="font-weight:bold;margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:4px;color:#00e5ff">${params[0].axisValue}</div>`;
+          let tip = `<div style="font-weight:bold;margin-bottom:6px;border-bottom:1px solid rgba(30,75,100,0.15);padding-bottom:4px;color:#08758f">${params[0].axisValue}</div>`;
           params.forEach((item) => {
             if (item.value === null || item.value === undefined) return;
             tip += `<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin:3px 0;">
               <span style="display:inline-flex;align-items:center;gap:6px;">
                 <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${item.color};"></span>
-                <span style="color:#cbd5e1">${item.seriesName}</span>
+                <span style="color:#355469">${item.seriesName}</span>
               </span>
-              <strong style="color:#ffffff">${item.value}</strong>
+              <strong style="color:#17334a">${item.value}</strong>
             </div>`;
           });
           return tip;
@@ -198,7 +198,7 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
         top: 2,
         data: selectedIndicators.map((v) => INDICATOR_CONFIG[v]?.label).filter(Boolean),
         textStyle: {
-          color: '#94a3b8',
+          color: '#475f70',
           fontSize: 11,
           fontFamily: 'ui-monospace, monospace',
         },
@@ -216,7 +216,7 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
         data: dates,
         axisLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.2)' } },
         axisLabel: {
-          color: '#94a3b8',
+          color: '#475f70',
           fontSize: 10,
           fontFamily: 'ui-monospace, monospace',
           formatter: (val: string) => val.slice(0, 4), // show year
@@ -228,13 +228,13 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
           type: 'value',
           name: primaryUnit,
           nameTextStyle: {
-            color: '#64748b',
+            color: '#526c7c',
             fontSize: 10,
             fontFamily: 'ui-monospace, monospace',
           },
           axisLine: { show: false },
           axisLabel: {
-            color: '#94a3b8',
+            color: '#475f70',
             fontSize: 10,
             fontFamily: 'ui-monospace, monospace',
           },
@@ -251,14 +251,14 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
                 type: 'value',
                 name: secondaryUnit,
                 nameTextStyle: {
-                  color: '#64748b',
+                  color: '#526c7c',
                   fontSize: 10,
                   fontFamily: 'ui-monospace, monospace',
                 },
                 position: 'right',
                 axisLine: { show: false },
                 axisLabel: {
-                  color: '#94a3b8',
+                  color: '#475f70',
                   fontSize: 10,
                   fontFamily: 'ui-monospace, monospace',
                 },
@@ -276,10 +276,10 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
           borderColor: 'rgba(0, 229, 255, 0.2)',
           fillerColor: 'rgba(0, 229, 255, 0.15)',
           handleStyle: {
-            color: '#00e5ff',
-            borderColor: '#020617',
+            color: '#1675b9',
+            borderColor: '#ffffff',
           },
-          textStyle: { color: '#64748b', fontSize: 9 },
+          textStyle: { color: '#526c7c', fontSize: 9 },
         },
         {
           type: 'inside',

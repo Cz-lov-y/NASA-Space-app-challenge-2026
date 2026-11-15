@@ -6,6 +6,7 @@ import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import math
+import pandas as pd
 from pathlib import Path
 import re
 from threading import Event, Lock
@@ -85,9 +86,8 @@ class RegionalAPI:
             files.append(boundary)
         return tuple((str(path.resolve()),path.stat().st_mtime_ns,path.stat().st_size) for path in files)
 
-    def _global_native(self,region_id):
+    def _global_raw(self,region_id):
         from src.global_cell_data import load_global_cell
-        from src.global_cell_analysis import analyze_global_cell
         signature=self._global_source_signature()
         key=(region_id,signature)
         with self._global_cache_guard:
@@ -112,7 +112,7 @@ class RegionalAPI:
         try:
             raw=load_global_cell(region_id,raw_directory=self.global_raw_directory,
                                  cache_directory=self.global_cache_directory)
-            result=analyze_global_cell(raw)
+            result=raw
             if self._global_source_signature()!=signature:
                 raise APIError(409,'global_source_changed_retry')
             with self._global_cache_guard:
@@ -134,6 +134,10 @@ class RegionalAPI:
                 self._global_inflight=None
                 record['event'].set()
 
+    def _global_native(self,region_id):
+        from src.global_cell_analysis import analyze_global_cell
+        return analyze_global_cell(self._global_raw(region_id))
+
     def _registered_native(self,region_id):
         from src.fine_grid import cell_bbox,parse_cell_id
         from src.fine_workflow import load_tile_index
@@ -142,7 +146,7 @@ class RegionalAPI:
         return any(t['bbox'][0]<=bbox[0] and t['bbox'][1]<=bbox[1]
                    and t['bbox'][2]>=bbox[2] and t['bbox'][3]>=bbox[3] for t in registry['tiles'])
 
-    def _bundle(self, region_id):
+    def _bundle(self, region_id, *, raw_only=False):
         fine = region_id.startswith('gldas025_')
         if not fine:
             match = REGION_PATTERN.fullmatch(region_id)
@@ -163,14 +167,14 @@ class RegionalAPI:
                             bundle=load_region(region_id,directory=batch)
                             bundle['provenance']['global_batch_scope']='single-tile exploratory; not worldwide adjusted'
                         else:
-                            bundle = self._global_native(region_id)
+                            bundle = self._global_raw(region_id) if raw_only else self._global_native(region_id)
                             bundle['on_demand_native']=True
                             try:
                                 from src.global_cell_modis import cached_native_modis
                                 from src.global_screening import screen_global_cell
                                 paired=cached_native_modis(bundle,cache_directory=self.native_modis_cache)
                                 if paired is not None:
-                                    bundle=screen_global_cell(paired)
+                                    bundle=paired if raw_only else screen_global_cell(paired)
                                     bundle['on_demand_native']=True
                             except (OSError,ValueError,KeyError,TypeError):
                                 bundle['native_modis_error']='native_modis_cache_invalid'
@@ -186,7 +190,7 @@ class RegionalAPI:
             raise APIError(404,'unknown_region') from None
         except (OSError, KeyError, TypeError):
             raise APIError(503,'regional_release_unavailable') from None
-        if bundle['screening_status'] != 'current':
+        if not raw_only and bundle['screening_status'] != 'current':
             raise APIError(409,'screening_rebuild_required')
         for jurisdiction in bundle['research_context']['jurisdictions']:
             if jurisdiction.get('name') in OFFICIAL_DOMAINS:
@@ -226,6 +230,42 @@ class RegionalAPI:
         state=self._ndvi_state(bundle,start=start_native)
         if state is not None:detail['ndvi_retrieval']=state
         return detail
+
+    def _raw_observations(self,bundle,*,start_native=False):
+        frame=bundle['observations'].copy(deep=True)
+        expected=pd.MultiIndex.from_product([[bundle['region_id']],
+            ['ndvi','soil_water_0_10cm','soil_water_0_100cm'],
+            pd.date_range('2003-01-01','2024-12-01',freq='MS')],names=['region_id','variable','date'])
+        frame['date']=pd.to_datetime(frame.date,utc=True).dt.tz_localize(None)
+        if frame.duplicated(['region_id','variable','date']).any():
+            raise APIError(503,'duplicate_source_observations')
+        frame=frame.set_index(['region_id','variable','date']).reindex(expected).reset_index()
+        for variable,unit,source in [('ndvi','1','MOD13A3.061'),
+                ('soil_water_0_10cm','kg m-2','GLDAS_NOAH025_M.2.1'),
+                ('soil_water_0_100cm','kg m-2','GLDAS_NOAH025_M.2.1')]:
+            rows=frame.variable==variable
+            for key,value in [('unit',unit),('source',source)]:
+                if key not in frame:frame[key]=None
+                frame.loc[rows,key]=frame.loc[rows,key].fillna(value)
+        if 'quality_flag' not in frame:frame['quality_flag']=None
+        pending=(frame.variable=='ndvi') & frame.quality_flag.isna()
+        frame.loc[pending,'quality_flag']='pending_export'
+        frame['quality_flag']=frame.quality_flag.fillna('missing')
+        state=self._ndvi_state(bundle,start=start_native)
+        if state and state.get('poll_url'):state['poll_url']+='&format=observations'
+        return {'schema_version':'regional-observations-1','region_id':bundle['region_id'],
+                'feature':deepcopy(bundle['feature']),'dataset_version':bundle['research_context']['dataset_version'],
+                'period':{'start':'2003-01-01','end':'2024-12-01'},
+                'observations':json.loads(frame.to_json(orient='records',date_format='iso',double_precision=15)),
+                'provenance':deepcopy(bundle['provenance']),'availability':deepcopy(bundle.get('availability',{})),
+                'status':bundle.get('status',bundle['feature']['properties'].get('data_status')),
+                'hasData':bool(bundle['observations'].value.notna().any()),'ndvi_retrieval':state,
+                'computation':{'location':'browser','server_statistics_computed':False,
+                    'variables':['ndvi','soil_water_0_10cm','soil_water_0_100cm'],
+                    'missing_values':'JSON null; no filling or interpolation',
+                    'qa_reviewed':False,'synthetic_demo':False},
+                'limitations':['Aligned monthly source observations; pending NDVI placeholders are not observations.',
+                    'Browser-derived screening is exploratory unless an explicit joint testing family is supplied.']}
 
     def _descriptor(self, bundle):
         region = bundle['region_id']
@@ -270,16 +310,22 @@ class RegionalAPI:
             return 200,all_screened_summaries(cache_directory=self.native_modis_cache,limit=limit,offset=offset)
         data_match=re.fullmatch(r'/api/v1/data-jobs/([a-f0-9]{32})',path)
         if method=='GET' and data_match:
-            if set(query)!={'region_id','context_key'} or any(len(v)!=1 or not v[0] for v in query.values()):
+            if not {'region_id','context_key'}.issubset(query) or set(query)-{'region_id','context_key','format'} or any(len(v)!=1 or not v[0] for v in query.values()):
                 raise APIError(400,'region_and_context_required')
+            raw_format=query.get('format',['detail'])[0]
+            if raw_format not in ('detail','observations'):raise APIError(400,'invalid_data_job_format')
             rid=query['region_id'][0]
             state=self.native_modis_jobs.poll(data_match[1],region_id=rid,context_key=query['context_key'][0])
             if state['state']=='complete':
-                base=self._global_native(rid)
-                current_key=hashlib.sha256((rid+base['research_context']['dataset_version']).encode()).hexdigest()
+                base=self._global_raw(rid) if raw_format=='observations' else self._global_native(rid)
+                from src.global_cell_modis import NativeModisJobs
+                current_key=NativeModisJobs._key(base)
                 if current_key!=query['context_key'][0]:
                     raise APIError(409,'native_data_source_changed')
-                state['detail']=self._detail(self._bundle(rid),start_native=False)
+                if raw_format=='observations':
+                    state['observations_response']=self._raw_observations(self._bundle(rid,raw_only=True),start_native=False)
+                else:
+                    state['detail']=self._detail(self._bundle(rid),start_native=False)
             return (404 if state['state']=='unknown' else 409 if state['state']=='stale' else 200),state
         if method == 'GET' and path == '/api/v1/cell':
             if set(query)!={'lon','lat'} or any(len(v)!=1 or not v[0] for v in query.values()):
@@ -326,10 +372,13 @@ class RegionalAPI:
                     or payload.get('source_catalog_sha256') != _file_digest(self.directory/'catalog.json')):
                 raise APIError(409,'map_rebuild_required')
             return 200,payload
-        match = re.fullmatch(r'/api/v1/regions/([^/]+)(/(?:research(?:/cached)?|ndvi))?',path)
+        match = re.fullmatch(r'/api/v1/regions/([^/]+)(/(?:research(?:/cached)?|ndvi|observations))?',path)
         if match:
-            bundle = self._bundle(match[1])
             suffix = match[2]
+            if suffix=='/observations':
+                if method!='GET':raise APIError(405,'method_not_allowed')
+                return 200,self._raw_observations(self._bundle(match[1],raw_only=True),start_native=True)
+            bundle = self._bundle(match[1])
             if method == 'GET' and suffix is None:
                 return 200,self._detail(bundle,start_native=True)
             if method=='POST' and suffix=='/ndvi':

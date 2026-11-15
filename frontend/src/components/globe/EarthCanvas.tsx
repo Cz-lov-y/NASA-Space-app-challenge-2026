@@ -76,25 +76,20 @@ export const EarthCanvas: React.FC<EarthCanvasProps> = ({
     <div className="w-full h-full absolute inset-0 z-0">
       <Canvas
         camera={{ position: [0, 0, 2.5], fov: 45, near: 0.1, far: 1000 }}
-        onPointerDown={(e) => {
-          // If clicked canvas element directly without hitting 3D object
-          if (e.target === e.currentTarget) {
-            handleMissedClick();
-          }
-        }}
+        onPointerMissed={handleMissedClick}
         gl={{
           antialias: true,
           powerPreference: 'high-performance',
           alpha: false,
         }}
       >
-        <color attach="background" args={['#020617']} />
+        <color attach="background" args={['#c8e5f2']} />
 
         {/* Space Lighting - Authentic Solar & Earth Illumination */}
-        <ambientLight intensity={0.55} color="#102a45" />
+        <ambientLight intensity={1.5} color="#ffffff" />
         <directionalLight
           position={[5, 3, 4]}
-          intensity={2.8}
+          intensity={2.0}
           color="#ffffff"
         />
         <directionalLight
@@ -109,7 +104,7 @@ export const EarthCanvas: React.FC<EarthCanvasProps> = ({
         />
 
         {/* Background Starfield */}
-        <Starfield count={3800} />
+        <Starfield count={500} />
 
         {/* 3D Earth Globe with Texture Suspension */}
         <Suspense fallback={null}>

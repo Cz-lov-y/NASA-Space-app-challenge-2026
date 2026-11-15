@@ -16,6 +16,7 @@ import { LocationData, RegionalDetail } from '../../types/contracts';
 import { ResearchPanel } from './ResearchPanel';
 import { formatCoordinates } from '../../utils/coordinates';
 import { apiService, apiJson, locationDataFromDetail } from '../../services/api';
+import { computeLiveScreening } from '../../services/liveScreening';
 import { TimeseriesChart } from '../charts/TimeseriesChart';
 import { ZScoreChart } from '../charts/ZScoreChart';
 import { IndicatorFilter } from '../charts/IndicatorFilter';
@@ -88,8 +89,9 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
       try {
         const job = await apiJson(retrieval.poll_url!);
         if (!active) return;
-        if (job.state === 'complete' && job.detail) {
-          const next = locationDataFromDetail(job.detail);
+        if (job.state === 'complete' && (job.observations_response || job.detail)) {
+          const raw = job.observations_response;
+          const next = raw ? { ...locationDataFromDetail(computeLiveScreening(raw, { startYear: yearRange[0], endYear: yearRange[1] })), rawObservations: raw } : locationDataFromDetail(job.detail);
           setDataStatus(next);
           if (next.observations?.some(o => o.variable === 'ndvi' && o.value !== null))
             setSelectedIndicators(current => current.includes('ndvi') ? current : ['ndvi', ...current]);
@@ -105,7 +107,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
     };
     timer = setTimeout(poll, 1000);
     return () => { active = false; clearTimeout(timer); };
-  }, [location?.regionId, retrieval?.poll_url]);
+  }, [location?.regionId, retrieval?.poll_url, yearRange]);
 
   useEffect(() => { if (dataStatus?.detail && onDetail) onDetail(dataStatus.detail); }, [dataStatus?.detail, onDetail]);
 
@@ -118,6 +120,14 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
       setDataStatus(current => current?.detail ? { ...current, detail: { ...current.detail, ndvi_retrieval: { ...retrieval, state: 'failed' } } } : current);
     }
   };
+
+  useEffect(() => {
+    setDataStatus(current => {
+      if (!current?.rawObservations) return current;
+      const detail = computeLiveScreening(current.rawObservations, { startYear: yearRange[0], endYear: yearRange[1] });
+      return { ...locationDataFromDetail(detail), rawObservations: current.rawObservations };
+    });
+  }, [yearRange]);
 
   const handleToggleIndicator = (variable: string) => {
     setSelectedIndicators((prev) => {
@@ -249,7 +259,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
               {retrieval?.retryable && retrieval.retry_url && <button type="button" onClick={retryVegetation} className="border border-cyan-700 rounded px-2 py-1 text-cyan-200">Retry vegetation loading</button>}
               <p className="text-amber-200">{dataStatus.detail.screening?.category || (dataStatus.detail.screening?.classification === 'unsupported' ? 'Outside GLDAS model coverage' : dataStatus.detail.screening?.classification === 'insufficient' ? 'Insufficient usable paired years' : 'Paired screening pending')} · source QA review pending</p>
               {dataStatus.detail.screening?.family_scope && <p className="text-slate-400">{dataStatus.detail.screening.family_scope}. This is preliminary evidence, not a calibrated probability of harm.</p>}
-              <p className="text-slate-400">Cyan dots identify cells with observations. They do not by themselves indicate environmental risk.</p>
+              <p className="text-slate-400">Colors describe preliminary evidence, not a probability of harm or proof of safety.</p>
               <details className="rounded-lg border border-slate-700 p-3"><summary>NASA source and processing provenance</summary>
                 <pre className="whitespace-pre-wrap text-[10px] mt-2">{JSON.stringify(dataStatus.detail.provenance, null, 2)}</pre>
               </details>

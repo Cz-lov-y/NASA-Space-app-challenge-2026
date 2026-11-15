@@ -210,3 +210,15 @@ A default `--min-free-gib 20` guard checks available disk space before each tile
 For this demo-oriented bulk path, the expensive independent release audit is explicitly deferred (`release_audit_status: deferred_for_demo`). Essential file parsing, source identity, native geometry, source QA, scaling, missing-value and version checks still run. Per-tile screening is provisional and its multiple-testing family stays tile-local. `worldwide_testing_family_complete` remains false: globally adjusted significance cannot be inferred by collecting tile-local classifications. No p-value is presented as a risk probability. The complete-world acquisition and rigorous worldwide statistical review remain outstanding until their actual outputs exist.
 
 The Earth Engine GLDAS2.1 collection is [three-hourly](https://developers.google.com/earth-engine/datasets/catalog/NASA_GLDAS_V021_NOAH_G025_T3H); it is not silently substituted for the archived authoritative monthly GLDAS product. This pipeline retrieves MODIS aggregates and joins those existing native monthly soil observations.
+
+## Optional request grouping without changing the data method
+
+The acquisition commands now accept `--years-per-request 2` as an opt-in acceleration. It groups two adjacent calendar years into the same existing native MODIS aggregation graph, reducing the 22 annual remote calls to 11 bounded calls per tile. Each response contains at most 384 month/cell rows for a sixteen-cell tile. The native grid, masks, source QA, area method, timestamps, monthly values and 30-second deadline are unchanged. It creates no extra parallel requests and changes no service tier or quota setting.
+
+The default remains one year per request, preserving current source-receipt identities and the already running background process. No background process was restarted to enable grouping, and no grouped live probe was run concurrently with that acquisition. This option is implemented and locally tested; its live speed benefit has not been measured. A future authorized invocation can use:
+
+```sh
+.venv/bin/python scripts/global_screen_earth_engine.py --fetch --years-per-request 2 --min-free-gib 20
+```
+
+Existing complete tile releases remain reusable. New grouped request intervals have their own immutable receipts. A partly completed one-year request cache is not falsely treated as a completed two-year response. On-demand per-cell API jobs currently retain their existing annual request layout unless their controller explicitly adopts and validates grouped source records.

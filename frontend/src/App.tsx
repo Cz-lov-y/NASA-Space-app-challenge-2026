@@ -173,13 +173,14 @@ export const App: React.FC = () => {
         {fineMode && tileLoading && <p className="mt-2 text-slate-400">Loading area…</p>}
         {fineMode && fineError && <p className="mt-2 text-amber-300">Area data unavailable.</p>}
         <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 border-t border-slate-700 pt-2 text-[11px] text-slate-400" aria-label="Map legend">
-          <span><span className="text-cyan-400">●</span> Data</span>
-          <span><span className="text-violet-400">●</span> Uncertain</span>
-          <span><span className="text-amber-400">●</span> Signal</span>
+          <span><span className="text-red-600">●</span> Stronger signal</span>
+          <span><span className="text-yellow-600">●</span> Uncertain</span>
+          <span><span className="text-green-600">●</span> No signal</span>
+          <span><span className="text-slate-500">●</span> Pending</span>
         </div>
         <details className="mt-2 text-[11px] text-slate-400">
           <summary className="cursor-pointer text-cyan-200">About this map</summary>
-          <p className="mt-2">Colors show preliminary evidence, not a probability of harm. Circles use the six-area analysis; diamonds are individually screened cells. Global screening is still in progress.</p>
+          <p className="mt-2">Red shows stronger evidence of opposing trends, yellow uncertain evidence, green no detected divergence, and gray insufficient or pending data. These are preliminary categories, not probabilities of harm or proof of safety. Circles use the six-area analysis; diamonds are individually screened cells. Global screening is still in progress.</p>
           {fineMode && family && <p className="mt-1">The six-area analysis includes {family.catalog_regions} cells and {family.family_size} tests.</p>}
           {fineMode && screenedTotal > 0 && <p className="mt-1">{screenedTotal} additional cells screened.</p>}
           {fineMode && screenedTotal > 1000 && <p className="mt-1"><button type="button" disabled={!screenedOffset} onClick={() => setScreenedOffset(Math.max(0, screenedOffset - 1000))} className="text-cyan-300 underline disabled:text-slate-600">Previous</button>{' · '}<button type="button" disabled={screenedOffset + 1000 >= screenedTotal} onClick={() => setScreenedOffset(screenedOffset + 1000)} className="text-cyan-300 underline disabled:text-slate-600">Next</button></p>}

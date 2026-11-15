@@ -137,7 +137,9 @@ class NativeModisJobs:
         self.jobs={};self.by_key={};self.closed=False
     @staticmethod
     def _key(bundle):
-        return hashlib.sha256((bundle['region_id']+bundle['research_context']['dataset_version']).encode()).hexdigest()
+        context=bundle['research_context']
+        version=context.get('raw_dataset_version',context['dataset_version'])
+        return hashlib.sha256((bundle['region_id']+version).encode()).hexdigest()
     @staticmethod
     def _snapshot(job):
         return {k:deepcopy(job[k]) for k in ('request_id','region_id','context_key','state','completed_years','total_years','current_year','error_code','retryable')}

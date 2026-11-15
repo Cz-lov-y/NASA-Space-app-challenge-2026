@@ -170,3 +170,12 @@ The native MODIS area calculation is now versioned as `modis_sinusoidal_sphere_n
 
 
 The Explore Earth card keeps the map controls compact; open **About this map** for the legend and screening scope. The global native pairing job runs with `.venv/bin/python scripts/global_screen_earth_engine.py --fetch` and checkpoints completed tiles under `data/processed/fine/global/`. It may take days and stop when free disk space falls below 20 GiB or a service-wide failure occurs. Original QA gaps and unsupported cells remain explicit.
+
+
+### Daylight display and local analysis
+
+The map uses red for a preliminary supported opposing-trend signal, yellow for uncertain evidence, green for no detected divergence, and gray for pending or insufficient data. These colors are evidence categories, not calibrated probabilities or proof that a location is safe. Drag to rotate; click to select.
+
+For native cells, the browser reads monthly source observations and computes the selected-cell statistics locally, updating them when the year window changes. This is an exploratory cell/window analysis, not a globally adjusted significance family. Stored map markers still use existing processed screening results. The server supplies data, runs long acquisition jobs and only starts AI research when the user clicks the research button.
+
+The existing background acquisition continues using the free Earth Engine project, cached monthly source files and local scripts. A future invocation can use `--years-per-request 2` to group up to two years per request, while preserving the same source method; this option has automated tests but has not yet been benchmarked against the live service. Existing one-year receipts remain reusable by the existing default path.

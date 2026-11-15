@@ -1,6 +1,7 @@
 import { LocationData, RegionalDetail } from '../types/contracts';
 import { DEMO_ANALYSIS, DEMO_TIMESERIES } from '../mock/mockData';
 import { SelectedLocation } from '../types/globe';
+import { computeLiveScreening } from './liveScreening';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 export async function apiJson(path: string, init?: RequestInit) {
@@ -30,6 +31,11 @@ export const apiService = {
       hasData: false, isSynthetic: false, statusMessage: 'This point is outside the available GLDAS land grid. Select another location.'
     };
     try {
+      if (location.regionId.startsWith('gldas025_')) {
+        const raw = await apiJson(`/api/v1/regions/${encodeURIComponent(location.regionId)}/observations`);
+        const detail = computeLiveScreening(raw, { startYear: 2003, endYear: 2024 });
+        return { ...locationDataFromDetail(detail), rawObservations: raw };
+      }
       const detail: RegionalDetail = await apiJson(`/api/v1/regions/${encodeURIComponent(location.regionId)}`);
       return locationDataFromDetail(detail);
     } catch (error) { return { hasData: false, isSynthetic: false,

@@ -101,3 +101,18 @@ def test_calculation_version_change_cannot_reuse_legacy_cache_key(fine_release,t
     receipt_path.write_text(json.dumps(receipt))
     second=fetch(fake,'SYNTHETIC_PROJECT',request,catalog,'SYNTHETIC_TARGET',plan,cache)
     assert not second['files'][0]['reused'] and calls==['fetch','fetch']
+
+
+def test_optional_two_year_grouping_preserves_every_required_month_and_default_receipts():
+    from scripts.fetch_fine_modis import grouped_year_plan
+    from scripts.export_regional_modis_earth_engine import export_plan
+    import pandas as pd
+    assert grouped_year_plan()==export_plan('years')
+    pairs=grouped_year_plan(years_per_request=2)
+    assert len(pairs)==11 and pairs[0]=={'start':'2003-01-01','end':'2005-01-01','label':'2003_2004'}
+    assert pairs[-1]['end']=='2025-01-01'
+    months=[month for item in pairs for month in pd.date_range(item['start'],item['end'],freq='MS',inclusive='left')]
+    assert len(months)==264 and len(set(months))==264
+    assert len(grouped_year_plan(2003,2005,2))==2
+    for value in [0,3,True,1.5]:
+        with pytest.raises(ValueError):grouped_year_plan(years_per_request=value)

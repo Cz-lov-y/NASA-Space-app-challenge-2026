@@ -22,6 +22,19 @@ from scripts.export_regional_modis_earth_engine import COLUMNS,export_plan,QA_RU
 from scripts.merge_fine_modis import validate_frame,validate
 
 
+def grouped_year_plan(first_year=2003,last_year=2024,years_per_request=1):
+    """Bound the same native graph to at most2years/384rows per tile request."""
+    if isinstance(years_per_request,bool) or not isinstance(years_per_request,int) or not 1<=years_per_request<=2:
+        raise ValueError('Years per request must be an integer in1to2')
+    years=export_plan('years',first_year,last_year)
+    groups=[]
+    for start in range(0,len(years),years_per_request):
+        chunk=years[start:start+years_per_request]
+        groups.append({'start':chunk[0]['start'],'end':chunk[-1]['end'],
+            'label':chunk[0]['label'] if len(chunk)==1 else chunk[0]['label']+'_'+chunk[-1]['label']})
+    return groups
+
+
 def checked_result(payload,catalog,item):
     features=payload.get('features',[])
     frame=pd.DataFrame([feature['properties'] for feature in features])
@@ -111,6 +124,7 @@ def main(argv=None):
     p.add_argument('--project',required=True);p.add_argument('--request',type=Path,default=ROOT/'data/requests/fine_central_us_1deg.json')
     p.add_argument('--mode',choices=['pilot','years','month'],default='pilot');p.add_argument('--month',default='2003-01-01')
     p.add_argument('--first-year',type=int);p.add_argument('--last-year',type=int)
+    p.add_argument('--years-per-request',type=int,default=1,help='Optional exact-graph grouping1to2years; default1 preserves existing receipts')
     p.add_argument('--fetch',action='store_true');p.add_argument('--refresh',action='store_true')
     p.add_argument('--deadline-seconds',type=int,default=30);p.add_argument('--cache',type=Path,default=ROOT/'.cache/fine_modis_direct')
     args=p.parse_args(argv)
@@ -121,7 +135,7 @@ def main(argv=None):
     if len(catalog['features'])>16:p.error('Interactive fine retrieval is restricted to at most16native cells')
     first=args.first_year if args.first_year is not None else request.get('first_year',2003)
     last=args.last_year if args.last_year is not None else request.get('last_year',2024)
-    plan=export_plan(args.mode,first,last,args.month)
+    plan=grouped_year_plan(first,last,args.years_per_request) if args.mode=='years' else export_plan(args.mode,first,last,args.month)
     if args.fetch:
         import ee
         result=fetch(ee,args.project,request,catalog,digest,plan,args.cache,args.deadline_seconds,args.refresh)
