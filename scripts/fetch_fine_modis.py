@@ -119,6 +119,43 @@ def fetch(ee,project,request,catalog,target_sha,plan,cache,deadline_seconds=30,r
         'ingested':False,'next_step':'Validate retained source files and explicitly ingest with scripts/merge_fine_modis.py; rebuild statistics/bundle afterward.'}
 
 
+def fetch_parallel(ee,project,request,catalog,target_sha,plan,cache,*,workers=4):
+    """Run independent annual requests concurrently with one receipt per request.
+
+    Each request has its own cache and receipt. The caller remains the only
+    writer of the final tile and global index. A retry reuses completed annual
+    receipts; partial or failed batches never reach tile ingestion.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+    if isinstance(workers,bool) or not isinstance(workers,int) or not 1<=workers<=16:
+        raise ValueError('Parallel request workers must be1to16')
+    ee.Initialize(project=project);ee.data.setDeadline(30000);ee.data.setMaxRetries(0)
+    class InitializedEE:
+        def Initialize(self,**kwargs):pass
+        def __getattr__(self,name):return getattr(ee,name)
+    client=InitializedEE()
+    def one(item):
+        identity={'project':project,'geometry':target_sha,'tile':request['tile_id'],
+                  'start':item['start'],'end':item['end'],'method':CALCULATION_VERSION}
+        key=hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()
+        result=fetch(client,project,request,catalog,target_sha,[item],Path(cache)/'parallel'/key)
+        return result['files'][0]
+    try:
+        with ThreadPoolExecutor(max_workers=workers,thread_name_prefix='earth-engine-year') as pool:
+            files=list(pool.map(one,plan))
+    except Exception as exc:
+        # Earth Engine's aggregation quota can be lower than its request quota.
+        # Keep completed per-year receipts and progressively reduce concurrency.
+        message=str(exc).lower()
+        if workers>1 and ('too many concurrent aggregations' in message or '429' in message or 'too many requests' in message):
+            import time
+            time.sleep(1)
+            return fetch_parallel(ee,project,request,catalog,target_sha,plan,cache,workers=max(1,workers//2))
+        raise
+    return {'mode':'fetched','tile_id':request['tile_id'],'native_cells':len(catalog['features']),
+            'files':files,'parallel_workers':workers,'export_tasks_submitted':0,'ingested':False}
+
+
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--project',required=True);p.add_argument('--request',type=Path,default=ROOT/'data/requests/fine_central_us_1deg.json')

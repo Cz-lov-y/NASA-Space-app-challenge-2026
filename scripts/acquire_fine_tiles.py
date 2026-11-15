@@ -21,7 +21,7 @@ from src.fine_grid import build_tile_catalog
 from scripts.process_fine_gldas import main as process_native
 from scripts.export_fine_modis_earth_engine import load_request,CALCULATION_VERSION
 from scripts.export_regional_modis_earth_engine import export_plan
-from scripts.fetch_fine_modis import fetch as fetch_sources,grouped_year_plan
+from scripts.fetch_fine_modis import fetch as fetch_sources,fetch_parallel,grouped_year_plan
 from scripts.merge_fine_modis import checked_catalog,validate,ingest
 from scripts.prepare_fine_backend import prepare
 from scripts.audit_fine_release import audit
@@ -83,16 +83,17 @@ def readiness(tile):
     return state
 
 
-def acquire(registry_path,project,*,fetch_requested=False,selected=None,cache=None,ee_client=None,reprocess=False,replace=False,audit_required=True,years_per_request=1):
+def acquire(registry_path,project,*,fetch_requested=False,selected=None,cache=None,ee_client=None,reprocess=False,replace=False,audit_required=True,years_per_request=1,request_workers=1):
     if reprocess and not fetch_requested:raise ValueError('Explicit reprocessing requires --fetch')
     if reprocess and not replace:raise ValueError('Reprocessing existing source observations requires explicit --replace')
     grouped_year_plan(years_per_request=years_per_request)
+    if isinstance(request_workers,bool) or not isinstance(request_workers,int) or not 1<=request_workers<=16:raise ValueError('Request workers must be1to16')
     tiles=load_tiles(registry_path,selected)
     cache=Path(cache) if cache else ROOT/'.cache/fine_modis_direct'
     report={'mode':'acquire' if fetch_requested else 'dry_plan','project':project,'registry':str(registry_path),
         'source_grid_degrees':.25,'selection':'Fixed registry; exploratory selection history disclosed separately. Acquisition never chooses replacements using classifications.','tiles':[],
         'export_tasks_submitted':0,'account_or_project_changes':False,'calculation_version':CALCULATION_VERSION,
-        'years_per_request':years_per_request,'reprocess_requested':reprocess,'replacement_authorized':replace,'audit_required':audit_required}
+        'years_per_request':years_per_request,'request_workers':request_workers,'reprocess_requested':reprocess,'replacement_authorized':replace,'audit_required':audit_required}
     for tile in tiles:
         state=readiness(tile)
         if not fetch_requested:
@@ -132,7 +133,8 @@ def acquire(registry_path,project,*,fetch_requested=False,selected=None,cache=No
             acquisition['pilot_finite_rows']=sum(source['finite_values'] for source in pilot['files'])
             # A valid winter pilot can have no valid pixels. Never choose a new
             # month or a new tile based on finding a desired statistical signal.
-            annual=fetch_sources(ee_client,project,request,catalog,digest,grouped_year_plan(years_per_request=years_per_request),cache)
+            annual=(fetch_parallel(ee_client,project,request,catalog,digest,grouped_year_plan(years_per_request=years_per_request),cache,workers=request_workers)
+                    if request_workers>1 else fetch_sources(ee_client,project,request,catalog,digest,grouped_year_plan(years_per_request=years_per_request),cache))
             acquisition['annual_source_files']=len(annual['files'])
             acquisition['ingestion']=ingest([source['path'] for source in annual['files']],directory,replace=replace)
         acquisition['statistics']=prepare(directory)

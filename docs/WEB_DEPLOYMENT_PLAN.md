@@ -26,3 +26,7 @@ For a more scalable deployment, package the API separately for Cloud Run, place 
 ## Human inputs needed before deployment
 
 Choose who may access the demo (public or team-only), the budget and alert recipients, the desired public domain (or accept a provider address), and who owns project IAM/billing. Authorize the production hosting and any related charges. The human decisions do not replace implementing the public-service boundary and storage/cutover work above.
+
+## Browser connection status (2026-11-15)
+
+The user enabled Chrome's Apple Events JavaScript control, switched the Cloud Console to the account with access to `tactical-attic-456217-t0`, and selected a passcode-protected demo. Compute Engine API was enabled, and the VM creation form was opened for inspection. No VM, public endpoint, passcode, or deployment was created in this step. A production HTTPS/authentication boundary, rate limits, durable data transfer and single-writer worker cutover still need implementation and testing before creating or publishing the service. Preserve the ongoing local data worker until the migration is ready. Do not store passcodes, OAuth tokens or API credentials in Git.

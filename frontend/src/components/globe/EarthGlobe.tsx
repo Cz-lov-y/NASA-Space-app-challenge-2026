@@ -3,9 +3,9 @@ import * as THREE from 'three';
 import { useFrame, useLoader, ThreeEvent } from '@react-three/fiber';
 import { Atmosphere } from './Atmosphere';
 import { LocationPin } from './LocationPin';
-import { Line } from '@react-three/drei';
 import { vector3ToLatLng, latLngToVector3 } from '../../utils/coordinates';
 import { GeoCoordinate, SelectedLocation } from '../../types/globe';
+import { CellOverlay } from './CellOverlay';
 
 interface EarthGlobeProps {
   regions: SelectedLocation[];
@@ -27,11 +27,12 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
   useEffect(() => { focusTime.current = selectedCoordinate ? 1.8 : 0; }, [selectedCoordinate]);
 
   // Load authentic NASA Blue Marble textures from public folder
-  const [dayMap, normalMap, specularMap, cloudsMap] = useLoader(THREE.TextureLoader, [
+  const [dayMap, normalMap, specularMap, cloudsMap, landMask] = useLoader(THREE.TextureLoader, [
     '/textures/earth_day_2048.jpg',
     '/textures/earth_normal_2048.jpg',
     '/textures/earth_specular_2048.jpg',
     '/textures/earth_clouds_1024.png',
+    '/data/land-mask.png',
   ]);
 
   // Configure texture parameters
@@ -129,17 +130,7 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
       {/* Atmospheric Rayleigh Corona Glow */}
       <Atmosphere />
 
-      {regions.filter(r => r.resolutionDegrees === 0.25 && r.bbox).map(region => {
-        const [w,s,e,n] = region.bbox!;
-        return <Line key={`${region.id}-boundary`} points={[[w,s],[e,s],[e,n],[w,n],[w,s]].map(([lon,lat]) => latLngToVector3(lat,lon,1.013))} color="#00e5ff" lineWidth={1} />;
-      })}
-      {regions.filter(r => r.hasObservationalData || r.isTileNavigation).map(region => (
-        <mesh key={region.id} position={latLngToVector3(region.lat, region.lng, 1.012)}
-          onClick={event => { if (event.delta > 5 || event.button !== 0) return; event.stopPropagation(); onSelectCoordinate({lat: region.lat, lng: region.lng}); }}>
-          {region.isExploratoryScreening ? <octahedronGeometry args={[0.003, 0]} /> : <sphereGeometry args={[region.isTileNavigation ? 0.009 : region.resolutionDegrees === 0.25 ? 0.0009 : 0.006, 8, 8]} />}
-          <meshBasicMaterial color={region.isTileNavigation ? '#1d4ed8' : region.screeningStatus === 'supported_signal' ? '#dc2626' : region.screeningStatus === 'uncertain_signal' ? '#eab308' : region.screeningStatus === 'no_detected_divergence' ? '#16a34a' : '#64748b'} />
-        </mesh>
-      ))}
+      <CellOverlay regions={regions} landMask={landMask} earthGroup={earthGroupRef} onSelectCoordinate={onSelectCoordinate} />
       {/* Animated Location Pin (attached to the rotating Earth coordinate frame) */}
       {selectedCoordinate && (
         <LocationPin

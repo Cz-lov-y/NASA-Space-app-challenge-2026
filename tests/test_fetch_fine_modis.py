@@ -116,3 +116,43 @@ def test_optional_two_year_grouping_preserves_every_required_month_and_default_r
     assert len(grouped_year_plan(2003,2005,2))==2
     for value in [0,3,True,1.5]:
         with pytest.raises(ValueError):grouped_year_plan(years_per_request=value)
+
+
+def test_parallel_requests_keep_independent_resumable_receipts(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    import threading
+    import scripts.fetch_fine_modis as module
+    calls=[];lock=threading.Lock()
+    class Client:
+        data=SimpleNamespace(setDeadline=lambda value:None,setMaxRetries=lambda value:None)
+        def Initialize(self,**kwargs):calls.append(('init',kwargs['project']))
+    def fake_fetch(ee,project,request,catalog,target_sha,plan,cache):
+        with lock:calls.append(('fetch',plan[0]['label'],str(cache)))
+        return {'files':[{'label':plan[0]['label'],'path':str(cache)}]}
+    monkeypatch.setattr(module,'fetch',fake_fetch)
+    plan=module.grouped_year_plan(2003,2006)
+    result=module.fetch_parallel(Client(),'project',{'tile_id':'test'},{'features':[{}]},'digest',plan,tmp_path,workers=4)
+    assert [item['label'] for item in result['files']]==['2003','2004','2005','2006']
+    assert len({item['path'] for item in result['files']})==4
+    assert calls.count(('init','project'))==1
+
+
+def test_parallel_aggregation_limit_retries_at_lower_concurrency(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    import threading
+    import scripts.fetch_fine_modis as module
+    lock=threading.Lock(); seen={'failed':False};init=[]
+    class Client:
+        data=SimpleNamespace(setDeadline=lambda value:None,setMaxRetries=lambda value:None)
+        def Initialize(self,**kwargs):init.append(kwargs['project'])
+    def fake_fetch(ee,project,request,catalog,target_sha,plan,cache):
+        with lock:
+            if not seen['failed']:
+                seen['failed']=True
+                raise RuntimeError('Too many concurrent aggregations.')
+        return {'files':[{'label':plan[0]['label'],'path':str(cache)}]}
+    monkeypatch.setattr(module,'fetch',fake_fetch)
+    monkeypatch.setattr('time.sleep',lambda _:None)
+    result=module.fetch_parallel(Client(),'project',{'tile_id':'test'},{'features':[{}]},'digest',module.grouped_year_plan(2003,2006),tmp_path,workers=4)
+    assert result['parallel_workers']==2
+    assert len(result['files'])==4 and len(init)==2

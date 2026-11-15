@@ -107,7 +107,8 @@ def existing_tiles(registry):
 
 def run(*,project='tactical-attic-456217-t0',raw_directory=ROOT/'data/raw/gldas',
         cache_directory=ROOT/'.cache/global_screen',fetch=False,bbox=None,max_tiles=None,
-        reprocess=False,replace=False,min_free_gib=20,years_per_request=1,priority_north_america=False,priority_southern_alberta=False):
+        reprocess=False,replace=False,min_free_gib=20,years_per_request=1,priority_north_america=False,priority_southern_alberta=False,request_workers=1):
+    if isinstance(request_workers,bool) or not isinstance(request_workers,int) or not 1<=request_workers<=16:raise ValueError('--request-workers must be1to16')
     if not np.isfinite(min_free_gib) or min_free_gib<0:raise ValueError('--min-free-gib must be finite and nonnegative')
     if max_tiles is not None and max_tiles<1:raise ValueError('--max-tiles must be positive')
     if reprocess and not (fetch and replace):raise ValueError('--reprocess requires --fetch --replace')
@@ -127,7 +128,7 @@ def run(*,project='tactical-attic-456217-t0',raw_directory=ROOT/'data/raw/gldas'
         'pilot_requests_before_cache':len(jobs),'max_tiles_this_run':max_tiles,'export_tasks_submitted':0,
         'priority':'Southern Alberta, then Canada, US and Puerto Rico' if priority_southern_alberta else 'Canada, US and Puerto Rico first' if priority_north_america else 'native grid order',
         'southern_alberta_tiles':alberta_count,
-        'priority_tiles':priority_count,
+        'priority_tiles':priority_count,'request_workers':request_workers,
         'worldwide_paired_complete':False,'worldwide_testing_family_complete':False,
         'statistical_scope':'Per-tile provisional screening; no worldwide BH claim or risk probability',
         'completed_tiles':[],'failed_tiles':[],'stop_reason':None,'minimum_free_gib':min_free_gib,'release_audit_status':'deferred_for_demo','reused_index_tiles':0}
@@ -172,7 +173,7 @@ def run(*,project='tactical-attic-456217-t0',raw_directory=ROOT/'data/raw/gldas'
             break
         try:
             result=acquire(registry_path,project,fetch_requested=True,cache=ROOT/'.cache/fine_modis_direct',
-                reprocess=reprocess,replace=replace,audit_required=False,years_per_request=years_per_request)
+                reprocess=reprocess,replace=replace,audit_required=False,years_per_request=years_per_request,request_workers=request_workers)
         except Exception as exc:
             message=str(exc)
             failure={'id':job['id'],'bbox':job['bbox'],'error_type':type(exc).__name__,
@@ -184,7 +185,7 @@ def run(*,project='tactical-attic-456217-t0',raw_directory=ROOT/'data/raw/gldas'
             if job['id'] in index['tiles']:index['tiles'][job['id']]['ready']=False
             lower=message.lower()
             systemic=isinstance(exc,(FileNotFoundError,OSError)) or any(word in lower for word in
-                ['quota','429','permission','credential','authenticate','unexpected gldas','unexpected source units','unexpected source scaling','source month/time'])
+                ['quota','429','too many concurrent aggregations','permission','credential','authenticate','unexpected gldas','unexpected source units','unexpected source scaling','source month/time'])
             if systemic:report['stop_reason']='source_or_service_blocked';index['last_stop_reason']=report['stop_reason']
             index['worldwide_paired_complete']=False
             _atomic(index_path,(json.dumps(index,indent=2)+'\n').encode())
@@ -211,14 +212,14 @@ def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--project',default='tactical-attic-456217-t0')
     p.add_argument('--raw',type=Path,default=ROOT/'data/raw/gldas');p.add_argument('--cache',type=Path,default=ROOT/'.cache/global_screen')
     p.add_argument('--fetch',action='store_true');p.add_argument('--max-tiles',type=int);p.add_argument('--bbox',type=float,nargs=4)
-    p.add_argument('--priority-north-america',action='store_true');p.add_argument('--priority-southern-alberta',action='store_true');p.add_argument('--years-per-request',type=int,default=1);p.add_argument('--reprocess',action='store_true');p.add_argument('--replace',action='store_true');p.add_argument('--min-free-gib',type=float,default=20)
+    p.add_argument('--priority-north-america',action='store_true');p.add_argument('--priority-southern-alberta',action='store_true');p.add_argument('--request-workers',type=int,default=1);p.add_argument('--years-per-request',type=int,default=1);p.add_argument('--reprocess',action='store_true');p.add_argument('--replace',action='store_true');p.add_argument('--min-free-gib',type=float,default=20)
     a=p.parse_args(argv)
     if not a.project.strip():p.error('--project must be nonempty')
     if a.bbox is not None:
         w,s,e,n=a.bbox
         if not(-180<=w<e<=180 and -60<=s<n<=90):p.error('--bbox must be a positive rectangle inside the GLDAS native envelope')
     result=run(project=a.project,raw_directory=a.raw,cache_directory=a.cache,fetch=a.fetch,bbox=a.bbox,
-        max_tiles=a.max_tiles,reprocess=a.reprocess,replace=a.replace,min_free_gib=a.min_free_gib,years_per_request=a.years_per_request,priority_north_america=a.priority_north_america,priority_southern_alberta=a.priority_southern_alberta)
+        max_tiles=a.max_tiles,reprocess=a.reprocess,replace=a.replace,min_free_gib=a.min_free_gib,years_per_request=a.years_per_request,priority_north_america=a.priority_north_america,priority_southern_alberta=a.priority_southern_alberta,request_workers=a.request_workers)
     print(json.dumps(result,indent=2))
 
 if __name__=='__main__':main()

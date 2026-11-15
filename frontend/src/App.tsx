@@ -9,6 +9,7 @@ import { mapRegion, fineGridId } from './services/regions';
 import { RegionalDetail } from './types/contracts';
 import { cachedMapRegions, forgetMapRegion, rememberMapRegion } from './services/mapCache';
 import { Geography, loadGeography, placeLabel } from './services/geography';
+import { SIGNAL_COLORS } from './utils/signalColors';
 
 export const App: React.FC = () => {
   const [selectedCoordinate, setSelectedCoordinate] = useState<GeoCoordinate | null>(null);
@@ -176,10 +177,14 @@ export const App: React.FC = () => {
         <p className="font-semibold text-white">Explore Earth</p>
         <p className="mt-1 text-slate-400">{geographyError ? 'Land map unavailable. Refresh to try again.' : geography ? 'Select a place on land to see its data.' : 'Loading land map…'}</p>
         <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 border-t border-slate-700 pt-2 text-[11px] text-slate-400" aria-label="Map legend">
-          <span><span className="text-red-600">●</span> Stronger signal</span>
-          <span><span className="text-yellow-800">●</span> Uncertain</span>
-          <span><span className="text-green-700">●</span> No signal</span>
-          <span><span className="text-slate-500">●</span> Not yet analyzed</span>
+          {([
+            ['supported_signal', 'Stronger signal'],
+            ['uncertain_signal', 'Uncertain'],
+            ['no_detected_divergence', 'No signal'],
+            ['pending', 'Not yet analyzed'],
+          ] as const).map(([status, label]) => <span key={status} className="inline-flex items-center gap-1">
+            <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full border border-slate-700/40" style={{backgroundColor: SIGNAL_COLORS[status]}} />{label}
+          </span>)}
         </div>
         <div className="mt-3 border-t border-slate-700 pt-2">
           <p className="font-semibold text-white">Places with a stronger signal</p>
