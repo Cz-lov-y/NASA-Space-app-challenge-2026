@@ -10,7 +10,8 @@ export async function apiJson(path: string, init?: RequestInit) {
 }
 export const apiService = {
   async getRegions() { return apiJson('/api/v1/regions'); },
-  async getFineRegions() { return apiJson('/api/v1/fine-regions'); },
+  async getFineTiles() { return apiJson('/api/v1/fine-tiles'); },
+  async getFineRegions(tileId?: string) { return apiJson('/api/v1/fine-regions' + (tileId ? '?tile_id=' + encodeURIComponent(tileId) : '')); },
   async getLocationData(location: SelectedLocation): Promise<LocationData> {
     if (location.regionId === 'demo-region') return {
       hasData: true, isSynthetic: true, observations: DEMO_TIMESERIES,

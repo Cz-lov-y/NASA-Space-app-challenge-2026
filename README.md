@@ -8,12 +8,16 @@ measurements to verifiable government policy and conservation evidence.
 
 ## Current status
 
-The globe now defaults to sixteen real native 0.25° GLDAS cells paired with MODIS
-NDVI for 2003–2024. All requested months have arrived; two QA-masked NDVI values
-remain missing. Preliminary results are twelve cells with no detected divergence
-and four uncertain signals. No cell meets the supported-signal gates. Coverage
-is the Central US pilot, with source review pending; worldwide fine coverage is next.
-The Scientific Audit shows stored annual results and the actual included years.
+The globe now offers **96 native 0.25° cells in six areas**: Central US, Canadian
+interior, Iberia, Central Sahel, southeast Australia and Brazilian Amazon. The
+2003–2024 collection has 76,032 monthly records. All NDVI export slots arrived;
+1,566 QA-masked values remain missing, and one cell lacks GLDAS support.
+
+Eighty cells have sufficient complete paired years. The declared 96-cell family
+contains 160 tests, producing 62 uncertain signals, 18 no-detected-divergence
+results, 15 insufficient cells and one unsupported cell; none meets the supported
+signal gates. Results remain provisional and the collection is exploratory.
+Worldwide fine coverage and scientific review remain next.
 
 ### Run the real-data globe locally
 
@@ -33,7 +37,7 @@ npm run dev -- --host 127.0.0.1
 ```
 
 Open http://127.0.0.1:3000/ and select a **0.25° cell** from the left-hand pilot
-grid or the real-data menu. The native tile spans 37–38°N, 98–97°W. The checkbox
+grid or the real-data menu. Use the **Area** selector to switch between the six available tiles. White globe markers also navigate to areas. The checkbox
 also offers the historical 10° overview. Measurements belong to cell footprints.
 
 Policy/scientific research requires clicking **Get policy & scientific context**.
@@ -43,9 +47,8 @@ server-side. Saved reports and source queries are reused before new requests.
 Selecting a cell never launches a search or model call. See [the HTTP API guide](docs/regional_api.md).
 
 Fine-cell acquisition and validation commands are in [the pipeline guide](docs/fine_data_pipeline.md).
-All 22 annual pilot files have been retrieved, validated, archived and imported.
-The release audit passes integrity checks and explicitly preserves two missing
-observations. The old coarse export batch was retired after the resolution change.
+All 132 current-method annual files have been retrieved, validated, archived and imported.
+The joint collection audit passes while preserving source-QA gaps and unsupported model cells. The old coarse export batch was retired after the resolution change.
 
 Cloud tooling needs optional `requirements-earthengine.txt` and authorized
 Earth Engine access. Daily demonstration reads need only the checked-in processed
@@ -143,11 +146,14 @@ deployment checklists.
 
 ### Native-cell product update
 
-The default globe now uses the available **0.25° GLDAS native-cell pilot** (16 cells at 37–38°N, 98–97°W); the 10° view is a labeled legacy overview. Each cell now has original monthly soil storage and MODIS NDVI for 2003–2024. All 4,224 NDVI slots were retrieved; two QA-masked months remain missing. All 16 cells support provisional paired analysis over 21–22 complete years. Worldwide fine coverage remains pending. See [the updated team plan](docs/team_demo_plan.md) and [resolution specification](docs/fine_resolution.md).
+The globe uses original **0.25° GLDAS native cells** with MODIS NDVI, grouped into six areas and one jointly adjusted analysis collection. The 10° view is a labeled legacy overview. Worldwide fine coverage remains pending. See [the updated team plan](docs/team_demo_plan.md) and [resolution specification](docs/fine_resolution.md).
 
 Policy/scientific research requires clicking **Get policy & scientific context**. Saved reports and source searches are reused on disk, including stale context with visible retrieval dates; selecting a cell never starts external research. Keep `.cache/regional_research` between server restarts to retain this cache. Qualitative reports remain machine-generated and unreviewed.
 
 Rebuild the fine pilot offline with `.venv/bin/python scripts/process_fine_gldas.py` followed by `.venv/bin/python scripts/prepare_fine_backend.py`. Cloud acquisition commands and remaining validation are in [B's fine-resolution handoff](docs/member_b_resolution.md).
 
 
-The fine pilot acquisition, strict importer, resumable direct retrieval and Drive synchronization are documented in [the fine-data pipeline](docs/fine_data_pipeline.md). The current release has 12 cells with no detected divergence and four uncertain signals; none pass the supported-signal gates. These are scoped pilot statistics with source review pending.
+The fine pilot acquisition, strict importer, resumable direct retrieval and Drive synchronization are documented in [the fine-data pipeline](docs/fine_data_pipeline.md). The current collection declares all 96 cells before joint adjustment; source review remains pending and no cell passes the supported-signal gates.
+
+
+The native MODIS area calculation is now versioned as `modis_sinusoidal_sphere_native_pixel_v2`: native pixel areas and geographic cell areas use the same sinusoidal sphere. Earlier fine source files remain archived as historical evidence. See [the resolution and collection methodology](docs/fine_resolution.md).

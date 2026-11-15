@@ -18,6 +18,7 @@ export interface SelectedLocation {
   bbox?: [number, number, number, number];
   resolutionDegrees?: number;
   pairedYearCount?: number;
+  isTileNavigation?: boolean;
 }
 
 export type ModalType = 'intro' | 'instructions' | 'methodology' | null;

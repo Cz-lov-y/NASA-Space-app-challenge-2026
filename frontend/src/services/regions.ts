@@ -9,7 +9,7 @@ export function mapRegion(feature: any): SelectedLocation {
   const [lng, lat] = p.centroid;
   const fine = p.region_id.startsWith('gldas025_');
   return { id: p.region_id, regionId: p.region_id,
-    name: (fine ? `${lat.toFixed(3)}°N, ${lng.toFixed(3)}°E` : LABELS[p.region_id] || p.name || p.region_id) + (fine ? ' · 0.25° cell' : ' · 10° overview'), lat, lng,
+    name: (fine ? `${Math.abs(lat).toFixed(3)}°${lat < 0 ? 'S' : 'N'}, ${Math.abs(lng).toFixed(3)}°${lng < 0 ? 'W' : 'E'}` : LABELS[p.region_id] || p.name || p.region_id) + (fine ? ' · 0.25° cell' : ' · 10° overview'), lat, lng,
     bbox: p.bbox, resolutionDegrees: fine ? 0.25 : 10,
     pairedYearCount: p.paired_year_count || 0,
     hasObservationalData: Object.keys(p.indicators || {}).length > 0,

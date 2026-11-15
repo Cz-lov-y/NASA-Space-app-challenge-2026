@@ -1,5 +1,7 @@
 # Native-cell vegetation acquisition and release
 
+Current active method: `modis_sinusoidal_sphere_native_pixel_v2`. Historical earlier-method CSVs are retained as evidence and rejected as active inputs. The current globe serves the audited six-area collection; the single-tile commands below remain useful for acquisition and diagnostics.
+
 The frozen first tile has 16 original GLDAS 0.25° cells at `[-98,37,-97,38]`, with a required January 2003–December 2024 index. Source masks and missing values remain explicit. Existing 10° and whole-Earth NDVI averages cannot supply these observations.
 
 ## Validation and import
@@ -67,3 +69,19 @@ To resume verified direct retrieval without repeating successful requests:
 The default without `--fetch` is a local plan. Interactive retrieval is capped at 16 cells per request and one calendar year at a time; each call has a 30-second deadline and stops on service errors. Raw responses are saved before validation, verified CSVs and receipts are immutable/hash-addressed, and successful requests are reused. `--refresh` is deliberate and may create provenance conflicts requiring reviewed replacement. No batch tasks or policy/AI calls are started.
 
 The source mosaic projection can have origins shifted by complete 1,200-pixel MODIS tiles while retaining the same native grid. Validation accepts only those aligned translations with unchanged scale/shear and valid tile bounds; it rejects partial-pixel shifts and changed resolution. Actual monthly transforms remain preserved. See NASA's [MODLAND grid documentation](https://modis-land.gsfc.nasa.gov/MODLAND_grid.html).
+
+
+## Six-area collection and navigation
+
+The frozen registry is `data/processed/fine/tiles.json`. `scripts/acquire_fine_tiles.py` provides a read-only plan by default; `--fetch` reuses audited completed tiles and resumes outstanding native requests. Reprocessing an earlier area method requires explicit `--fetch --reprocess --replace`; no mixed-method remainder is allowed.
+
+```sh
+.venv/bin/python scripts/acquire_fine_tiles.py
+.venv/bin/python scripts/acquire_fine_tiles.py --fetch
+.venv/bin/python scripts/prepare_fine_collection.py
+.venv/bin/python scripts/prepare_fine_collection.py --audit-only
+```
+
+The collection directory stores one joint 96-cell statistical family, original source-tile fingerprints and deduplicated raw-file manifests. Publishing audits a temporary candidate first. The API serves a small six-area index and one selected 16-cell tile while preserving collection-wide corrected statistics. The UI Area selector and white markers navigate between real source regions; opening cells sends no research requests.
+
+Current source-QA gaps are expected missing observations, not pending downloads. Scientific common-footprint/coverage review and global geographic expansion remain separate next tasks. The Canadian winter gaps are preserved under the same complete-year requirement as all other areas.

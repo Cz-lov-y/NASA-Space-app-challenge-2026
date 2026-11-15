@@ -17,7 +17,7 @@ import sys
 import pandas as pd
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-from scripts.export_fine_modis_earth_engine import load_request,build_collection
+from scripts.export_fine_modis_earth_engine import load_request,build_collection,CALCULATION_VERSION
 from scripts.export_regional_modis_earth_engine import COLUMNS,export_plan,QA_RULE
 from scripts.merge_fine_modis import validate_frame,validate
 
@@ -25,6 +25,13 @@ from scripts.merge_fine_modis import validate_frame,validate
 def checked_result(payload,catalog,item):
     features=payload.get('features',[])
     frame=pd.DataFrame([feature['properties'] for feature in features])
+    # Earth Engine omits null-valued dictionary keys from JSON. Restore only
+    # scientifically nullable source fields; required identity/QA metadata must
+    # still be present and passes the existing source-image-count consistency.
+    nullable=['value','valid_area_m2','valid_area_fraction','source_asset_id',
+              'source_time_start','source_crs','source_transform']
+    for column in nullable:
+        if column not in frame.columns:frame[column]=float('nan')
     frame=validate_frame(frame,catalog)
     dates=pd.date_range(pd.Timestamp(item['start']),pd.Timestamp(item['end']),freq='MS',inclusive='left').strftime('%Y-%m-%d')
     ids={f['properties']['region_id'] for f in catalog['features']}
@@ -43,7 +50,8 @@ def fetch(ee,project,request,catalog,target_sha,plan,cache,deadline_seconds=30,r
     ee_initialized=False;results=[]
     for item in plan:
         identity={'project':project,'target_geometry_sha256':target_sha,'tile_id':request['tile_id'],
-            'start':item['start'],'end_exclusive':item['end'],'source':'MODIS/061/MOD13A3','qa_rule':QA_RULE}
+            'start':item['start'],'end_exclusive':item['end'],'source':'MODIS/061/MOD13A3','qa_rule':QA_RULE,
+            'calculation_version':CALCULATION_VERSION}
         key=hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()
         previous=receipt['requests'].get(key)
         if previous and not refresh:
@@ -72,7 +80,7 @@ def fetch(ee,project,request,catalog,target_sha,plan,cache,deadline_seconds=30,r
         except (ValueError,KeyError,TypeError) as exc:
             raise ValueError(f'{exc}; raw service response retained at {raw_path}') from exc
         buffer=io.StringIO(newline='')
-        columns=COLUMNS+['tile_id','target_resolution_degrees']
+        columns=COLUMNS+['tile_id','target_resolution_degrees','area_method']
         writer=csv.DictWriter(buffer,fieldnames=columns,extrasaction='ignore',lineterminator='\n')
         writer.writeheader()
         # DataFrame missing values must remain blank rather than literal nan text.
@@ -118,7 +126,7 @@ def main(argv=None):
         import ee
         result=fetch(ee,args.project,request,catalog,digest,plan,args.cache,args.deadline_seconds,args.refresh)
     else:result={'mode':'dry_plan','tile_id':request['tile_id'],'native_cells':len(catalog['features']),
-        'target_resolution_degrees':.25,'target_geometry_sha256':digest,'request_count':len(plan),'requests':plan,
+        'target_resolution_degrees':.25,'target_geometry_sha256':digest,'calculation_version':CALCULATION_VERSION,'request_count':len(plan),'requests':plan,
         'deadline_seconds':args.deadline_seconds,'export_tasks_submitted':0,'network_calls':0}
     print(json.dumps(result,indent=2))
 

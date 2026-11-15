@@ -44,7 +44,7 @@ def api(monkeypatch,tmp_path):
     monkeypatch.setattr(module,'build_region_detail',lambda data:{'region_id':data['region_id'],'paired_analysis':None,
         'available_indicator_analysis':{'variables':['soil_water_0_100cm']},'annual_fits':{'soil_water_0_100cm':{}}})
     service=RegionalAPI(directory=tmp_path,cache_dir=tmp_path/'cache',report_dir=tmp_path/'reports',
-                        settings=SETTINGS,live_enabled=True,jobs=Jobs())
+                        settings=SETTINGS,live_enabled=True,jobs=Jobs(),fine_directory=tmp_path/"fine")
     yield service
     service.close()
 
@@ -205,3 +205,38 @@ def test_fine_catalog_and_detail_dispatch_are_offline(api,monkeypatch):
     assert status==200 and detail['region_id']==native_id
     assert calls[0][1]['directory']==api.fine_directory
     assert api.jobs.calls==[]
+
+
+def test_registry_routes_allow_only_one_known_tile_id(api,monkeypatch,tmp_path):
+    import src.fine_workflow as workflow
+    api._registered_fine=True
+    api.tile_index=tmp_path/'tiles.json';api.tile_index.write_text('{}')
+    registry={'schema_version':'fine-tiles-1','tiles':[{'id':'central_us_1deg','name':'US','bbox':[-98,37,-97,38]}]}
+    monkeypatch.setattr(workflow,'load_tile_index',lambda **kwargs:deepcopy(registry))
+    monkeypatch.setattr(workflow,'fine_tiles',lambda **kwargs:deepcopy(registry))
+    calls=[]
+    def selected(tile_id,**kwargs):
+        calls.append(tile_id)
+        return {'type':'FeatureCollection','features':[],'viewport':{'tile_id':tile_id}}
+    monkeypatch.setattr(workflow,'registered_fine_map',selected)
+    assert api.handle('GET','/api/v1/fine-tiles')[0]==200
+    assert api.handle('GET','/api/v1/fine-regions?tile_id=central_us_1deg')[0]==200
+    assert calls==['central_us_1deg']
+    assert api.handle('GET','/api/v1/fine-regions?tile_id=canada_1deg')[0]==404
+    assert api.handle('GET','/api/v1/fine-regions?tile_id=central_us_1deg&tile_id=central_us_1deg')[0]==400
+    assert api.handle('GET','/api/v1/fine-regions?directory=/etc')[0]==400
+    assert api.handle('GET','/api/v1/fine-tiles?tile_id=central_us_1deg')[0]==400
+    assert api.jobs.calls==[]
+
+
+def test_registered_detail_stale_source_manifest_returns_rebuild_conflict(api,monkeypatch,tmp_path):
+    import src.fine_workflow as workflow
+    api._registered_fine=True
+    api.tile_index=tmp_path/'tiles.json';api.tile_index.write_text('{}')
+    def stale(*a,**kwargs):
+        raise workflow.FineCollectionStale('private input path must not leak')
+    monkeypatch.setattr(workflow,'load_registered_fine_region',stale)
+    status,payload=api.handle('GET','/api/v1/regions/gldas025_r388_c0328')
+    assert status==409
+    assert payload['error']['code']=='fine_collection_rebuild_required'
+    assert 'private' not in str(payload)

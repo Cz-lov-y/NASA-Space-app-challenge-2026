@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from scripts.merge_fine_modis import validate,validate_frame,ingest
-from scripts.export_fine_modis_earth_engine import load_request
+from scripts.export_fine_modis_earth_engine import load_request,CALCULATION_VERSION
 ROOT=Path(__file__).resolve().parents[1]
 
 
@@ -38,7 +38,7 @@ def fake_rows(catalog,dates):
         'source_asset_id':'MODIS/061/MOD13A3/'+date.replace('-','_'),'source_time_start':date,
         'source_crs':'SR-ORG:6974','source_transform':transform,
         'qa_rule':'raw NDVI [-2000,10000]; (DetailedQA & 3)==0; SummaryQA==0','configured_at_utc':'2026-11-15T00:00:00Z',
-        'tile_id':f['properties']['tile_id'],'target_resolution_degrees':.25}
+        'tile_id':f['properties']['tile_id'],'target_resolution_degrees':.25,'area_method':CALCULATION_VERSION}
         for date in dates for f in catalog['features']])
 
 
@@ -49,7 +49,7 @@ def test_validation_is_readonly_and_checks_native_geometry_and_complete_cells(fi
     assert before=={p.name:p.read_bytes() for p in out.iterdir()}
     with pytest.raises(ValueError,match='expected month'):validate(path,catalog,expected_month='2003-02-01')
     with pytest.raises(ValueError,match='every requested'):validate_frame(rows.iloc[:-1],catalog)
-    for changes in [{'target_resolution_degrees':.01},{'tile_id':'wrong_tile'},{'unit':'m3 m-3'},
+    for changes in [{'area_method':'legacy_ellipsoid_pixelarea'},{'target_resolution_degrees':.01},{'tile_id':'wrong_tile'},{'unit':'m3 m-3'},
                     {'source_asset_id':'MODIS/061/MOD13A3/2003_02_01'},{'valid_area_m2':-1}]:
         bad=rows.copy()
         for key,value in changes.items():bad[key]=value
@@ -116,3 +116,27 @@ def test_full_month_index_and_exported_missing_values_stay_distinct(fine_release
     assert all(f['properties']['ndvi_valid_months']==264 for f in updated['features'][:-1])
     quality=pd.read_csv(out/'quality_report.csv')
     assert quality.loc[quality.variable=='ndvi','missing_months'].sum()==1
+
+
+def test_processing_method_upgrade_requires_complete_legacy_replacement(fine_release,tmp_path):
+    out,catalog=fine_release
+    jan=tmp_path/'SYNTHETIC_V2_JAN.csv';feb=tmp_path/'SYNTHETIC_V2_FEB.csv'
+    fake_rows(catalog,['2003-01-01']).to_csv(jan,index=False)
+    fake_rows(catalog,['2003-02-01']).to_csv(feb,index=False)
+    ingest([jan,feb],out)
+    ledger_path=out/'accepted_modis_observations.csv'
+    old=pd.read_csv(ledger_path,dtype={'unit':str},float_precision='round_trip')
+    old['area_method']='SYNTHETIC_LEGACY_ELLIPSOID_METHOD';old.to_csv(ledger_path,index=False)
+    before=ledger_path.read_bytes()
+    with pytest.raises(ValueError,match='Legacy fine area method'):
+        ingest([jan,feb],out)
+    with pytest.raises(ValueError,match='every previously accepted legacy'):
+        ingest([jan],out,replace=True)
+    assert ledger_path.read_bytes()==before
+    report=ingest([jan,feb],out,replace=True)
+    assert report['accepted_ndvi_rows']==32 and report['archived_source_files']==2
+    updated=pd.read_csv(ledger_path)
+    assert updated.area_method.eq(CALCULATION_VERSION).all()
+    metadata=json.loads((out/'metadata.json').read_text())
+    assert metadata['modis_calculation_version']==CALCULATION_VERSION
+    assert metadata['ndvi']['area_method']==CALCULATION_VERSION

@@ -1,0 +1,63 @@
+{
+  "mode": "offline_replay",
+  "region_id": "gldas025_r388_c0328",
+  "bbox": [
+    -98.0,
+    37.0,
+    -97.75,
+    37.25
+  ],
+  "month": "2003-01-01",
+  "processed_at_utc": "2026-11-15T15:41:43.958331+00:00",
+  "source_asset_id": "MODIS/061/MOD13A3/2003_01_01",
+  "projection": {
+    "crs": "SR-ORG:6974",
+    "transform": "PARAM_MT[\"Affine\", \n  PARAMETER[\"num_row\", 3], \n  PARAMETER[\"num_col\", 3], \n  PARAMETER[\"elt_0_0\", 926.625433055833], \n  PARAMETER[\"elt_0_2\", -20015109.354], \n  PARAMETER[\"elt_1_1\", -926.6254330558334], \n  PARAMETER[\"elt_1_2\", 10007554.677003]]"
+  },
+  "local": {
+    "value": 0.45463846615120873,
+    "unit": "1",
+    "valid_area_m2": 616145968.5288681,
+    "valid_area_fraction": 0.9999999996123066,
+    "region_area_m2": 616145968.7677438,
+    "sample_coordinate_convention": "half_integer_centers",
+    "sampled_pixels": 2340,
+    "intersecting_pixels": 804,
+    "valid_intersecting_pixels": 804,
+    "all_pixel_intersection_area_m2": 616145968.5288681,
+    "geometry_area_relative_error": -3.873633636075624e-10,
+    "boundary_pixels": 167,
+    "one_quantization_step_per_boundary_pixel_area_budget_m2": 560124.9756329962,
+    "one_quantization_step_coverage_budget": 0.0009090783743229119,
+    "native_pixel_area_m2": 858634.6931859103,
+    "method": "Local raw QA, one scale factor, densified sinusoidal equal-area polygon intersections; no EE regional reducer"
+  },
+  "qa_reviewed": false,
+  "status": "independent_consistency_review_required",
+  "comparison": {
+    "file": "data/raw/modis_earth_engine/fine/60e06a15a8359fe3affa1d6086ecbc9b2c1c1ca37da09cac508e856603fe4520.csv",
+    "sha256": "60e06a15a8359fe3affa1d6086ecbc9b2c1c1ca37da09cac508e856603fe4520",
+    "exported": {
+      "value": 0.4545947041911694,
+      "valid_area_m2": 616048505.5942053,
+      "valid_area_fraction": 0.9998418180455948,
+      "region_area_m2": 616145968.7677438
+    },
+    "export_minus_local": {
+      "value": -4.376196003935684e-05,
+      "valid_area_m2": -97462.93466281891,
+      "valid_area_fraction": -0.00015818156671176808,
+      "region_area_m2": 0.0
+    },
+    "coverage_exceeds_one": false,
+    "coverage_below_zero": false,
+    "area_difference_exceeds_boundary_quantization_budget": false,
+    "boundary_quantization_area_budget_m2": 560124.9756329962,
+    "status": "review_required",
+    "note": "Any coverage above1 remains flagged. Pixel-fraction quantization may explain small edge differences; percent-level excess requires investigation, not clipping."
+  },
+  "raw_sample_file": "data/raw/modis_earth_engine/fine_validation/mod13a3_2003_01_gldas025_r388_c0328_pixels.json",
+  "raw_sample_sha256": "1d3b08abbce7fd9be7fd965b19b12474975d8e70f0c66d02c1c7a11104ce3637",
+  "calculation_version": "modis_sinusoidal_sphere_native_pixel_v2",
+  "scope": "One cell/month only; source QA remains unreviewed."
+}

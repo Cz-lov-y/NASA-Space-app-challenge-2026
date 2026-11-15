@@ -13,7 +13,9 @@ from scripts.export_fine_modis_earth_engine import load_request
 
 
 def discover(session,tile_id):
-    pattern=re.compile(r'^mod13a3_gldas025_'+re.escape(tile_id)+r'_(pilot_2003_01|200[3-9]|201[0-9]|202[0-4]|retry_\d{8})\.csv$')
+    # Legacy exports used a different area model and are historical evidence.
+    # Only the explicitly versioned spherical-area exports may enter this route.
+    pattern=re.compile(r'^mod13a3_gldas025_sphere_v2_'+re.escape(tile_id)+r'_(pilot_2003_01|200[3-9]|201[0-9]|202[0-4]|retry_\d{8})\.csv$')
     folders=list_files(session,"trashed = false and mimeType = 'application/vnd.google-apps.folder' and name = 'NASA_member_B_fine'")
     found={}
     for folder in folders:

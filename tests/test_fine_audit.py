@@ -149,7 +149,8 @@ def synthetic_modis_fixture(catalog):
         'source_crs':'SR-ORG:6974','source_transform':transform,
         'qa_rule':'raw NDVI [-2000,10000]; (DetailedQA & 3)==0; SummaryQA==0',
         'configured_at_utc':'2026-11-15T12:00:00Z','tile_id':p['tile_id'],
-        'target_resolution_degrees':.25,'test_fixture':'SYNTHETIC_UNIT_TEST_VALUES_ONLY',
+        'target_resolution_degrees':.25,'area_method':'modis_sinusoidal_sphere_native_pixel_v2',
+        'test_fixture':'SYNTHETIC_UNIT_TEST_VALUES_ONLY',
     } for p in (f['properties'] for f in catalog['features'])])
 
 
@@ -232,3 +233,40 @@ def test_pending_cell_cannot_be_recolored_as_supported_by_mutating_both_artifact
     result=audit(copied_release)
     assert not result['integrity_passed']
     assert any('noneligible status cannot become a detected signal' in error for error in result['errors'])
+
+
+def test_superseded_legacy_archives_are_preserved_but_cannot_supply_active_v2_rows(copied_release,tmp_path):
+    """Both v1/v2 NDVI inputs here are explicitly synthetic temporary fixtures."""
+    from scripts.merge_fine_modis import ingest
+    from scripts.prepare_fine_backend import prepare
+    catalog=json.loads((copied_release/'catalog.json').read_text())
+    current=synthetic_modis_fixture(catalog)
+    path=tmp_path/'SYNTHETIC_CURRENT_V2.csv'
+    current.to_csv(path,index=False)
+    ingest([path],copied_release)
+    prepare(copied_release)
+    legacy=current.drop(columns='area_method').to_csv(index=False).encode()
+    legacy_hash=hashlib.sha256(legacy).hexdigest()
+    archive=copied_release/'source_archive'/(legacy_hash+'.csv')
+    archive.write_bytes(legacy)
+    manifest_path=copied_release/'modis_source_manifest.json'
+    manifest=json.loads(manifest_path.read_text())
+    manifest.append({'file':str(archive),'original_name':'SYNTHETIC_HISTORICAL_V1.csv','sha256':legacy_hash})
+    manifest_path.write_text(json.dumps(manifest))
+    # Historical v1 bytes are allowed only as immutable, unreferenced provenance.
+    valid=audit(copied_release)
+    assert valid['integrity_passed'],valid['errors']
+    # Every archive still gets a checksum check, including superseded files.
+    archive.write_bytes(b'SYNTHETIC_TEST_CORRUPTION')
+    corrupt=audit(copied_release)
+    assert not corrupt['integrity_passed']
+    assert any('modis_source_manifest.json: source hash matches' in error for error in corrupt['errors'])
+    archive.write_bytes(legacy)
+    # Merely swapping a ledger hash to old bytes must not bypass v2 validation.
+    ledger_path=copied_release/'accepted_modis_observations.csv'
+    ledger=pd.read_csv(ledger_path,dtype={'unit':str},float_precision='round_trip')
+    ledger.loc[0,'source_file_sha256']=legacy_hash
+    ledger.to_csv(ledger_path,index=False)
+    active=audit(copied_release)
+    assert not active['integrity_passed']
+    assert 'active MODIS archive passes current native-area/provenance validation' in active['errors']

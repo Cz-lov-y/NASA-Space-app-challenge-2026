@@ -109,7 +109,11 @@ def main(raw,out,bbox=BBOX,tile_id='central_us_1deg'):
         'support':'Envelope is not land availability; source valid masks determine actual support. Outside envelope is unsupported by GLDAS.',
         'storage':'Bounded tile catalogs and source reads; no eager864000-feature global JSON.',
         'pilot':{'tile_id':tile_id,'bbox':bbox,'catalog':str((out/'catalog.json').relative_to(ROOT)) if (out/'catalog.json').is_relative_to(ROOT) else str(out/'catalog.json')}}
-    (out.parent/'grid_definition.json').write_text(json.dumps(definition,indent=2)+'\n')
+    # This file describes the shared lattice; subsequent tile extraction must
+    # not replace the original pilot identity with whichever tile ran last.
+    grid_definition_path=out.parent/'grid_definition.json'
+    if not grid_definition_path.exists():
+        grid_definition_path.write_text(json.dumps(definition,indent=2)+'\n')
     request={'tile_id':tile_id,'bbox':bbox,'catalog':str((out/'catalog.json').relative_to(ROOT)) if (out/'catalog.json').is_relative_to(ROOT) else str(out/'catalog.json'),
         'source':'MODIS/061/MOD13A3','target_grid':'GLDAS native0.25degree','first_year':2003,'last_year':2024,
         'pilot_month':'2003-01-01','qa_rule':'raw NDVI [-2000,10000]; (DetailedQA & 3)==0; SummaryQA==0',

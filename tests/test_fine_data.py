@@ -66,7 +66,7 @@ def test_fine_export_submission_is_explicit_and_targets_exact_catalog(tmp_path,m
     result=mod.submit(fake,'SYNTHETIC_PROJECT',request,catalog,'SYNTHETIC_SHA',plan,manifest)
     assert calls[1]['collection']==('SYNTHETIC_GRAPH',catalog)
     assert calls[1]['folder']=='NASA_member_B_fine' and calls[1]['fileFormat']=='CSV'
-    assert calls[1]['selectors'][-2:]==['tile_id','target_resolution_degrees']
+    assert set(calls[1]['selectors'][-3:])=={'tile_id','target_resolution_degrees','area_method'}
     assert result[0]['scope']=='native_gldas025_tile' and result[0]['region_count']==1
     with pytest.raises(ValueError,match='already recorded'):
         mod.submit(fake,'SYNTHETIC_PROJECT',request,catalog,'SYNTHETIC_SHA',plan,manifest)

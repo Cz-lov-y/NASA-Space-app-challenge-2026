@@ -53,3 +53,51 @@ def test_failed_validation_retains_raw_response_without_completed_receipt(fine_r
         fetch(fake,'SYNTHETIC_TEST_PROJECT',request,too_many,'SHA',plan,cache)
     with pytest.raises(ValueError,match='1to30'):
         fetch(fake,'SYNTHETIC_TEST_PROJECT',request,catalog,'SHA',plan,cache,deadline_seconds=31)
+
+
+
+def test_getinfo_omitted_null_properties_preserve_winter_and_absent_image_semantics(fine_release):
+    from scripts.fetch_fine_modis import checked_result
+    _,catalog=fine_release
+    source=fake_rows(catalog,['2003-01-01'])
+    winter=[]
+    for row in source.to_dict('records'):
+        row.pop('value');row.update(valid_area_m2=0,valid_area_fraction=0,quality_flag='no_valid_pixels')
+        winter.append({'properties':row})
+    item={'start':'2003-01-01','end':'2003-02-01','label':'pilot'}
+    result=checked_result({'features':winter},catalog,item)
+    assert len(result)==16 and result.value.isna().all() and result.quality_flag.eq('no_valid_pixels').all()
+    absent=[]
+    for feature in winter:
+        row=feature['properties'].copy()
+        for col in ['value','valid_area_m2','valid_area_fraction','source_asset_id','source_time_start','source_crs','source_transform']:
+            row.pop(col,None)
+        row.update(source_image_count=0,quality_flag='missing');absent.append({'properties':row})
+    result=checked_result({'features':absent},catalog,item)
+    assert result.value.isna().all() and result.valid_area_m2.isna().all() and result.quality_flag.eq('missing').all()
+    # Required metadata is never invented when the service response omits it.
+    for column in ['source_image_count','configured_at_utc','region_area_m2','tile_id']:
+        malformed=[{'properties':{k:v for k,v in feature['properties'].items() if k!=column}} for feature in winter]
+        with pytest.raises(ValueError):checked_result({'features':malformed},catalog,item)
+    missing_present_crs=[{'properties':{k:v for k,v in feature['properties'].items() if k!='source_crs'}} for feature in winter]
+    with pytest.raises(ValueError,match='source provenance'):
+        checked_result({'features':missing_present_crs},catalog,item)
+
+
+def test_calculation_version_change_cannot_reuse_legacy_cache_key(fine_release,tmp_path,monkeypatch):
+    import scripts.fetch_fine_modis as mod
+    _,catalog=fine_release;request={'tile_id':'central_us_1deg'}
+    payload={'features':[{'properties':row} for row in fake_rows(catalog,['2003-01-01']).to_dict('records')]}
+    calls=[]
+    fake=SimpleNamespace(Initialize=lambda **kw:None,data=SimpleNamespace(setDeadline=lambda ms:None,setMaxRetries=lambda n:None))
+    monkeypatch.setattr(mod,'build_collection',lambda *a:SimpleNamespace(getInfo=lambda:calls.append('fetch') or payload))
+    plan=[{'start':'2003-01-01','end':'2003-02-01','label':'pilot'}];cache=tmp_path/'version_cache'
+    first=fetch(fake,'SYNTHETIC_PROJECT',request,catalog,'SYNTHETIC_TARGET',plan,cache)
+    assert first['files'][0]['calculation_version']==mod.CALCULATION_VERSION
+    receipt_path=cache/'receipt.json';receipt=json.loads(receipt_path.read_text())
+    old=receipt['requests'].pop(next(iter(receipt['requests'])))
+    old['calculation_version']='SYNTHETIC_PREVIOUS_METHOD'
+    receipt['requests']['SYNTHETIC_OLD_VERSION_KEY']=old
+    receipt_path.write_text(json.dumps(receipt))
+    second=fetch(fake,'SYNTHETIC_PROJECT',request,catalog,'SYNTHETIC_TARGET',plan,cache)
+    assert not second['files'][0]['reused'] and calls==['fetch','fetch']

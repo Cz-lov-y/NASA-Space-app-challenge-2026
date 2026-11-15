@@ -49,7 +49,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({ type, isOpen, onClose }) =
                 <div>
                   <h4 className="text-white font-medium mb-1">What is the "Green Mirage"?</h4>
                   <p>
-                    Across arid and semi-arid regions worldwide, extensive satellite observations from MODIS show increasing Normalized Difference Vegetation Index (NDVI). In many agricultural and reforested basins, this apparent greening masks a dangerous depletion of underlying root-zone soil moisture and groundwater aquifers.
+                    EarthRisk compares vegetation greenness with modeled soil-water storage to screen for places where greening accompanies declining soil water. A preliminary signal needs scientific review; it does not establish environmental damage, groundwater depletion or causation. The current collection covers six demonstration areas rather than the whole Earth.
                   </p>
                 </div>
                 <div>
@@ -57,7 +57,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({ type, isOpen, onClose }) =
                   <ul className="list-disc list-inside space-y-1 text-slate-300 text-xs">
                     <li><strong className="text-cyan-300">Member A (Statistics):</strong> OLS & Theil–Sen slope modeling, Mann–Kendall trend divergence tests, and Benjamini–Hochberg adjustments.</li>
                     <li><strong className="text-cyan-300">Member B (NASA Data):</strong> MODIS vegetation and GLDAS hydrological land surface observation pipelines.</li>
-                    <li><strong className="text-cyan-300">Member C (Policy Agent):</strong> Traceable retrieval of government conservation policies and peer-reviewed literature without synthetic hallucination.</li>
+                    <li><strong className="text-cyan-300">Member C (Policy Agent):</strong> Candidate policy and scientific sources with citations and explicit review status, requested by the user.</li>
                     <li><strong className="text-cyan-300">Member D (Frontend/Integration):</strong> 3D Earth digital twin, interactive mission telemetry, and dashboard integration.</li>
                   </ul>
                 </div>

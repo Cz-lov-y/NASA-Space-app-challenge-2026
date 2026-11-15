@@ -125,8 +125,69 @@ Evidence is retained in `data/raw/modis_earth_engine/fine_validation/annual2003_
 
 The controller's actual retrieval completed all 22 calendar-year requests, each returning 192 fine-cell rows. The batch pilot had remained queued while the project reported a noncommercial quota restriction, but the service permitted these bounded interactive requests. Retrieval used the same authorized account, the same project and the unchanged native aggregation graph. It did not open another account/project, submit replacement batch tasks, retry rejected calls automatically, or change resolution/QA. Future calls remain subject to service-enforced quotas and stop if rejected. The controller owns final ingestion and the resulting release audit; source-pixel/model scientific review remains a separate requirement.
 
-## Current integrated fine release
+## Initial single-tile release before expansion and area correction
 
-The controller completed the actual fine release: **12,672 rows** comprising 8,448 native GLDAS observations and 4,224 received NDVI month/cell slots. NDVI has **4,222 valid values and two source-QA gaps**. Those missing values are preserved; no interpolation or invented replacement was applied. All 16 cells have paired data sufficient for the configured statistical preview, with a 32-test tile-scoped family. The result contains 12 cells with no detected divergence, four uncertain cells and zero supported signals. The pipeline does not manufacture hotspots to populate the map.
+Before the expansion and v2 area-method correction below, the controller completed the initial actual fine release: **12,672 rows** comprising 8,448 native GLDAS observations and 4,224 received NDVI month/cell slots. NDVI has **4,222 valid values and two source-QA gaps**. Those missing values are preserved; no interpolation or invented replacement was applied. All 16 cells have paired data sufficient for the configured statistical preview, with a 32-test tile-scoped family. The result contains 12 cells with no detected divergence, four uncertain cells and zero supported signals. The pipeline does not manufacture hotspots to populate the map.
 
 The fine release audit passed 1,110 integrity checks. This confirms the documented source/archive, grid, temporal and interface consistency; it does not establish globally validated fine-cell coverage, independent adjacent-cell observations, or completed ecological/source-pixel scientific review. The real fine observations currently cover only the explicitly documented Central-US tile.
+
+## Preselected expansion to six native tiles
+
+The expansion registry is `data/processed/fine/tiles.json`. It combines the existing **exploratory Central-US pilot** with five geographic expansion tiles fixed before reviewing those new tiles’ trend classifications. This is not a claim that all six locations were preregistered before any trend exploration. Each contains sixteen complete native 0.25° cells:
+
+| Registry tile ID | Bounding box, longitude/latitude | Local directory |
+| --- | --- | --- |
+| `central_us_1deg` | `[-98, 37, -97, 38]` | `data/processed/fine/central_us` |
+| `canada_1deg` | `[-106, 54, -105, 55]` | `data/processed/fine/canada` |
+| `iberia_1deg` | `[-5, 38, -4, 39]` | `data/processed/fine/iberia` |
+| `sahel_1deg` | `[2, 13, 3, 14]` | `data/processed/fine/sahel` |
+| `se_australia_1deg` | `[145, -36, 146, -35]` | `data/processed/fine/se_australia` |
+| `amazon_1deg` | `[-60, -4, -59, -3]` | `data/processed/fine/amazon` |
+
+These are geographically varied coverage pilots with disclosed exploratory selection history, rather than a representative global sample or proof of worldwide fine-cell coverage. The acquisition workflow keeps the frozen expansion locations when missing values or classifications are inconvenient. The previously explored Central-US tile is explicitly identified as exploratory.
+
+`scripts/acquire_fine_tiles.py` coordinates the existing native extraction, strict pilot validation, bounded annual retrieval, archival import, per-tile statistics and integrity audit. It creates no export tasks and changes no account, project, quota setting, pricing tier, source resolution or QA rule.
+
+Inspect local readiness without network calls, authentication, file creation or source processing:
+
+```sh
+.venv/bin/python scripts/acquire_fine_tiles.py
+```
+
+Explicitly acquire missing sources using the current authorized project:
+
+```sh
+.venv/bin/python scripts/acquire_fine_tiles.py --fetch
+```
+
+Use repeated `--tile ID` arguments to select registry entries. Native GLDAS files are processed only for uninitialized tiles; an existing partial local release requires explicit repair rather than being overwritten. An already received 264-month NDVI index with current statistics is reused, including legitimate source-QA gaps. If only statistics are stale, they are rebuilt locally without another retrieval.
+
+For a tile needing MODIS, the sequence is one January 2003 pilot, strict validation, 22 bounded annual requests, annual-only incremental import, per-tile statistics, then a release audit. The validation pilot is not imported, avoiding its configuration-timestamp overlap with the annual January rows. Shared `.cache/fine_modis_direct/` request receipts reuse completed requests by project, immutable target geometry and date range; interruption resumes without redownloading successful years. Server/quota errors stop the acquisition and retain completed work. No new account/project is created to bypass a limit.
+
+Canada's actual January pilot demonstrated an important missing-data case: all sixteen rows legitimately reported `no_valid_pixels`. Earth Engine JSON omits keys whose values are null, so the response lacked a `value` property entirely. The direct reader restores only scientifically nullable fields (`value`, valid area/fraction, and image provenance fields that may be absent when image count is zero). Required cell identity, source image count, tile ID, configuration time, QA rules and full-cell area are never invented. Existing source-count/provenance consistency checks still reject missing metadata for a present image. The cached raw January response revalidated as sixteen missing values; the workflow retained Canada and the original pilot month. It did not switch seasons, drop the tile, fill missing values or manufacture a trend.
+
+Completing all six tiles supplies up to 96 native cells, but source QA can reduce complete-year statistical eligibility. A valid all-missing winter pilot is not a retrieval failure. Paired annual analysis may remain insufficient for a tile with recurring winter gaps under the default twelve-valid-month requirement; that outcome should remain visible. Per-tile statistical families and any combined-family analysis must disclose their actual frozen scope rather than imply a worldwide test family.
+
+## Processing correction: consistent native sinusoidal sphere areas
+
+The Canadian expansion exposed a real processing error in the original fine-cell area calculation. Earth Engine `pixelArea()` and the analytic sinusoidal-sphere footprint denominator used different area conventions. A Canadian source fraction reached about 1.0042, which correctly failed the strict upper bound; the validator was not widened and coverage was not capped.
+
+The corrected fine calculation is versioned as `modis_sinusoidal_sphere_native_pixel_v2`. It uses the native sinusoidal pixel's constant area, `926.625433055833 × 926.6254330558334 m²`, evaluated in the original source projection and intersected with the same source masks/QA and unchanged GLDAS footprints. Numerator and denominator now use one sphere convention. An actual Canadian July check had maximum valid-area fraction approximately 0.999798. The change is a processing correction, not a change of product, spatial resolution, region selection, scaling, account or service tier.
+
+Every new fine source row must declare `area_method = modis_sinusoidal_sphere_native_pixel_v2`. Direct request identities/receipts include the calculation version, so the cache cannot silently reuse older sources with the same coordinates and dates. CSV serialization preserves the method field. Provenance records `modis_calculation_version` and the explicit native constant-area method. Original source transforms and the strict native tile-lattice checks remain unchanged.
+
+Previously imported Central-US data require deliberate corrected retrieval, not reinterpretation of old bytes:
+
+```sh
+.venv/bin/python scripts/acquire_fine_tiles.py --fetch --reprocess --replace
+```
+
+`--reprocess` forces otherwise complete tiles through the current-version pipeline and requires explicit `--replace`. All previously accepted legacy region/months must be covered by new corrected sources before the importer accepts the upgrade. It never labels old values as v2 or mixes an uncorrected legacy remainder into the current release. Earlier source archives remain available as historical evidence; only current accepted-ledger source hashes define the active calculation. Native GLDAS observations, source hashes and cell geometry stay unchanged.
+
+After corrected sources have been imported successfully, a normal `--fetch` resumes unfinished tiles while reusing completed current-version tiles. Reuse now runs the read-only release audit and requires its integrity checks to pass before a tile is reported ready. It refreshes the separate audit report, without changing source observations. Corrupt cached or archived data stop reuse rather than triggering an automatic replacement cloud call. Project/service settings remain unchanged throughout the correction.
+
+## Six-tile v2 delivery snapshot
+
+The controller completed all six current-version tile releases. The collection audit passed for **96 native cells and 76,032 monthly rows**, with **80 paired statistically eligible cells and 160 tests** in the disclosed combined family. All requested month/cell slots are present; source-QA gaps remain missing values rather than invented replacements. The browser checks covered all six areas.
+
+This snapshot replaces the earlier single-tile data-delivery status. It does not turn the six geographic pilots into worldwide fine-cell coverage or a confirmatory globally preregistered study. Central-US results had already been explored before the five expansion locations were chosen; the five expansion boxes were then fixed geographically before reviewing their own trend classifications. Scientific source-pixel/common-footprint review and spatial dependence limitations remain explicit.

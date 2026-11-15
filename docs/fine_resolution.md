@@ -255,3 +255,99 @@ The source CSV SHA-256 was
 `40e667e8c7cdb42c4a91766b9629f7c7f915873f7e70656f80d96c3577a7212e`.
 Local raw evidence is `.cache/fine_pixel_check.pixels.json`; the controller can
 archive the replay/comparison report without a further account request.
+
+## Six-tile collection and one joint testing family
+
+`data/processed/fine/tiles.json` freezes six 1° source tiles: central US, Canadian
+interior, Iberia, central Sahel, southeast Australia and the Brazilian Amazon.
+Each contains 16 native GLDAS cells. Their 96 distinct cells form one declared
+statistical collection; they are geographically separated demonstrations rather
+than representative or exhaustive global coverage. The original central-US pilot
+was already exploratory work; this expansion must not be described as a fully
+confirmatory blind global sample.
+
+Prepare the collection after source ingestion:
+
+```bash
+.venv/bin/python scripts/prepare_fine_collection.py
+.venv/bin/python scripts/prepare_fine_collection.py --audit-only
+```
+
+`src.fine_collection.prepare_collection` reads and hashes the registry and each
+tile's catalog, actual monthly table, original soil table, metadata, source
+manifests and accepted MODIS ledger. It copies the actual observations and native
+geometry into `data/processed/fine/collection/`; source releases remain intact.
+Original `tile_id` values are retained and `collection_tile_id` identifies origin.
+The 264 shared GLDAS source-file records are deduplicated; all historical MODIS
+archives remain hash-checked. Only files currently authoritative in the accepted
+ledger undergo current-method strict source/provenance validation. Superseded
+archives remain immutable evidence rather than being mistaken for current data.
+
+One call to the existing batch computes statistics across the entire 96-cell
+catalog. Eligible paired cells each contribute two primary MK tests; the complete
+collection can contain up to 192 tests. The family ID includes sorted native-cell
+IDs, all six tile IDs, grid, fixed period and primary variables. Arrival of new
+observations changes family size and adjusted values while preserving the declared
+family identity. Standalone soil diagnostics remain separate. No previous
+central-US-only or coarse-grid adjusted p-values are reused.
+
+The output includes one full screening report and compact map, concatenated
+original tables, quality counts, consolidated source manifests and an
+`input_manifest.json`. The latter has flattened `{file, sha256}` records for the
+registry and all source-release inputs, plus per-tile hashes. API consumers check
+these fingerprints and withhold a collection when an upstream tile changes.
+Viewport filtering may select fewer map features, but must retain the full joint
+family metadata and adjusted values; it must not silently recompute a local family.
+
+The collection audit independently reconciles source values, original soil
+baselines, native catalogs, monthly indexes, immutable archives and ledger values.
+It derives complete common annual years from actual observations, recomputes the
+raw MK tests from those annual values and independently calculates the joint BH
+adjustment. It checks the stored category with those joint values and ensures
+map/report agreement. These integrity checks do not promote source QA or establish
+spatial independence, causal effects or ecological damage.
+
+Candidates are written to a temporary staging directory first. Only a successful
+independent audit and a final unchanged-input check allow publication. Individual
+files are replaced atomically, with the compact map published last as the visible
+release marker. A failed candidate leaves the prior collection untouched.
+
+## Spherical area-reference correction (calculation version 2)
+
+The first fine exports used Earth Engine `pixelArea()` while the native target
+cell denominator used the MODIS sinusoidal sphere, radius 6,371,007.181 m. A
+high-latitude Canadian source check exposed a latitude-dependent coverage bias.
+Independent `pyproj.Geod` calculations for densified 0.25° geographic rectangles
+show these WGS84-ellipsoid/spherical-area ratios:
+
+| Approximate southern latitude | Ellipsoidal area / spherical area |
+| --- | --- |
+| 37° N | 1.0004033513 |
+| 54° N | 1.0043396169 |
+| 13° N | 0.9962177484 |
+| 4° S | 0.9955909858 |
+
+The Canadian ratio closely matches the approximately 1.0042 excess that triggered
+investigation. A single central-US comparison could not distinguish this reference
+mismatch from boundary quantization because its discrepancy was smaller than the
+conservative edge budget. The earlier January 2003 comparison table above records
+that **legacy** calculation and must not be treated as validation of the corrected
+processing version or a claim that quantization alone explained its area excess.
+
+Fine exports now use the constant native sinusoidal pixel area
+`abs(926.625433055833 × -926.6254330558334)` m², with the native projection applied
+explicitly. This equal-area spherical reference matches the target denominator
+at all latitudes. The version is
+`modis_sinusoidal_sphere_native_pixel_v2`, recorded as `area_method` in fine CSVs
+and in fetch/task cache identity. Shared coarse-export calculations are unaffected
+by this fine-specific correction. No coverage threshold is widened to hide the
+mismatch; any positive excess remains visible for boundary-weight review.
+
+All received fine NDVI rows, including actual missing-image rows, must declare the
+version-2 method before a collection can publish. Unreceived `pending_export`
+placeholders have no source computation to certify. Legacy current rows require
+deliberate reprocessing/replacement and new immutable source archives; mixing
+versions in the active ledger is rejected. Previously archived version-1 files
+are retained, hash-checked and excluded from the authoritative current ledger.
+Two physical regression tests verify the native affine pixel area on the sphere
+and the material latitude-dependent ellipsoid/sphere discrepancy.

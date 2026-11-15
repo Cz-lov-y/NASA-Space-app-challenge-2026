@@ -12,6 +12,7 @@ import pandas as pd
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from src.fine_grid import cell_bbox,cell_feature,parse_cell_id
+from scripts.export_fine_modis_earth_engine import CALCULATION_VERSION
 from scripts.merge_regional_timeseries import validate_modis,combine_records,archive_exports
 
 
@@ -35,8 +36,9 @@ def checked_catalog(catalog):
 def validate_frame(frame,catalog,expected_month=None):
     """Validate fine identity plus shared source-mask/QA/grid/coverage semantics."""
     catalog,areas=checked_catalog(catalog)
-    required={'tile_id','target_resolution_degrees'}
-    if not required.issubset(frame.columns):raise ValueError('Fine export requires tile_id and target_resolution_degrees')
+    required={'tile_id','target_resolution_degrees','area_method'}
+    if not required.issubset(frame.columns):raise ValueError('Fine export requires tile_id, target_resolution_degrees and area_method')
+    if not frame.area_method.eq(CALCULATION_VERSION).all():raise ValueError('Fine MODIS area method is outdated; reprocess using the declared native sinusoidal sphere calculation version')
     frame=validate_modis(frame,region_areas=areas)
     resolutions=pd.to_numeric(frame.target_resolution_degrees,errors='raise')
     if not resolutions.eq(.25).all():raise ValueError('Fine export must target native0.25degree GLDAS cells')
@@ -86,10 +88,20 @@ def ingest(paths,directory,replace=False):
     if not parts:raise ValueError('Supply at least one actual fine MODIS source export')
     ledger_path=directory/'accepted_modis_observations.csv'
     if ledger_path.exists():
-        previous=validate_frame(pd.read_csv(ledger_path,dtype={'unit':str},float_precision='round_trip'),catalog)
-        if 'source_file_sha256' not in previous or previous.source_file_sha256.isna().any():
-            raise ValueError('Existing fine ledger lacks source archive links')
-        parts.insert(0,previous)
+        previous_raw=pd.read_csv(ledger_path,dtype={'unit':str},float_precision='round_trip')
+        current_method=(previous_raw.area_method.eq(CALCULATION_VERSION) if 'area_method' in previous_raw else pd.Series(False,index=previous_raw.index))
+        legacy=previous_raw.loc[~current_method]
+        if not legacy.empty:
+            new_keys=set().union(*(set(zip(f.region_id,f.date)) for f in parts))
+            legacy_keys=set(zip(legacy.region_id,legacy.date))
+            if not replace or not legacy_keys.issubset(new_keys):
+                raise ValueError('Legacy fine area method requires explicit --replace and corrected inputs covering every previously accepted legacy region/month; no mixed-method release is allowed')
+        previous=previous_raw.loc[current_method]
+        if not previous.empty:
+            previous=validate_frame(previous,catalog)
+            if 'source_file_sha256' not in previous or previous.source_file_sha256.isna().any():
+                raise ValueError('Existing fine ledger lacks source archive links')
+            parts.insert(0,previous)
     elif (directory/'monthly_timeseries.csv').exists():
         previous=pd.read_csv(directory/'monthly_timeseries.csv',dtype={'unit':str},float_precision='round_trip')
         previous=previous.loc[(previous.variable=='ndvi') & previous.quality_flag.ne('pending_export')]
@@ -127,8 +139,10 @@ def ingest(paths,directory,replace=False):
     archived=archive_exports(paths,sources,archive)
     manifests=sorted({r['sha256']:r for r in previous_manifest+archived}.values(),key=lambda r:r['sha256'])
     metadata['dataset_versions']=['GLDAS_NOAH025_M.2.1','MOD13A3.061']
+    metadata['modis_calculation_version']=CALCULATION_VERSION
     metadata['ndvi']={'dataset_version':'MOD13A3.061','unit':'1','target_resolution_degrees':.25,
-        'method':'Original native sinusoidal MODIS pixel-area weighted means into unchanged native GLDAS cell footprints; scale0.0001once',
+        'area_method':CALCULATION_VERSION,
+        'method':'Constant native MODIS sinusoidal-sphere pixel area; original native sinusoidal MODIS pixel-area weighted means into unchanged native GLDAS cell footprints; scale0.0001once',
         'qa':'Intersect source NDVI/DetailedQA/SummaryQA masks; raw NDVI[-2000,10000]; (DetailedQA&3)==0;SummaryQA==0',
         'missing':'Unexported264-month slots remainNaN with pending_export; exported no_valid_pixels/missing retained without imputation',
         'scientific_validation':'Source metadata/QA/projection/index checks passed; independent source-pixel and common-footprint scientific review pending',

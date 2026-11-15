@@ -26,7 +26,7 @@ class APIError(Exception):
         self.status, self.code = status, code
 
 
-@lru_cache(maxsize=16)
+@lru_cache(maxsize=256)
 def _digest(path, mtime, size):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
@@ -50,9 +50,11 @@ class RegionalAPI:
     multi-user API. Live POST access requires explicit server enablement.
     """
     def __init__(self, *, directory=REGIONAL, cache_dir=None, report_dir=None,
-                 settings=None, live_enabled=False, jobs=None, fine_directory=None):
+                 settings=None, live_enabled=False, jobs=None, fine_directory=None, tile_index=None):
         self.directory = Path(directory)
         self.fine_directory = Path(fine_directory or ROOT / "data/processed/fine/central_us")
+        self._registered_fine = fine_directory is None
+        self.tile_index = Path(tile_index or ROOT / 'data/processed/fine/tiles.json')
         self.cache_dir = Path(cache_dir or ROOT / '.cache/regional_research')
         self.report_dir = Path(report_dir or ROOT / 'data/research')
         self._settings = {key: value for key,value in (settings or {}).items() if key in SETTINGS}
@@ -67,11 +69,18 @@ class RegionalAPI:
                 raise APIError(404,'unknown_region')
         try:
             if fine:
-                from src.fine_workflow import load_fine_region
-                bundle = load_fine_region(region_id, directory=self.fine_directory)
+                if self._registered_fine and self.tile_index.is_file():
+                    from src.fine_workflow import load_registered_fine_region
+                    bundle = load_registered_fine_region(region_id,index_path=self.tile_index)
+                else:
+                    from src.fine_workflow import load_fine_region
+                    bundle = load_fine_region(region_id, directory=self.fine_directory)
             else:
                 bundle = load_region(region_id, directory=self.directory)
-        except ValueError:
+        except ValueError as exc:
+            from src.fine_workflow import FineCollectionStale
+            if isinstance(exc,FineCollectionStale):
+                raise APIError(409,'fine_collection_rebuild_required') from None
             raise APIError(404,'unknown_region') from None
         except (OSError, KeyError, TypeError):
             raise APIError(503,'regional_release_unavailable') from None
@@ -107,14 +116,33 @@ class RegionalAPI:
             raise APIError(400,'invalid_target')
         path = url.path
         query = parse_qs(url.query,keep_blank_values=True)
-        if path != '/api/v1/jobs/' and not path.startswith('/api/v1/jobs/') and query:
+        if path != '/api/v1/fine-regions' and not path.startswith('/api/v1/jobs/') and query:
             raise APIError(400,'unexpected_query')
         if method == 'GET' and path in ('/health','/api/v1/health'):
             return 200, {'status':'ok','api_version':'v1','live_enabled':self.live_enabled,
                 'configured':{key:bool(self._settings.get(key)) for key in SETTINGS},
                 'release_files_present':all((self.directory/name).is_file() for name in
                     ('catalog.json','monthly_timeseries.csv','screening.json','map_screening.geojson'))}
+        if method == 'GET' and path == '/api/v1/fine-tiles':
+            if not self._registered_fine or not self.tile_index.is_file():
+                raise APIError(404,'tile_registry_unavailable')
+            from src.fine_workflow import fine_tiles
+            return 200, fine_tiles(index_path=self.tile_index)
         if method == 'GET' and path == '/api/v1/fine-regions':
+            if set(query)-{'tile_id'} or ('tile_id' in query and (len(query['tile_id'])!=1 or not query['tile_id'][0])):
+                raise APIError(400,'invalid_tile_query')
+            if self._registered_fine and self.tile_index.is_file():
+                from src.fine_workflow import load_tile_index,registered_fine_map,DEFAULT_TILE
+                registry = load_tile_index(index_path=self.tile_index)
+                tile_id = query.get('tile_id',[DEFAULT_TILE])[0]
+                if tile_id not in {tile['id'] for tile in registry['tiles']}:
+                    raise APIError(404,'unknown_tile')
+                try:
+                    return 200, registered_fine_map(tile_id,index_path=self.tile_index)
+                except ValueError:
+                    raise APIError(409,'fine_collection_rebuild_required') from None
+            if query:
+                raise APIError(400,'tile_selection_not_configured')
             from src.fine_workflow import fine_map
             return 200, fine_map(directory=self.fine_directory)
         if method == 'GET' and path == '/api/v1/regions':

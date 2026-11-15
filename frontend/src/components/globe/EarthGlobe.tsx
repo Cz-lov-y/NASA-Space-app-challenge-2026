@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame, useLoader, ThreeEvent } from '@react-three/fiber';
 import { Atmosphere } from './Atmosphere';
@@ -23,6 +23,8 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
   const earthGroupRef = useRef<THREE.Group>(null);
   const earthMeshRef = useRef<THREE.Mesh>(null);
   const cloudsRef = useRef<THREE.Mesh>(null);
+  const focusTime = useRef(0);
+  useEffect(() => { focusTime.current = selectedCoordinate ? 1.8 : 0; }, [selectedCoordinate]);
 
   // Load authentic NASA Blue Marble textures from public folder
   const [dayMap, normalMap, specularMap, cloudsMap] = useLoader(THREE.TextureLoader, [
@@ -49,7 +51,15 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
 
     // Only rotate if user hasn't interacted for > 1.2 seconds
     const timeSinceInteraction = state.clock.getElapsedTime() - lastInteractionTimeRef.current;
-    const shouldRotate = !isInteracting && timeSinceInteraction > 1.2;
+    const shouldRotate = !selectedCoordinate && !isInteracting && timeSinceInteraction > 1.2;
+
+    if (earthGroupRef.current && selectedCoordinate && focusTime.current > 0 && !isInteracting) {
+      const localPoint = latLngToVector3(selectedCoordinate.lat, selectedCoordinate.lng, 1).normalize();
+      const towardCamera = state.camera.getWorldPosition(new THREE.Vector3()).sub(earthGroupRef.current.getWorldPosition(new THREE.Vector3())).normalize();
+      const target = new THREE.Quaternion().setFromUnitVectors(localPoint, towardCamera);
+      earthGroupRef.current.quaternion.slerp(target, 1 - Math.exp(-5 * delta));
+      focusTime.current -= delta;
+    }
 
     if (earthGroupRef.current && shouldRotate) {
       earthGroupRef.current.rotation.y += delta * 0.04;
@@ -110,11 +120,11 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
         const [w,s,e,n] = region.bbox!;
         return <Line key={`${region.id}-boundary`} points={[[w,s],[e,s],[e,n],[w,n],[w,s]].map(([lon,lat]) => latLngToVector3(lat,lon,1.013))} color="#00e5ff" lineWidth={1} />;
       })}
-      {regions.filter(r => r.hasObservationalData).map(region => (
+      {regions.filter(r => r.hasObservationalData || r.isTileNavigation).map(region => (
         <mesh key={region.id} position={latLngToVector3(region.lat, region.lng, 1.012)}
           onPointerDown={event => { event.stopPropagation(); onSelectCoordinate({lat: region.lat, lng: region.lng}); }}>
-          <sphereGeometry args={[region.resolutionDegrees === 0.25 ? 0.0009 : 0.006, 8, 8]} />
-          <meshBasicMaterial color={region.screeningStatus === 'supported_signal' ? '#f59e0b' : region.screeningStatus === 'uncertain_signal' ? '#a78bfa' : '#00e5ff'} />
+          <sphereGeometry args={[region.isTileNavigation ? 0.009 : region.resolutionDegrees === 0.25 ? 0.0009 : 0.006, 8, 8]} />
+          <meshBasicMaterial color={region.isTileNavigation ? '#ffffff' : region.screeningStatus === 'supported_signal' ? '#f59e0b' : region.screeningStatus === 'uncertain_signal' ? '#a78bfa' : '#00e5ff'} />
         </mesh>
       ))}
       {/* Animated Location Pin (attached to the rotating Earth coordinate frame) */}

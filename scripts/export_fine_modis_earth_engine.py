@@ -15,6 +15,11 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from scripts.export_regional_modis_earth_engine import COLUMNS,QA_RULE,export_plan,poll_status
 
+# MODIS sinusoidal is an equal-area sphere. EE pixelArea is not used here:
+# its geographic/ellipsoidal area differs from this target's spherical denominator.
+CALCULATION_VERSION = 'modis_sinusoidal_sphere_native_pixel_v2'
+NATIVE_PIXEL_AREA_M2 = 926.625433055833 * 926.6254330558334
+
 
 def load_request(path):
     from src.fine_grid import cell_bbox,parse_cell_id
@@ -51,7 +56,8 @@ def build_collection(ee,catalog,start,end,configured,tile_id):
         detailed=image.select('DetailedQA');summary=image.select('SummaryQA');projection=raw.projection()
         valid=(raw.mask().And(detailed.mask()).And(summary.mask()).And(raw.gte(-2000)).And(raw.lte(10000))
             .And(detailed.bitwiseAnd(3).eq(0)).And(summary.eq(0)).unmask(0))
-        area=ee.Image.pixelArea().updateMask(valid).rename('valid_area_m2')
+        area=(ee.Image.constant(NATIVE_PIXEL_AREA_M2).setDefaultProjection(projection)
+            .updateMask(valid).rename('valid_area_m2'))
         weighted=raw.multiply(.0001).multiply(area).rename('weighted_ndvi')
         reduced=weighted.addBands(area).unmask(0,False).reduceRegions(collection=grid,
             reducer=ee.Reducer.sum(),crs=projection,tileScale=4)
@@ -65,7 +71,8 @@ def build_collection(ee,catalog,start,end,configured,tile_id):
                 'source_transform':projection.transform()})
         result=ee.FeatureCollection(ee.Algorithms.If(count.eq(1),reduced.map(summarize),grid.map(absent)))
         return result.map(lambda f:f.set({'date':date.format('YYYY-MM-dd'),'variable':'ndvi','unit':'1','source':'MOD13A3.061',
-            'source_image_count':count,'qa_rule':QA_RULE,'configured_at_utc':configured,'tile_id':tile_id,'target_resolution_degrees':.25}))
+            'source_image_count':count,'qa_rule':QA_RULE,'configured_at_utc':configured,'tile_id':tile_id,'target_resolution_degrees':.25,
+            'area_method':CALCULATION_VERSION}))
     start=ee.Date(start);end=ee.Date(end)
     n=(ee.Number(end.get('year')).subtract(start.get('year')).multiply(12)
         .add(ee.Number(end.get('month')).subtract(start.get('month'))))
@@ -77,19 +84,19 @@ def submit(ee,project,request,catalog,catalog_sha,plan,manifest_path,force=False
     tile=request['tile_id']
     if not force:
         for item in plan:
-            if any(r.get('project')==project and r.get('tile_id')==tile and
+            if any(r.get('project')==project and r.get('tile_id')==tile and r.get('calculation_version')==CALCULATION_VERSION and
                 r.get('start')==item['start'] and r.get('end_exclusive')==item['end'] and r.get('status') not in {'FAILED','CANCELLED'} for r in records):
                 raise ValueError('Fine export already recorded; poll status or explicitly --force an intentional retry')
     ee.Initialize(project=project);configured=datetime.now(timezone.utc).isoformat().replace('+00:00','Z');new=[]
     for item in plan:
-        name='mod13a3_gldas025_'+tile+'_'+item['label']
+        name='mod13a3_gldas025_sphere_v2_'+tile+'_'+item['label']
         task=ee.batch.Export.table.toDrive(collection=build_collection(ee,catalog,item['start'],item['end'],configured,tile),
             description=name,folder='NASA_member_B_fine',fileNamePrefix=name,fileFormat='CSV',
-            selectors=COLUMNS+['tile_id','target_resolution_degrees'])
+            selectors=COLUMNS+['area_method','tile_id','target_resolution_degrees'])
         task.start()
         record={'task_id':task.id,'description':name,'project':project,'tile_id':tile,'catalog_sha256':catalog_sha,'target_geometry_sha256':catalog_sha,
             'start':item['start'],'end_exclusive':item['end'],'region_count':len(catalog['features']),
-            'scope':'native_gldas025_tile','status':'SUBMITTED','submitted_at_utc':configured}
+            'scope':'native_gldas025_tile','calculation_version':CALCULATION_VERSION,'status':'SUBMITTED','submitted_at_utc':configured}
         records.append(record);new.append(record);manifest_path.parent.mkdir(parents=True,exist_ok=True)
         manifest_path.write_text(json.dumps(records,indent=2)+'\n')
     return new
@@ -109,6 +116,7 @@ def main(argv=None):
     if not args.submit and not args.status:
         result={'mode':'dry_plan','tile_id':request['tile_id'],'bbox':request['bbox'],'region_count':len(catalog['features']),
             'target_resolution_degrees':.25,'source':'MODIS/061/MOD13A3','native_projection':True,'qa_rule':QA_RULE,
+            'calculation_version':CALCULATION_VERSION,'native_pixel_area_m2':NATIVE_PIXEL_AREA_M2,
             'task_count':len(plan),'tasks':plan,'catalog_sha256':digest,
             'status':'fine tile source-pixel/cloud pilot validation pending; no cloud calls made'}
     else:

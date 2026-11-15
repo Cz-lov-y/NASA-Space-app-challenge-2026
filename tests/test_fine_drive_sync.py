@@ -44,3 +44,15 @@ def test_complete_annual_reaches_import(monkeypatch,tmp_path):
     calls=setup(monkeypatch,tmp_path,'2003',dates)
     result=module.sync(None,'request',tmp_path/'cache',directory=tmp_path,ingest=True)
     assert result['ingested'] and len(calls)==1
+
+
+def test_discovery_accepts_only_current_area_method_exports(monkeypatch):
+    def files(session,query):
+        if "name = 'NASA_member_B_fine'" in query:return [{'id':'folder'}]
+        return [{'id':'old','name':'mod13a3_gldas025_tile_2003.csv'},
+                {'id':'current','name':'mod13a3_gldas025_sphere_v2_tile_2003.csv'},
+                {'id':'other','name':'mod13a3_gldas025_sphere_v2_other_2003.csv'}]
+    monkeypatch.setattr(module,'list_files',files)
+    result=module.discover(None,'tile')
+    assert [r['id'] for r in result]==['current']
+    assert result[0]['year']==2003

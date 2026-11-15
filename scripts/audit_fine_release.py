@@ -123,11 +123,19 @@ def audit(directory, *, root=ROOT):
         keys=['region_id','date']
         check(not ledger.duplicated(keys).any(),'accepted MODIS ledger has unique regional months')
         accepted=ledger.set_index(keys).sort_index()
+        active_hashes=set(ledger.source_file_sha256)
         for source in modis_manifest:
             path=Path(source['file']);path=path if path.is_absolute() else root/path
             check(path.name==source['sha256']+'.csv','fine MODIS source archive uses content-addressed filenames')
-            if not path.is_file(): continue
-            archived=validate_frame(pd.read_csv(path,dtype={'unit':str},float_precision='round_trip'),catalog).set_index(keys).sort_index()
+            # Every historical file was hash-checked above. Superseded legacy
+            # exports remain immutable provenance, not active v2 observations.
+            # Only ledger-referenced archives must pass today's strict method.
+            if not path.is_file() or source['sha256'] not in active_hashes: continue
+            try:
+                archived=validate_frame(pd.read_csv(path,dtype={'unit':str},float_precision='round_trip'),catalog).set_index(keys).sort_index()
+            except ValueError:
+                check(False,'active MODIS archive passes current native-area/provenance validation')
+                continue
             authoritative=accepted[accepted.source_file_sha256==source['sha256']]
             check(set(authoritative.index).issubset(archived.index),'ledger authoritative rows exist in their recorded source archive')
             common_source=authoritative.index.intersection(archived.index)
