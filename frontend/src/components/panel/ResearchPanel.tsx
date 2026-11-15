@@ -62,7 +62,7 @@ export function ResearchPanel({ detail }: { detail: RegionalDetail }) {
       </div>
     </div>
     {requested !== selection && <button type="button" onClick={() => setRequested(selection)}
-      className="mt-4 rounded-lg border border-cyan-600 bg-cyan-700 px-4 py-2 text-xs font-semibold text-white hover:bg-cyan-800">
+      className="research-action mt-4 rounded-lg px-4 py-2.5 text-xs font-semibold transition-colors">
       Get policy &amp; scientific context
     </button>}
     {status && <p role="status" className="mt-4 text-xs text-slate-500">{status}</p>}

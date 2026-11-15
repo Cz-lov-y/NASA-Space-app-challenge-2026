@@ -9,7 +9,6 @@ import { mapRegion, fineGridId } from './services/regions';
 import { RegionalDetail } from './types/contracts';
 import { cachedMapRegions, forgetMapRegion, rememberMapRegion } from './services/mapCache';
 import { Geography, loadGeography, placeLabel } from './services/geography';
-import { formatCoordinates } from './utils/coordinates';
 
 export const App: React.FC = () => {
   const [selectedCoordinate, setSelectedCoordinate] = useState<GeoCoordinate | null>(null);
@@ -159,6 +158,14 @@ export const App: React.FC = () => {
     .map(region => ({ ...region, screeningStatus: 'pending' }));
   const mapRegions = [...liveRegions, ...pendingRegions];
   const redRegions = liveRegions.filter(r => r.screeningStatus === 'supported_signal');
+  const redPlaces = new Map<string, { location: SelectedLocation; count: number }>();
+  redRegions.forEach(region => {
+    const place = geography?.lookup(region.lat, region.lng);
+    const label = place ? placeLabel(place) : (region.country && region.country !== 'Regional NASA observations' ? region.country : 'Land location');
+    const existing = redPlaces.get(label);
+    if (existing) existing.count++;
+    else redPlaces.set(label, { location: region, count: 1 });
+  });
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-space-950 font-sans">
@@ -176,11 +183,14 @@ export const App: React.FC = () => {
         </div>
         <div className="mt-3 border-t border-slate-700 pt-2">
           <p className="font-semibold text-white">Places with a stronger signal</p>
-          {redRegions.length ? <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto">
-            {redRegions.map(region => <li key={region.id}><button type="button"
-              onClick={() => handleSelectLocation(region)}
-              className="w-full rounded-md px-2 py-1.5 text-left text-red-700 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600">
-              <span aria-hidden="true">● </span>{(() => { const place = geography?.lookup(region.lat, region.lng); return place ? placeLabel(place) : (region.country && region.country !== 'Regional NASA observations' ? region.country : 'Land location'); })()}<span className="block pl-3 text-slate-500">{formatCoordinates(region.lat, region.lng)}</span>
+          {redPlaces.size ? <ul className="mt-2 max-h-40 divide-y divide-slate-200 overflow-y-auto">
+            {Array.from(redPlaces, ([label, item]) => <li key={label}><button type="button"
+              onClick={() => handleSelectLocation(item.location)}
+              title={item.count > 1 ? `View one of ${item.count} matching locations` : `View ${label}`}
+              className="flex w-full items-center gap-2 rounded-md px-1 py-2 text-left text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600">
+              <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-red-600" />
+              <span className="min-w-0 flex-1">{label}</span>
+              {item.count > 1 && <span className="text-slate-500">{item.count}</span>}
             </button></li>)}
           </ul> : <p className="mt-1 text-slate-400">No stronger signals identified yet.</p>}
         </div>

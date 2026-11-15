@@ -1,6 +1,6 @@
 import { SelectedLocation } from '../types/globe';
 
-const KEY = 'earthrisk-map-screening-v1';
+const KEY = 'earthrisk-map-screening-v2';
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const MAX_ENTRIES = 2000;
 const STATUSES = new Set(['supported_signal', 'uncertain_signal', 'no_detected_divergence', 'insufficient', 'pending', 'unsupported']);

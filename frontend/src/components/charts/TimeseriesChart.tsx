@@ -137,7 +137,7 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
         const estimated = ndviGapEstimates(dates, varObs);
         if (estimated.some(point => point?.estimated)) seriesList.push({
           name: 'Vegetation estimate', type: 'line', yAxisIndex: yAxisIdx,
-          data: estimated, smooth: false, symbol: 'none', connectNulls: false,
+          data: estimated, smooth: 0.2, symbol: 'none', connectNulls: false,
           lineStyle: { width: 2, type: 'dashed', color: config.color },
           itemStyle: { color: config.color },
         });
@@ -317,7 +317,7 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
         lazyUpdate
       />
       {option.series.some((series: any) => series.name === 'Vegetation estimate') &&
-        <p className="mt-2 text-xs text-slate-500">Dashed green lines are estimates between observed months; solid lines show observations.</p>}
+        <p className="mt-2 text-xs text-slate-500">Dashed green lines show estimated vegetation; solid lines show observations.</p>}
     </div>
   );
 };

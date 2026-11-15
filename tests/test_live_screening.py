@@ -34,7 +34,7 @@ import {createRequire} from 'node:module';
 const require=createRequire(process.cwd()+'/frontend/package.json');
 const esbuild=require('esbuild');
 const mod={exports:{}};
-const source=esbuild.transformSync(fs.readFileSync('frontend/src/services/liveScreening.ts','utf8'),{loader:'ts',format:'cjs',target:'es2020'}).code;
+const source=esbuild.buildSync({entryPoints:['frontend/src/services/liveScreening.ts'],bundle:true,write:false,format:'cjs',platform:'node',target:'es2020'}).outputFiles[0].text;
 new Function('module','exports','require',source)(mod,mod.exports,require);
 const cases=JSON.parse(fs.readFileSync(0,'utf8'));
 process.stdout.write(JSON.stringify(cases.map(c=>mod.exports.computeLiveScreening(c.raw,c.options))));
@@ -63,7 +63,7 @@ def payload(frame,start=2003,end=2024):
     observations=json.loads(frame.to_json(orient='records',date_format='iso',double_precision=15))
     return {'raw':{'region_id':str(frame.region_id.iloc[0]),'feature':{'type':'Feature','geometry':None,'properties':{}},
         'dataset_version':'TEST_SOURCE_VERSION','observations':observations,'provenance':{'status':'TEST_PARITY_ONLY'}},
-        'options':{'startYear':start,'endYear':end}}
+        'options':{'startYear':start,'endYear':end,'estimateMissing':False}}
 
 
 def assert_numerics_match(live,expected):
@@ -141,3 +141,20 @@ def test_live_preserves_source_qa_missing_values_and_synthetic_flag():
     assert outputs[2]['screening']['classification']=='unsupported'
     assert outputs[2]['screening']['category'] is None
     assert outputs[2]['annual_fits']=={}
+
+
+def test_canadian_seasonal_estimates_enable_screening_without_changing_source_observations():
+    frame=pd.read_csv(ROOT/'data/processed/fine/canada/monthly_timeseries.csv')
+    region=frame.region_id.iloc[0]
+    frame=frame.loc[frame.region_id==region].copy()
+    case=payload(frame)
+    observed_only=run_live([case])[0]
+    case['options']['estimateMissing']=True
+    estimated=run_live([case])[0]
+    assert observed_only['screening']['classification']=='insufficient'
+    assert estimated['screening']['classification']!='insufficient'
+    assert estimated['provenance']['live_analysis']['ndvi_estimated_months']>0
+    quality=estimated['paired_analysis']['analysis']['ndvi']['data_quality']
+    assert quality['n_years']>=8 and quality['model_estimated_observations']>0
+    assert quality['raw_missing_fraction']>0 and quality['raw_incomplete_retained_years']
+    assert estimated['observations']==case['raw']['observations']

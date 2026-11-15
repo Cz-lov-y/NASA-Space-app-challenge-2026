@@ -1,19 +1,21 @@
-/** Live annual inference from supplied monthly observations. No data or probabilities are invented.
- * Implements the Python module's default complete-year, Sen/MK/OLS and reliability rules.
+/** Live annual inference from monthly observations and optional seasonal NDVI estimates.
+ * Uses complete-year, Sen/MK/OLS and reliability rules; model uncertainty is not propagated.
  * Scope is the selected cell and window; no global or stored collection q-values are reused.
  */
 import { RegionalDetail, TimeSeriesObservation } from '../types/contracts';
+import { ndviGapEstimates } from '../utils/ndviEstimates';
 
 type Observation = TimeSeriesObservation & { quality_flag?: string };
 type Raw = { region_id: string; feature: any; dataset_version: string; observations: Observation[];
   provenance: any; availability?: any; ndvi_retrieval?: RegionalDetail['ndvi_retrieval'] };
-export interface LiveOptions { startYear: number; endYear: number; alpha?: number }
+export interface LiveOptions { startYear: number; endYear: number; alpha?: number; estimateMissing?: boolean }
 const REJECT = new Set(['low_coverage','missing','invalid','qa_rejected','no_valid_data','no_valid_pixels','negative_value']);
 const VARIABLES = ['ndvi','soil_water_0_100cm'];
 const SCOPE = 'live browser single-cell/window exploratory; not adjusted across regions or repeated windows';
 const LIMITATIONS = [
   'Computed in the browser from supplied monthly source observations; source QA remains unreviewed.',
-  'Equal-weight annual means require12valid monthly observations. Missing months are never interpolated.',
+  'NDVI may include model-estimated months in short no-pixel gaps; annual means require12 observed or estimated months.',
+  'Uncertainty from estimated NDVI is not propagated into statistical significance or trend intervals.',
   'BH covers only the primary indicators in this selected cell/window; no adjustment across regions or repeated windows.',
   'P-values and marginal slope intervals assume independent annual observations; lag1is a diagnostic, not a correction.',
   'Evidence categories are not calibrated environmental-risk probabilities. Divergence does not establish damage or causation.',
@@ -85,15 +87,15 @@ export function adjustLivePValues(p:(number|null)[]) {
   for(let j=ranked.length-1;j>=0;j--){minimum=Math.min(minimum,ranked[j].v*p.length/(j+1));q[ranked[j].i]=p[ranked[j].i]===null?null:minimum;}return q;
 }
 function prepare(rows:Observation[]) {
-  const yearRows=new Map<number,number[]>(),seen=new Set<string>();let valid=0;
+  const yearRows=new Map<number,number[]>(),observedYears=new Map<number,number>(),seen=new Set<string>();let valid=0,estimated=0;
   rows.forEach(row=>{const date=new Date(row.date),year=date.getUTCFullYear(),month=`${year}-${date.getUTCMonth()}`;
     if(seen.has(month))throw new Error('Duplicate monthly source observations');seen.add(month);
-    const values=yearRows.get(year)||[];if(finite(row.value)&&!REJECT.has(row.quality_flag||'')){values.push(row.value);valid++;}yearRows.set(year,values);
+    const values=yearRows.get(year)||[];if(finite(row.value)&&!REJECT.has(row.quality_flag||'')){values.push(row.value);valid++;if(row.quality_flag==='model_estimated')estimated++;else observedYears.set(year,(observedYears.get(year)||0)+1);}yearRows.set(year,values);
   });
   const years=sorted([...yearRows.keys()]),first=years[0],last=years[years.length-1],annual=new Map<number,number>();
   yearRows.forEach((values,year)=>{if(values.length===12)annual.set(year,mean(values));});
-  const excluded:number[]=[];for(let y=first;y<=last;y++)if((yearRows.get(y)||[]).length<12)excluded.push(y);
-  return {annual,yearRows,quality:{input_rows:rows.length,valid_observations:valid,raw_expected_observations:(last-first+1)*12,raw_missing_fraction:1-valid/((last-first+1)*12),raw_excluded_years:excluded,available_years:sorted([...annual.keys()]),raw_incomplete_retained_years:[],input_period:{start:rows.map(r=>r.date.slice(0,10)).sort()[0],end:rows.map(r=>r.date.slice(0,10)).sort().slice(-1)[0]}}};
+  const excluded:number[]=[];for(let y=first;y<=last;y++)if((observedYears.get(y)||0)<12)excluded.push(y);
+  return {annual,yearRows,quality:{input_rows:rows.length,valid_observations:valid-estimated,model_estimated_observations:estimated,raw_expected_observations:(last-first+1)*12,raw_missing_fraction:1-(valid-estimated)/((last-first+1)*12),raw_excluded_years:excluded,available_years:sorted([...annual.keys()]),raw_incomplete_retained_years:excluded.filter(y=>annual.has(y)),input_period:{start:rows.map(r=>r.date.slice(0,10)).sort()[0],end:rows.map(r=>r.date.slice(0,10)).sort().slice(-1)[0]}}};
 }
 function analyzeVariable(prepared:ReturnType<typeof prepare>,years:number[],unit:string,source:string,alpha:number):any {
   const x=years,y=years.map(year=>prepared.annual.get(year)!),n=years.length,expected=n?(years[n-1]-years[0]+1)*12:0;
@@ -139,16 +141,22 @@ export function computeLiveScreening(raw:Raw,options:LiveOptions):RegionalDetail
   const rows=raw.observations.filter(row=>{if(!Number.isFinite(Date.parse(row.date)))throw new Error('Invalid source date');const year=new Date(row.date).getUTCFullYear();return year>=options.startYear&&year<=options.endYear;});
   rows.forEach(row=>{if(row.region_id!==raw.region_id||row.value!==null&&!finite(row.value)||!row.source||!row.unit)throw new Error('Invalid source observation or metadata');});
   const selected=rows.filter(r=>VARIABLES.includes(r.variable));
+  const ndviRows=selected.filter(r=>r.variable==='ndvi').sort((a,b)=>a.date.localeCompare(b.date));
+  const estimates=options.estimateMissing===false?[]:ndviGapEstimates(ndviRows.map(r=>r.date),ndviRows);
+  const estimatedByDate=new Map<string,number>();
+  ndviRows.forEach((row,i)=>{const point=estimates[i];if(point?.estimated)estimatedByDate.set(row.date,point.value);});
+  const analysisRows=selected.map(row=>row.variable==='ndvi' && estimatedByDate.has(row.date)
+    ? {...row,value:estimatedByDate.get(row.date)!,quality_flag:'model_estimated'} : row);
   VARIABLES.forEach(v=>{const values=selected.filter(r=>r.variable===v);if(new Set(values.map(r=>r.unit)).size>1||new Set(values.map(r=>r.source)).size>1)throw new Error('Mixed units or sources');if(values.length&&values[0].unit!==(v==='ndvi'?'1':'kg m-2'))throw new Error('Unexpected physical units');});
   const usable=(v:string)=>selected.some(r=>r.variable===v&&finite(r.value)&&!REJECT.has(r.quality_flag||''));
   const supplied=(v:string)=>selected.some(r=>r.variable===v&&r.quality_flag!=='pending_export');
-  const supported=usable('soil_water_0_100cm'),paired=supplied('ndvi')&&supplied('soil_water_0_100cm')?analyze(selected,VARIABLES,raw.region_id,alpha):null;
+  const supported=usable('soil_water_0_100cm'),paired=supplied('ndvi')&&supplied('soil_water_0_100cm')?analyze(analysisRows,VARIABLES,raw.region_id,alpha):null;
   const eligible=paired&&VARIABLES.every(v=>paired.analysis[v].status==='ok');
   const diagnostic=!eligible&&supported?analyze(selected.filter(r=>r.variable==='soil_water_0_100cm'),['soil_water_0_100cm'],raw.region_id,alpha):null;
   const classification=!supported?'unsupported':!paired?'pending':!eligible?'insufficient':paired.divergence_status;
   const screening:any={classification,category:eligible?paired.divergence.category:null,reasons:eligible?paired.divergence.pairs.flatMap((p:any)=>p.reasons):[classification],qa_reviewed:false,provisional:true,probability:null,probability_status:'not_calibrated',family_scope:SCOPE,computed_in:'browser',multiple_testing:{method:'benjamini_hochberg',family_size:eligible?2:0,globally_adjusted:false},adjusted_p_values:eligible?paired.adjusted_p_values:{}};
   const displayed=diagnostic||paired,annualFits:any={};
   Object.entries(displayed?.analysis||{}).forEach(([v,value])=>{const r:any=value,o=r.linear_regression;annualFits[v]=o?{kind:'annual_ols_fitted',unit:r.unit,slope_unit:r.slope_unit,...o,points:r.data_quality.analyzed_years.map((year:number)=>({year,date:`${year}-01-01`,value:o.intercept+o.slope*(year-o.time_origin)}))}:null;});
-  const result:any={schema_version:'regional-detail-1',region_id:raw.region_id,feature:raw.feature,dataset_version:raw.dataset_version,screening_status:'current_browser_computation',observations:rows,provenance:{...raw.provenance,live_analysis:{engine:'browser-typescript-v1',window:[options.startYear,options.endYear],scope:SCOPE,source_dataset_version:raw.dataset_version}},paired_analysis:paired,available_indicator_analysis:diagnostic,screening,annual_fits:annualFits,ndvi_retrieval:raw.ndvi_retrieval,scientific_display:{analysis_kind:diagnostic?'available_indicator':paired?'paired':'none',analysis_period:displayed?.observation_period??null,category:screening.category,classification,qa_reviewed:false,limitations:LIMITATIONS}};
+  const result:any={schema_version:'regional-detail-1',region_id:raw.region_id,feature:raw.feature,dataset_version:raw.dataset_version,screening_status:'current_browser_computation',observations:rows,provenance:{...raw.provenance,live_analysis:{engine:'browser-typescript-v1',window:[options.startYear,options.endYear],scope:SCOPE,source_dataset_version:raw.dataset_version,ndvi_model:'seasonal_harmonic_bounded_gaps_v1',ndvi_estimated_months:estimatedByDate.size}},paired_analysis:paired,available_indicator_analysis:diagnostic,screening,annual_fits:annualFits,ndvi_retrieval:raw.ndvi_retrieval,scientific_display:{analysis_kind:diagnostic?'available_indicator':paired?'paired':'none',analysis_period:displayed?.observation_period??null,category:screening.category,classification,qa_reviewed:false,limitations:LIMITATIONS}};
   return result;
 }
