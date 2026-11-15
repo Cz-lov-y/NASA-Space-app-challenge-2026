@@ -20,6 +20,11 @@ export const apiService = {
   async getRegions() { return apiJson('/api/v1/regions'); },
   async getFineTiles() { return apiJson('/api/v1/fine-tiles'); },
   async getGlobalScreenedCells(offset = 0) { return apiJson(`/api/v1/global-screened-cells?limit=1000&offset=${offset}`); },
+  async getCachedLocationData(regionId: string): Promise<LocationData> {
+    const raw = await apiJson(`/api/v1/regions/${encodeURIComponent(regionId)}/observations?start_native=0`);
+    const detail = computeLiveScreening(raw, { startYear: 2003, endYear: 2024 });
+    return { ...locationDataFromDetail(detail), rawObservations: raw };
+  },
   async getFineRegions(tileId?: string) { return apiJson('/api/v1/fine-regions' + (tileId ? '?tile_id=' + encodeURIComponent(tileId) : '')); },
   async getLocationData(location: SelectedLocation): Promise<LocationData> {
     if (!location.regionId?.startsWith('grid_r') && !location.regionId?.startsWith('gldas025_')) return {

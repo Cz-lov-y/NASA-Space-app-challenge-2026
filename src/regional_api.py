@@ -294,7 +294,7 @@ class RegionalAPI:
             raise APIError(400,'invalid_target')
         path = url.path
         query = parse_qs(url.query,keep_blank_values=True)
-        if path not in ('/api/v1/fine-regions','/api/v1/cell','/api/v1/cell/nearest','/api/v1/global-screened-cells') and not path.startswith(('/api/v1/jobs/','/api/v1/data-jobs/')) and query:
+        if path not in ('/api/v1/fine-regions','/api/v1/cell','/api/v1/cell/nearest','/api/v1/global-screened-cells') and not path.startswith(('/api/v1/jobs/','/api/v1/data-jobs/')) and not re.fullmatch(r'/api/v1/regions/[^/]+/observations',path) and query:
             raise APIError(400,'unexpected_query')
         if method == 'GET' and path in ('/health','/api/v1/health'):
             return 200, {'status':'ok','api_version':'v1','live_enabled':self.live_enabled,
@@ -392,7 +392,9 @@ class RegionalAPI:
             suffix = match[2]
             if suffix=='/observations':
                 if method!='GET':raise APIError(405,'method_not_allowed')
-                return 200,self._raw_observations(self._bundle(match[1],raw_only=True),start_native=True)
+                if set(query)-{'start_native'} or ('start_native' in query and query['start_native'] not in (['0'], ['1'])):
+                    raise APIError(400,'invalid_observations_query')
+                return 200,self._raw_observations(self._bundle(match[1],raw_only=True),start_native=query.get('start_native',['1'])==['1'])
             bundle = self._bundle(match[1])
             if method == 'GET' and suffix is None:
                 return 200,self._detail(bundle,start_native=True)

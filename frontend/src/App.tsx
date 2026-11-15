@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { EarthCanvas } from './components/globe/EarthCanvas';
 import { HeaderHUD } from './components/hud/HeaderHUD';
 import { SlidingPanel } from './components/panel/SlidingPanel';
@@ -14,6 +14,9 @@ export const App: React.FC = () => {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [visitedRegions, setVisitedRegions] = useState<SelectedLocation[]>([]);
   const [availableRegions, setAvailableRegions] = useState<SelectedLocation[]>([]);
+  const [preparedRegions, setPreparedRegions] = useState<SelectedLocation[]>([]);
+  const [analyzedRegions, setAnalyzedRegions] = useState<SelectedLocation[]>([]);
+  const analyzedIds = useRef(new Set<string>());
   const [catalogError, setCatalogError] = useState(false);
 
   // Previously processed cells indicate where data are available. Their stored
@@ -24,7 +27,7 @@ export const App: React.FC = () => {
     const refresh = () => apiService.getGlobalScreenedCells().then(data => {
       if (!active) return;
       setAvailableRegions(data.features.map((f: any) => mapRegion({ ...f, properties: {
-        ...f.properties, classification: 'pending',
+        ...f.properties,
         indicators: f.properties.classification === 'unsupported' ? {} : { data: true },
       } })));
       setCatalogError(false);
@@ -33,6 +36,55 @@ export const App: React.FC = () => {
     const timer = setInterval(refresh, 20000);
     return () => { active = false; clearInterval(timer); };
   }, []);
+
+  // The six original areas remain ordinary native cells, using the same live
+  // calculation and source observations as every other prepared cell.
+  useEffect(() => {
+    let active = true;
+    apiService.getFineTiles().then(data => Promise.all(
+      data.tiles.filter((tile: any) => tile.status === 'available')
+        .map((tile: any) => apiService.getFineRegions(tile.id))
+    )).then(maps => {
+      if (active) setPreparedRegions(maps.flatMap((m: any) => m.features.map(mapRegion)));
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    // Pilot cells and other completed paired cells use the same browser
+    // computation. Cached-only requests never start Earth Engine retrievals.
+    const candidates = [...preparedRegions, ...availableRegions.filter(r =>
+      ['supported_signal', 'uncertain_signal', 'no_detected_divergence'].includes(r.screeningStatus || ''))];
+    const queued = new Set<string>();
+    const unique = candidates.filter(region => {
+      if (!region.regionId || analyzedIds.current.has(region.regionId) || queued.has(region.regionId)) return false;
+      queued.add(region.regionId);
+      return true;
+    });
+    let next = 0;
+    const work = async () => {
+      while (active && next < unique.length) {
+        const region = unique[next++];
+        analyzedIds.current.add(region.regionId!);
+        try {
+          const result = await apiService.getCachedLocationData(region.regionId!);
+          if (!active) { analyzedIds.current.delete(region.regionId!); return; }
+          if (!result.hasData || !result.detail?.feature?.properties?.centroid) continue;
+          const p = result.detail.feature.properties;
+          const computed = mapRegion({properties: {...p,
+            classification: result.detail.screening?.classification || 'pending',
+            family_scope: result.detail.screening?.family_scope, indicators: {data: true}}});
+          setAnalyzedRegions(current => [...current.filter(r => r.id !== computed.id), computed]);
+        } catch {
+          // A later catalog refresh can retry unavailable local data.
+          analyzedIds.current.delete(region.regionId!);
+        }
+      }
+    };
+    void Promise.all([work(), work()]);
+    return () => { active = false; };
+  }, [preparedRegions, availableRegions]);
 
   const handleSelectCoordinate = useCallback((coord: GeoCoordinate) => {
     const regionId = fineGridId(coord.lat, coord.lng);
@@ -81,8 +133,13 @@ export const App: React.FC = () => {
   }, [activeModal, selectedCoordinate, handleDeselect]);
 
   const visitedIds = new Set(visitedRegions.map(r => r.id));
-  const mapRegions = [...visitedRegions, ...availableRegions.filter(r => !visitedIds.has(r.id))];
-  const redRegions = visitedRegions.filter(r => r.screeningStatus === 'supported_signal');
+  const liveRegions = [...visitedRegions, ...analyzedRegions.filter(r => !visitedIds.has(r.id))];
+  const liveIds = new Set(liveRegions.map(r => r.id));
+  const pendingRegions = [...preparedRegions, ...availableRegions]
+    .filter((region, index, all) => !liveIds.has(region.id) && all.findIndex(r => r.id === region.id) === index)
+    .map(region => ({ ...region, screeningStatus: 'pending' }));
+  const mapRegions = [...liveRegions, ...pendingRegions];
+  const redRegions = liveRegions.filter(r => r.screeningStatus === 'supported_signal');
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-space-950 font-sans">
@@ -106,7 +163,7 @@ export const App: React.FC = () => {
               className="w-full rounded-md px-2 py-1.5 text-left text-red-700 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600">
               <span aria-hidden="true">● </span>{region.name}
             </button></li>)}
-          </ul> : <p className="mt-1 text-slate-400">No stronger signals in the places you’ve explored yet.</p>}
+          </ul> : <p className="mt-1 text-slate-400">No stronger signals identified yet.</p>}
         </div>
       </div>
       {catalogError && <div className="fixed bottom-4 left-4 z-40 bg-space-900 p-3 text-amber-200 text-xs">Location data are temporarily unavailable. Please try again shortly.</div>}
