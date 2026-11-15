@@ -7,6 +7,9 @@ import { GeoCoordinate, ModalType, SelectedLocation } from './types/globe';
 import { apiService } from './services/api';
 import { mapRegion, fineGridId } from './services/regions';
 import { RegionalDetail } from './types/contracts';
+import { cachedMapRegions, forgetMapRegion, rememberMapRegion } from './services/mapCache';
+import { Geography, loadGeography, placeLabel } from './services/geography';
+import { formatCoordinates } from './utils/coordinates';
 
 export const App: React.FC = () => {
   const [selectedCoordinate, setSelectedCoordinate] = useState<GeoCoordinate | null>(null);
@@ -15,9 +18,14 @@ export const App: React.FC = () => {
   const [visitedRegions, setVisitedRegions] = useState<SelectedLocation[]>([]);
   const [availableRegions, setAvailableRegions] = useState<SelectedLocation[]>([]);
   const [preparedRegions, setPreparedRegions] = useState<SelectedLocation[]>([]);
-  const [analyzedRegions, setAnalyzedRegions] = useState<SelectedLocation[]>([]);
+  const [restoredRegions] = useState(cachedMapRegions);
+  const [analyzedRegions, setAnalyzedRegions] = useState<SelectedLocation[]>(restoredRegions);
   const analyzedIds = useRef(new Set<string>());
   const [catalogError, setCatalogError] = useState(false);
+  const [geography, setGeography] = useState<Geography | null>(null);
+  const [geographyError, setGeographyError] = useState(false);
+  useEffect(() => { let active = true; loadGeography().then(value => { if (active) setGeography(value); })
+    .catch(() => { if (active) setGeographyError(true); }); return () => { active = false; }; }, []);
 
   // Previously processed cells indicate where data are available. Their stored
   // classifications can use a different statistical family, so the map uses
@@ -54,7 +62,7 @@ export const App: React.FC = () => {
     let active = true;
     // Pilot cells and other completed paired cells use the same browser
     // computation. Cached-only requests never start Earth Engine retrievals.
-    const candidates = [...preparedRegions, ...availableRegions.filter(r =>
+    const candidates = [...preparedRegions, ...restoredRegions, ...availableRegions.filter(r =>
       ['supported_signal', 'uncertain_signal', 'no_detected_divergence'].includes(r.screeningStatus || ''))];
     const queued = new Set<string>();
     const unique = candidates.filter(region => {
@@ -70,11 +78,16 @@ export const App: React.FC = () => {
         try {
           const result = await apiService.getCachedLocationData(region.regionId!);
           if (!active) { analyzedIds.current.delete(region.regionId!); return; }
-          if (!result.hasData || !result.detail?.feature?.properties?.centroid) continue;
+          if (!result.hasData || !result.detail?.feature?.properties?.centroid) {
+            forgetMapRegion(region.regionId!);
+            setAnalyzedRegions(current => current.filter(r => r.id !== region.id));
+            continue;
+          }
           const p = result.detail.feature.properties;
           const computed = mapRegion({properties: {...p,
             classification: result.detail.screening?.classification || 'pending',
             family_scope: result.detail.screening?.family_scope, indicators: {data: true}}});
+          rememberMapRegion(computed);
           setAnalyzedRegions(current => [...current.filter(r => r.id !== computed.id), computed]);
         } catch {
           // A later catalog refresh can retry unavailable local data.
@@ -84,27 +97,28 @@ export const App: React.FC = () => {
     };
     void Promise.all([work(), work()]);
     return () => { active = false; };
-  }, [preparedRegions, availableRegions]);
+  }, [preparedRegions, availableRegions, restoredRegions]);
 
   const handleSelectCoordinate = useCallback((coord: GeoCoordinate) => {
+    const place = geography?.lookup(coord.lat, coord.lng);
+    if (!place) return;
     const regionId = fineGridId(coord.lat, coord.lng);
-    const latStr = coord.lat >= 0 ? `${coord.lat.toFixed(2)}°N` : `${Math.abs(coord.lat).toFixed(2)}°S`;
-    const lngStr = coord.lng >= 0 ? `${coord.lng.toFixed(2)}°E` : `${Math.abs(coord.lng).toFixed(2)}°W`;
     setSelectedCoordinate(coord);
     setSelectedLocation({
       id: regionId || `coord-${coord.lat.toFixed(2)}-${coord.lng.toFixed(2)}`,
       regionId: regionId || undefined,
-      name: `Point (${latStr}, ${lngStr})`,
+      name: placeLabel(place),
       lat: coord.lat, lng: coord.lng,
       hasObservationalData: false, isSyntheticDemo: false,
-      country: 'Global Surface Point',
+      country: place.country,
     });
-  }, []);
+  }, [geography]);
 
   const handleSelectLocation = useCallback((location: SelectedLocation) => {
+    const place = geography?.lookup(location.lat, location.lng);
     setSelectedCoordinate({ lat: location.lat, lng: location.lng });
-    setSelectedLocation(location);
-  }, []);
+    setSelectedLocation(place ? { ...location, name: placeLabel(place), country: place.country } : location);
+  }, [geography]);
 
   const recordDetail = useCallback((detail: RegionalDetail) => {
     const p = detail.feature?.properties;
@@ -115,6 +129,11 @@ export const App: React.FC = () => {
       indicators: { data: true },
     } });
     setVisitedRegions(current => [...current.filter(r => r.id !== region.id), region]);
+    const window = detail.provenance?.live_analysis?.window;
+    if (window?.[0] === 2003 && window?.[1] === 2024) {
+      rememberMapRegion(region);
+      setAnalyzedRegions(current => [...current.filter(r => r.id !== region.id), region]);
+    }
   }, []);
 
   const handleDeselect = useCallback(() => {
@@ -148,7 +167,7 @@ export const App: React.FC = () => {
       <HeaderHUD onOpenModal={setActiveModal} selectedCoordinate={selectedCoordinate} />
       <div className="fixed top-20 left-4 z-30 w-56 max-w-[calc(100vw-2rem)] rounded-xl border border-cyan-500/20 bg-space-900/95 p-3 text-xs text-slate-200 shadow-lg backdrop-blur">
         <p className="font-semibold text-white">Explore Earth</p>
-        <p className="mt-1 text-slate-400">Select a place on the globe to see its data.</p>
+        <p className="mt-1 text-slate-400">{geographyError ? 'Land map unavailable. Refresh to try again.' : geography ? 'Select a place on land to see its data.' : 'Loading land map…'}</p>
         <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 border-t border-slate-700 pt-2 text-[11px] text-slate-400" aria-label="Map legend">
           <span><span className="text-red-600">●</span> Stronger signal</span>
           <span><span className="text-yellow-600">●</span> Uncertain</span>
@@ -161,7 +180,7 @@ export const App: React.FC = () => {
             {redRegions.map(region => <li key={region.id}><button type="button"
               onClick={() => handleSelectLocation(region)}
               className="w-full rounded-md px-2 py-1.5 text-left text-red-700 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600">
-              <span aria-hidden="true">● </span>{region.name}
+              <span aria-hidden="true">● </span>{(() => { const place = geography?.lookup(region.lat, region.lng); return place ? placeLabel(place) : (region.country && region.country !== 'Regional NASA observations' ? region.country : 'Land location'); })()}<span className="block pl-3 text-slate-500">{formatCoordinates(region.lat, region.lng)}</span>
             </button></li>)}
           </ul> : <p className="mt-1 text-slate-400">No stronger signals identified yet.</p>}
         </div>

@@ -16,7 +16,7 @@ export function mapRegion(feature: any): SelectedLocation {
     hasObservationalData: Object.keys(p.indicators || {}).length > 0,
     isSyntheticDemo: false, screeningStatus: p.classification,
     description: `${p.region_id} · ${p.classification}. Source QA review pending.`,
-    country: LABELS[p.region_id] || 'Regional NASA observations' };
+    country: p.jurisdictions?.[0]?.name || LABELS[p.region_id] || 'Regional NASA observations' };
 }
 export function fineGridId(lat: number, lng: number): string | null {
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -60 || lat > 90) return null;
