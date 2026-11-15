@@ -1,0 +1,23 @@
+import { SelectedLocation } from '../types/globe';
+const LABELS: Record<string, string> = {
+  grid_r12_c08: 'Central US', grid_r12_c17: 'Iberia / NW Africa',
+  grid_r10_c18: 'Central Sahel', grid_r05_c32: 'Southeast Australia',
+  grid_r08_c12: 'Brazilian Amazon', grid_r14_c07: 'Canadian interior',
+};
+export function mapRegion(feature: any): SelectedLocation {
+  const p = feature.properties;
+  const [lng, lat] = p.centroid;
+  return { id: p.region_id, regionId: p.region_id,
+    name: (LABELS[p.region_id] || p.name || p.region_id) + ' · 10° cell', lat, lng,
+    hasObservationalData: Object.keys(p.indicators || {}).length > 0,
+    isSyntheticDemo: false, screeningStatus: p.classification,
+    description: `${p.region_id} · ${p.classification}. Source QA review pending.`,
+    country: LABELS[p.region_id] || 'Regional NASA observations' };
+}
+export function gridId(lat: number, lng: number): string {
+  const row = Math.min(17, Math.max(0, Math.floor((lat + 90) / 10)));
+  const lon = ((lng + 180) % 360 + 360) % 360 - 180;
+  const col = Math.min(35, Math.max(0, Math.floor((lon + 180) / 10)));
+  return `grid_r${String(row).padStart(2,'0')}_c${String(col).padStart(2,'0')}`;
+}
+export const DEMO_REGION_IDS = Object.keys(LABELS);

@@ -14,9 +14,9 @@ export const ZScoreChart: React.FC<ZScoreChartProps> = ({
 }) => {
   const filtered = useMemo(() => {
     return observations.filter((obs) => {
-      const year = new Date(obs.date).getFullYear();
+      const year = new Date(obs.date).getUTCFullYear();
       return (
-        ['ndvi', 'soil_moisture'].includes(obs.variable) &&
+        ['ndvi', 'soil_water_0_100cm', 'soil_water_0_10cm', 'soil_moisture'].includes(obs.variable) &&
         year >= yearRange[0] &&
         year <= yearRange[1]
       );
@@ -29,7 +29,8 @@ export const ZScoreChart: React.FC<ZScoreChartProps> = ({
   }, [filtered]);
 
   const moistureSeries = useMemo(() => {
-    const moistObs = filtered.filter((d) => d.variable === 'soil_moisture');
+    const soil = ['soil_water_0_100cm', 'soil_moisture', 'soil_water_0_10cm'].find((name) => filtered.some((d) => d.variable === name));
+    const moistObs = filtered.filter((d) => d.variable === soil);
     return calculateZScores(moistObs);
   }, [filtered]);
 
@@ -145,7 +146,7 @@ export const ZScoreChart: React.FC<ZScoreChartProps> = ({
           },
         },
         {
-          name: 'Soil Moisture (Water Content)',
+          name: `Soil Water (${filtered.some((d) => d.variable === 'soil_water_0_100cm') ? '0–100 cm' : filtered.some((d) => d.variable === 'soil_water_0_10cm') ? '0–10 cm' : 'demo'})`,
           type: 'line',
           data: moistureData,
           smooth: 0.3,
@@ -156,7 +157,7 @@ export const ZScoreChart: React.FC<ZScoreChartProps> = ({
         },
       ],
     };
-  }, [ndviSeries, moistureSeries]);
+  }, [ndviSeries, moistureSeries, filtered]);
 
   if (ndviSeries.length === 0 || moistureSeries.length === 0) {
     return (

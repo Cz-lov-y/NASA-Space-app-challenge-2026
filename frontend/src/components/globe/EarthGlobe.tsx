@@ -3,16 +3,18 @@ import * as THREE from 'three';
 import { useFrame, useLoader, ThreeEvent } from '@react-three/fiber';
 import { Atmosphere } from './Atmosphere';
 import { LocationPin } from './LocationPin';
-import { vector3ToLatLng } from '../../utils/coordinates';
-import { GeoCoordinate } from '../../types/globe';
+import { vector3ToLatLng, latLngToVector3 } from '../../utils/coordinates';
+import { GeoCoordinate, SelectedLocation } from '../../types/globe';
 
 interface EarthGlobeProps {
+  regions: SelectedLocation[];
   onSelectCoordinate: (coord: GeoCoordinate) => void;
   selectedCoordinate: GeoCoordinate | null;
   isInteracting: boolean;
 }
 
 export const EarthGlobe: React.FC<EarthGlobeProps> = ({
+  regions,
   onSelectCoordinate,
   selectedCoordinate,
   isInteracting,
@@ -103,6 +105,13 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
       {/* Atmospheric Rayleigh Corona Glow */}
       <Atmosphere />
 
+      {regions.filter(r => r.hasObservationalData).map(region => (
+        <mesh key={region.id} position={latLngToVector3(region.lat, region.lng, 1.012)}
+          onPointerDown={event => { event.stopPropagation(); onSelectCoordinate({lat: region.lat, lng: region.lng}); }}>
+          <sphereGeometry args={[0.006, 8, 8]} />
+          <meshBasicMaterial color={region.screeningStatus === 'supported_signal' ? '#f59e0b' : region.screeningStatus === 'uncertain_signal' ? '#a78bfa' : '#00e5ff'} />
+        </mesh>
+      ))}
       {/* Animated Location Pin (attached to the rotating Earth coordinate frame) */}
       {selectedCoordinate && (
         <LocationPin

@@ -35,18 +35,18 @@ Coverage is valid source area divided by the **whole 10° cell including oceans*
 
 ## Human steps: acquire the missing regional MODIS
 
-**Paused on an exporter defect:** authentication now works, but the worldwide pilot failed with the polar-boundary error documented below. Do not launch the yearly tasks or repeat the same Code Editor script until the controller resolves and verifies that defect. The following download sequence applies after a successful pilot.
+**Use the approved nonpolar scope:** authentication works and the 576-cell nonpolar pilot CSV passed structural/provenance checks. Full-world mode still fails on polar bounds. The controller can now submit annual nonpolar exports and automate their retrieval; the manual steps below are a fallback.
 
 1. Open the [Earth Engine Code Editor](https://code.earthengine.google.com/) with the same approved account/project used for previous exports. This JavaScript runs in the Code Editor, not the Cloud Shell terminal.
 2. Open local `scripts/export_regional_modis_earth_engine.js`, copy its contents into a new Code Editor script, and save it as `EarthRisk regional MODIS`.
-3. Keep `MODE = 'pilot'` and click **Run** above the editor. Confirm the console region count is 648. In **Tasks**, click **Run** for `mod13a3_grid10_pilot_2003_01`; keep the proposed Google Drive CSV export settings and submit.
-4. When the task completes, open Google Drive folder `NASA_member_B_regional`, download its pilot CSV, and make it available locally. The controller can validate it with the command below. A complete pilot has 648 rows, one region/month each; ocean cells can have blank NDVI and `no_valid_pixels`.
+3. Set `NONPOLAR_ONLY = true` and keep `MODE = 'pilot'` and click **Run** above the editor. Confirm the console export-region count is 576; the local catalog still contains 648 cells. In **Tasks**, click **Run** for `mod13a3_grid10_pilot_2003_01`; keep the proposed Google Drive CSV export settings and submit.
+4. When the task completes, open Google Drive folder `NASA_member_B_regional`, download its pilot CSV, and make it available locally. The controller can validate it with the command below. A complete nonpolar pilot has 576 rows, one region/month each; ocean cells can have blank NDVI and `no_valid_pixels`.
 5. After pilot validation, change `MODE` to `'years'`, retain `FIRST_YEAR = 2003` and `LAST_YEAR = 2024`, and click **Run**. This prepares 22 yearly export tasks. Submit them in the Tasks panel. Do not raise the spatial scale or enable a coarse approximation to speed them up.
-6. Each completed annual CSV should contain 7,776 rows (648 regions × 12 months). Download all completed annual CSVs from the same Drive folder into a local directory. Keep their filenames beginning `mod13a3_grid10_`. These are regional aggregates; the prior `whole_earth` exports cannot replace them.
+6. Each completed nonpolar annual CSV should contain 6,912 rows (576 regions × 12 months). Download all completed annual CSVs from the same Drive folder into a local directory. Keep their filenames beginning `mod13a3_grid10_`. These are regional aggregates; the prior `whole_earth` exports cannot replace them.
 7. Give the controller the downloaded directory path. It can merge available years immediately, preserve all unexported months as missing, rebuild screening results, and supply the updated catalog to A/C/D. Once full annual exports are available, exclude the pilot CSV from the merge because it duplicates January 2003.
 8. If an annual task exceeds limits, set `MODE = 'month'` and `RETRY_MONTH = 'YYYY-MM-01'`, then run/export each month of that failed year. Keep exactly one accepted CSV per region/month: merge the 12 replacement monthly files **instead of** the failed/partial annual file. Report the exact error if the monthly retry also fails.
 
-The authenticated Python cloud pilot has been executed and failed on polar raster bounds; it has not produced a usable CSV. Independent source-pixel validation is also pending. Task completion remains external; account/project authentication itself has succeeded.
+The full-world Python pilot failed on polar bounds. The separate nonpolar pilot completed and produced the checked-in validation CSV; structural and source-provenance checks passed. Independent source-pixel validation remains pending. Account/project authentication has succeeded.
 
 ## Commands the controller can automate
 
@@ -70,7 +70,7 @@ The read-only audit reports month-level region counts, QA flags, valid area and 
 Ingest annual files together, excluding the pilot:
 
 ```sh
-.venv/bin/python scripts/merge_regional_timeseries.py /absolute/path/mod13a3_grid10_20[0-9][0-9].csv
+.venv/bin/python scripts/merge_regional_timeseries.py /absolute/path/mod13a3_grid10_20[0-9][0-9]_nonpolar.csv
 ```
 
 Imports are incremental. Pass only newly completed annual or monthly CSVs: previously accepted regional months remain in `accepted_modis_observations.csv` and are preserved in the combined release. Exact repeat observations are idempotent, including identical pilot/annual overlap. A changed existing measurement **or provenance field**, including `configured_at_utc`, is rejected unless `--replace` explicitly accepts the changed overlapping row. The last supplied version wins under `--replace`; unrelated accepted dates remain. Because the pilot and annual tasks normally have different configuration timestamps, either omit an unimported pilot from the annual import or use `--replace` for that deliberate overlap. The read-only pilot audit does not import the pilot.
@@ -97,7 +97,7 @@ A bounded search of Downloads (three directory levels, `mod13a3_grid10*` names) 
 
 ## Authenticated Python export automation
 
-Optional environment tooling is declared in `requirements-earthengine.txt`. It is separate from app/runtime requirements. The controller has obtained account authorization; credentials stay in the normal Earth Engine credential store outside Git. Project ID `earthrisk-greenmirage` has passed a basic Earth Engine service check. No annual tasks should be submitted before reviewing the pilot.
+Optional environment tooling is declared in `requirements-earthengine.txt`. It is separate from app/runtime requirements. The controller has obtained account authorization; credentials stay in the normal Earth Engine credential store outside Git. Project ID `earthrisk-greenmirage` has passed a basic Earth Engine service check. The nonpolar pilot has now passed structural/provenance review; the controller owns annual task submission.
 
 Preview the exact task plan without loading Earth Engine or contacting cloud services:
 
@@ -108,7 +108,7 @@ Preview the exact task plan without loading Earth Engine or contacting cloud ser
 Submit the single pilot explicitly:
 
 ```sh
-.venv/bin/python scripts/export_regional_modis_earth_engine.py --project earthrisk-greenmirage --mode pilot --submit
+.venv/bin/python scripts/export_regional_modis_earth_engine.py --project earthrisk-greenmirage --mode pilot --nonpolar --submit
 ```
 
 The Python exporter uses the same grid, explicit intersected source masks, native projection, QA, scaling, coverage denominator and CSV columns as the Code Editor script. Task IDs are stored locally in ignored `.cache/regional_modis_tasks.json`. A duplicate recorded project/date range is blocked while its status is active, completed or unknown; `--force` intentionally resubmits it. A known failed/cancelled task can be retried. Monitor existing task IDs without creating exports:
@@ -117,7 +117,7 @@ The Python exporter uses the same grid, explicit intersected source masks, nativ
 .venv/bin/python scripts/export_regional_modis_earth_engine.py --project earthrisk-greenmirage --status
 ```
 
-After pilot review, the controller can use `--mode years --first-year 2003 --last-year 2024 --submit` to create annual tasks, or `--mode month --month YYYY-MM-01 --submit` for a failed month's retry. These actions still require the existing account/project permissions. Outputs go to Drive folder `NASA_member_B_regional` and can be imported incrementally after retrieval. Authentication does not itself supply regional observations or complete source validation.
+After pilot review, the controller can use `--mode years --first-year 2003 --last-year 2024 --nonpolar --submit` to create annual tasks, or `--mode month --month YYYY-MM-01 --nonpolar --submit` for a failed month's retry. These actions still require the existing account/project permissions. Outputs go to Drive folder `NASA_member_B_regional` and can be imported incrementally after retrieval. Authentication does not itself supply regional observations or complete source validation.
 
 ## Read-only regional release audit
 
@@ -149,6 +149,33 @@ The controller approved a partial pilot using `--nonpolar`. This exports the **5
 .venv/bin/python scripts/export_regional_modis_earth_engine.py --project earthrisk-greenmirage --mode pilot --nonpolar --submit
 ```
 
-Only one such pilot should be retried before this milestone. Its description/filename ends in `_nonpolar`; task metadata records `scope: nonpolar` and `region_count: 576`. The duplicate guard distinguishes this explicit partial scope from the failed full-world scope. No annual tasks should be submitted before reviewing its actual CSV. If approved later, a nonpolar annual export contains 6,912 rows (576 × 12), and only 285 of the 301 GLDAS-supported cells can acquire paired observations from that scope. The remaining supported cells stay visibly pending.
+The nonpolar pilot has now completed and passed the stored structural/provenance audit. Its description/filename ends in `_nonpolar`; task metadata records `scope: nonpolar` and `region_count: 576`. The duplicate guard distinguishes this explicit partial scope from the failed full-world scope. The controller has approved annual nonpolar export submission after reviewing that CSV. A nonpolar annual export contains 6,912 rows (576 × 12), and only 285 of the 301 GLDAS-supported cells can acquire paired observations from that scope. The remaining supported cells stay visibly pending.
 
 The existing read-only CSV audit continues to report the full-grid denominator of 648; a complete nonpolar pilot therefore intentionally reports 72 absent full-grid cells and `all_exported_months_cover_full_grid: false`. Verify its actual 576 distinct region IDs against `export_grid(nonpolar=True)` rather than relabeling it as whole-world completion. The incremental importer can accept these source files and preserve explicit missing months for the omitted supported cells. The Code Editor equivalent is `NONPOLAR_ONLY = true`; its default remains the full-world graph with the documented defect.
+
+## Automatic Drive synchronization
+
+The successful pilot is retained at `data/raw/modis_earth_engine/regional_validation/mod13a3_grid10_pilot_2003_01_nonpolar.csv`, with audit `data/processed/regional/modis_pilot_audit.json`. It contains 576 region rows, 249 finite NDVI values and 327 `no_valid_pixels` rows for January 2003. It is a real NASA-derived validation export, kept separate from annual imports. Structural/provenance acceptance does not complete independent source-pixel validation.
+
+The controller can retrieve completed annual exports using the existing Earth Engine OAuth credentials; the sync never opens a browser or creates export tasks:
+
+```sh
+.venv/bin/python scripts/sync_regional_modis_drive.py --list-only
+.venv/bin/python scripts/sync_regional_modis_drive.py --poll-tasks
+```
+
+The first command lists matching annual files without writing a download cache. The second refreshes recorded task states once and downloads matching completed annual CSVs; it never waits for running tasks. Both inspect only folders named exactly `NASA_member_B_regional`. Only filenames `mod13a3_grid10_2003_nonpolar.csv` through `mod13a3_grid10_2024_nonpolar.csv` are selected. Pilot, retry, full-world, unrelated and out-of-period files are excluded automatically.
+
+Downloaded bytes go to ignored `.cache/regional_modis_drive/` under immutable Drive-ID/content-hash names. Drive MD5 and size are checked, then SHA-256 is recorded. Unchanged remote versions with verified local hashes are skipped. A changed remote version creates a new immutable cache file and preserves previous bytes. Progress is saved after each completed file so rerunning resumes with remaining files; an interrupted individual file restarts cleanly rather than retaining unverified partial bytes.
+
+Import actual annual observations explicitly:
+
+```sh
+.venv/bin/python scripts/sync_regional_modis_drive.py --ingest
+```
+
+Every candidate must pass the strict source/QA/native-grid checks and contain exactly the 576 requested region IDs × all 12 months of its filename year. Validated inputs then use the existing incremental merger and permanent raw archive. GLDAS inputs are preserved. An import changes data fingerprints: the controller must rebuild statistics, screening and the frontend data bundle afterward.
+
+Drive permits duplicate filenames. The sync tracks files by Drive ID and never overwrites one file with another sharing its name. If different contents exist for the same annual year, automatic ingestion stops rather than selecting an arbitrary copy. Use repeated `--file-id ID` arguments to identify the accepted files from the listing. Exact duplicate content is safe to repeat. `--replace --ingest` explicitly accepts changed observations/provenance against previously accepted source rows; it does not resolve an ambiguous choice between multiple different Drive IDs for one year.
+
+No credentials, access tokens or OAuth refresh tokens are printed or included in the cache/source manifests. Existing OAuth scopes must permit Drive reads; a scope/API access failure is reported without triggering reauthentication. The Drive implementation follows the primary [files.list](https://developers.google.com/workspace/drive/api/reference/rest/v3/files/list) and [files.get](https://developers.google.com/workspace/drive/api/reference/rest/v3/files/get) API documentation.

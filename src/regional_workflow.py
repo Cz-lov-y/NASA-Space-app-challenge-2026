@@ -105,12 +105,12 @@ def research_selected_region(bundle: dict, **kwargs) -> dict:
     """
     from src.regional_research import research_region
     record = bundle.get('screening') or {}
-    analysis = deepcopy(record.get('analysis') or record.get('available_indicator_analysis') or {
+    analysis = deepcopy(record.get('available_indicator_analysis') or record.get('analysis') or {
         'region': bundle['region_id'],
         'data_quality': {'qa_reviewed': False, 'synthetic_demo': False},
         'limitations': ['Paired regional statistical analysis is not available.'],
     })
     report = research_region(analysis, bundle['research_context'], **kwargs)
-    if not record.get('analysis'):
+    if record.get('status') != 'eligible':
         report['limitations'].append('Regional paired analysis is unavailable; any available single-indicator statistics are exploratory, and research provides jurisdiction context only.')
     return report

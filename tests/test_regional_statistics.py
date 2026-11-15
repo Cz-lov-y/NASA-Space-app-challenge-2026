@@ -278,3 +278,30 @@ def test_cli_writes_consistent_compact_artifact_and_protects_source_paths(tmp_pa
     assert data_path.read_bytes() == data_before
     with pytest.raises(SystemExit):
         main(options[:-1] + [str(detail_path)])
+
+
+def test_first_annual_ndvi_import_preserves_independent_22_year_soil_diagnostic():
+    from src.regional_statistics import build_screening_summary
+    data = sample()
+    data = data[(data.variable != 'ndvi') | (pd.to_datetime(data.date).dt.year == 2003)]
+    result = build_regional_screening(data, [feature('test', data_status='partial_ndvi')])
+    record = result['regions'][0]
+    assert record['status'] == 'insufficient'
+    assert record['analysis']['variables'] == ['ndvi', 'soil_water_0_100cm']
+    assert record['analysis']['observation_period']['years'] == [2003]
+    assert record['analysis']['trend_slopes']['soil_water_0_100cm'] is None
+    diagnostic = record['available_indicator_analysis']
+    assert diagnostic['variables'] == ['soil_water_0_100cm']
+    assert diagnostic['observation_period']['years'] == list(range(2003, 2025))
+    assert diagnostic['trend_slopes']['soil_water_0_100cm'] == pytest.approx(-2)
+    assert diagnostic['divergence_detected'] is None
+    assert record['screening']['classification'] == 'insufficient'
+    assert record['screening']['category'] is None
+    assert result['multiple_testing']['family_size'] == 0
+    summary = build_screening_summary(result)['features'][0]['properties']
+    assert summary['analysis_kind'] == 'available_indicator'
+    assert summary['paired_year_count'] == 1
+    assert summary['available_year_count'] == 22
+    assert summary['indicators']['soil_water_0_100cm']['n_years'] == 22
+    assert summary['indicators']['soil_water_0_100cm']['worldwide_adjusted_p_value'] is None
+    assert summary['classification'] == 'insufficient'

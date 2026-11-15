@@ -5,9 +5,10 @@ import { OrbitControls } from '@react-three/drei';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { EarthGlobe } from './EarthGlobe';
 import { Starfield } from './Starfield';
-import { GeoCoordinate } from '../../types/globe';
+import { GeoCoordinate, SelectedLocation } from '../../types/globe';
 
 interface EarthCanvasProps {
+  regions: SelectedLocation[];
   selectedCoordinate: GeoCoordinate | null;
   onSelectCoordinate: (coord: GeoCoordinate) => void;
   onDeselect: () => void;
@@ -15,12 +16,14 @@ interface EarthCanvasProps {
 
 // Inner scene component to manage smooth viewport translation
 interface SceneRigProps {
+  regions: SelectedLocation[];
   selectedCoordinate: GeoCoordinate | null;
   onSelectCoordinate: (coord: GeoCoordinate) => void;
   isInteracting: boolean;
 }
 
 const SceneRig: React.FC<SceneRigProps> = ({
+  regions,
   selectedCoordinate,
   onSelectCoordinate,
   isInteracting,
@@ -44,6 +47,7 @@ const SceneRig: React.FC<SceneRigProps> = ({
   return (
     <group ref={globeRootRef}>
       <EarthGlobe
+        regions={regions}
         onSelectCoordinate={onSelectCoordinate}
         selectedCoordinate={selectedCoordinate}
         isInteracting={isInteracting}
@@ -53,6 +57,7 @@ const SceneRig: React.FC<SceneRigProps> = ({
 };
 
 export const EarthCanvas: React.FC<EarthCanvasProps> = ({
+  regions,
   selectedCoordinate,
   onSelectCoordinate,
   onDeselect,
@@ -109,6 +114,7 @@ export const EarthCanvas: React.FC<EarthCanvasProps> = ({
         {/* 3D Earth Globe with Texture Suspension */}
         <Suspense fallback={null}>
           <SceneRig
+            regions={regions}
             selectedCoordinate={selectedCoordinate}
             onSelectCoordinate={onSelectCoordinate}
             isInteracting={isInteracting}

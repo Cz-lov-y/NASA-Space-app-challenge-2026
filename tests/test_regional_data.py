@@ -280,3 +280,78 @@ def test_release_audit_is_readonly_and_detects_source_and_unit_tampering(tmp_pat
     rows['unit']='m3 m-3';rows.to_csv(out/'monthly_timeseries.csv',index=False)
     report=mod.audit(out,root=tmp_path,expected_grid=1,expected_supported=1)
     assert any('units and source' in e for e in report['errors'])
+
+
+
+def test_drive_sync_pagination_names_checksums_idempotency_and_immutable_versions(tmp_path,monkeypatch):
+    import hashlib
+    import json
+    mod=load('sync_regional_modis_drive')
+    contents={'id_a':b'SYNTHETIC_CSV_A','id_b':b'SYNTHETIC_CSV_B'}
+    downloads=[]
+    class Response:
+        def __init__(self,data=None,content=None):self.data=data;self.content=content
+        def raise_for_status(self):pass
+        def json(self):return self.data
+        def iter_content(self,chunk_size):yield self.content[:3];yield b'';yield self.content[3:]
+    def item(fid,year):
+        content=contents[fid]
+        return {'id':fid,'name':f'mod13a3_grid10_{year}_nonpolar.csv','size':str(len(content)),
+            'md5Checksum':hashlib.md5(content).hexdigest(),'version':'1','modifiedTime':'2026-11-15T00:00:00Z'}
+    class Session:
+        def get(self,url,params,**kwargs):
+            if params.get('alt')=='media':
+                fid=url.rsplit('/',1)[-1];downloads.append(fid);return Response(content=contents[fid])
+            query=params['q']
+            if "name = 'NASA_member_B_regional'" in query:
+                if not params.get('pageToken'):return Response({'files':[{'id':'folder_a'}],'nextPageToken':'folder_page2'})
+                assert params['pageToken']=='folder_page2';return Response({'files':[{'id':'folder_b'}]})
+            if "'folder_a' in parents" in query:
+                if not params.get('pageToken'):
+                    return Response({'files':[item('id_a',2003),{'id':'pilot','name':'mod13a3_grid10_pilot_2003_01_nonpolar.csv'}],'nextPageToken':'file_page2'})
+                return Response({'files':[{'id':'global','name':'mod13a3_whole_earth_2004.csv'},{'id':'old','name':'mod13a3_grid10_2002_nonpolar.csv'}]})
+            assert "'folder_b' in parents" in query
+            return Response({'files':[item('id_a',2003),item('id_b',2004)]})
+    cache=tmp_path/'cache';session=Session()
+    listed=mod.sync(session,cache,list_only=True)
+    assert listed['matching_annual_files']==2 and not cache.exists() and not downloads
+    first=mod.sync(session,cache)
+    assert downloads==['id_a','id_b'] and all(f['downloaded'] for f in first['files'])
+    old_paths=[Path(f['path']) for f in first['files']]
+    repeated=mod.sync(session,cache)
+    assert downloads==['id_a','id_b'] and not any(f['downloaded'] for f in repeated['files'])
+    contents['id_a']=b'SYNTHETIC_CHANGED_CONTENT'
+    changed=mod.sync(session,cache)
+    assert downloads==['id_a','id_b','id_a'] and changed['files'][0]['path']!=str(old_paths[0])
+    assert old_paths[0].read_bytes()==b'SYNTHETIC_CSV_A'
+    history=json.loads((cache/'manifest.json').read_text())['history']
+    assert len(history)==3 and all(Path(r['path']).is_file() for r in history)
+    # A valid download does not bypass explicit source validation and import scope.
+    called=[]
+    monkeypatch.setattr(mod,'validate_annual',lambda path,year:called.append(('validate',year)) or {'year':year})
+    monkeypatch.setattr(mod,'ingest_exports',lambda paths,out,replace:called.append(('ingest',len(paths),replace)))
+    ingested=mod.sync(session,cache,ingest=True,out=tmp_path/'release')
+    assert ingested['ingested'] and called==[('validate',2003),('validate',2004),('ingest',2,False)]
+
+
+def test_drive_download_hash_failure_and_duplicate_names_need_explicit_ids(tmp_path,monkeypatch):
+    import hashlib
+    mod=load('sync_regional_modis_drive')
+    class Response:
+        def raise_for_status(self):pass
+        def iter_content(self,chunk_size):yield b'SYNTHETIC_BYTES'
+    class Session:
+        def get(self,*a,**kw):return Response()
+    item={'id':'a','name':'mod13a3_grid10_2003_nonpolar.csv','year':2003,'size':15,'md5Checksum':'bad'}
+    with pytest.raises(ValueError,match='size mismatch|MD5 mismatch'):
+        mod.download_file(Session(),item,tmp_path/'bad_cache')
+    assert not list((tmp_path/'bad_cache').glob('*.csv')) and not list((tmp_path/'bad_cache').glob('*.part'))
+    candidates=[{**item,'id':fid} for fid in ['a','b']]
+    monkeypatch.setattr(mod,'discover_annuals',lambda session,file_ids=None:candidates)
+    def fake_download(session,item,cache,previous):
+        path=Path(cache)/(item['id']+'.csv');path.parent.mkdir(parents=True,exist_ok=True);path.write_text('SYNTHETIC_'+item['id'])
+        return {'drive_id':item['id'],'name':item['name'],'year':2003,'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'path':str(path)},True
+    monkeypatch.setattr(mod,'download_file',fake_download)
+    monkeypatch.setattr(mod,'ingest_exports',lambda *a,**kw:pytest.fail('ambiguous files must not import'))
+    with pytest.raises(ValueError,match='Different Drive files'):
+        mod.sync(Session(),tmp_path/'duplicates',ingest=True)

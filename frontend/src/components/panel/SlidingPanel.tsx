@@ -12,7 +12,8 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import { SelectedLocation } from '../../types/globe';
-import { TimeSeriesObservation, RegionalAnalysis } from '../../types/contracts';
+import { LocationData } from '../../types/contracts';
+import { ResearchPanel } from './ResearchPanel';
 import { formatCoordinates } from '../../utils/coordinates';
 import { apiService } from '../../services/api';
 import { TimeseriesChart } from '../charts/TimeseriesChart';
@@ -31,13 +32,8 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
   onClose,
   onSelectPreset,
 }) => {
-  const [dataStatus, setDataStatus] = useState<{
-    hasData: boolean;
-    isSynthetic: boolean;
-    observations?: TimeSeriesObservation[];
-    analysis?: RegionalAnalysis;
-    statusMessage: string;
-  } | null>(null);
+  const [dataStatus, setDataStatus] = useState<LocationData | null>(null);
+  const [dataYears, setDataYears] = useState<[number, number]>([2003,2024]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'visualize' | 'audit'>('visualize');
@@ -45,7 +41,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
   // Visualization interactive states
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>([
     'ndvi',
-    'soil_moisture',
+    'soil_water_0_100cm',
   ]);
   const [chartMode, setChartMode] = useState<'timeseries' | 'zscore'>('timeseries');
   const [showTrendline, setShowTrendline] = useState(true);
@@ -59,16 +55,20 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
 
     let isMounted = true;
     setIsLoading(true);
+    setDataStatus(null);
 
     apiService.getLocationData(location).then((res) => {
       if (isMounted) {
         setDataStatus(res);
         setIsLoading(false);
         if (res.observations && res.observations.length > 0) {
-          const years = res.observations.map((o) => new Date(o.date).getFullYear());
+          const years = res.observations.map((o) => Number(o.date.slice(0,4)));
           const minY = Math.min(...years);
           const maxY = Math.max(...years);
-          setYearRange([minY, maxY]);
+          setYearRange([minY, maxY]); setDataYears([minY, maxY]);
+          const names = [...new Set(res.observations.filter(o => o.value !== null).map(o => o.variable))];
+          const preferred = names.filter(n => ['ndvi','soil_water_0_100cm','soil_moisture'].includes(n));
+          setSelectedIndicators(preferred.length ? preferred : names.slice(0,2));
         }
       }
     });
@@ -88,7 +88,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
     });
   };
 
-  const availableIndicators = ['ndvi', 'soil_moisture', 'temperature', 'precipitation'];
+  const availableIndicators = [...new Set((dataStatus?.observations || []).map(o => o.variable))];
 
   return (
     <AnimatePresence>
@@ -202,6 +202,14 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
               </div>
             )}
 
+            {dataStatus?.detail && <div className="space-y-2 text-xs font-mono">
+              <p className="text-amber-200">{dataStatus.detail.screening?.category || 'Paired screening pending'} · source QA review pending</p>
+              <p className="text-slate-400">Cyan dots identify cells with observations. They do not by themselves indicate environmental risk.</p>
+              <details className="rounded-lg border border-slate-700 p-3"><summary>NASA source and processing provenance</summary>
+                <pre className="whitespace-pre-wrap text-[10px] mt-2">{JSON.stringify(dataStatus.detail.provenance, null, 2)}</pre>
+              </details>
+              <a className="text-cyan-300 underline" href={`/api/v1/regions/${encodeURIComponent(dataStatus.detail.region_id)}`} target="_blank" rel="noreferrer">Open observations and analysis JSON</a>
+            </div>}
             {/* MILESTONE 2: Environmental Data Visualization & Statistical Dashboard */}
             {dataStatus?.hasData && dataStatus.observations && (
               <div className="space-y-3 pt-1">
@@ -239,10 +247,11 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
                       selectedIndicators={selectedIndicators}
                       onToggleIndicator={handleToggleIndicator}
                       yearRange={yearRange}
-                      minYear={2015}
-                      maxYear={2024}
+                      minYear={dataYears[0]}
+                      allowTrendline={!!dataStatus.isSynthetic}
+                      maxYear={dataYears[1]}
                       onChangeYearRange={setYearRange}
-                      showTrendline={showTrendline}
+                      showTrendline={showTrendline && !!dataStatus.isSynthetic}
                       onToggleTrendline={() => setShowTrendline(!showTrendline)}
                       chartMode={chartMode}
                       onChangeChartMode={setChartMode}
@@ -265,7 +274,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
                           observations={dataStatus.observations}
                           selectedIndicators={selectedIndicators}
                           yearRange={yearRange}
-                          showTrendline={showTrendline}
+                          showTrendline={showTrendline && !!dataStatus.isSynthetic}
                         />
                       ) : (
                         <ZScoreChart
@@ -280,6 +289,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
                 {/* Tab 2: Statistical Audit & Safeguards */}
                 {activeTab === 'audit' && (
                   <StatisticalAudit
+                    detail={dataStatus.detail}
                     analysis={dataStatus.analysis}
                     observations={dataStatus.observations}
                     selectedIndicators={selectedIndicators}
@@ -288,6 +298,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
                 )}
               </div>
             )}
+            {dataStatus?.hasData && dataStatus.detail && <ResearchPanel detail={dataStatus.detail} />}
           </div>
 
           {/* Bottom Actions Bar */}

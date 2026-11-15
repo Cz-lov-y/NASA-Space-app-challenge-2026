@@ -5,22 +5,28 @@ import { SlidingPanel } from './components/panel/SlidingPanel';
 import { InfoModal } from './components/modals/InfoModal';
 import { GeoCoordinate, ModalType, SelectedLocation } from './types/globe';
 import { PRESET_REGIONS } from './mock/regions';
+import { apiService } from './services/api';
+import { mapRegion, gridId, DEMO_REGION_IDS } from './services/regions';
 
 export const App: React.FC = () => {
   const [selectedCoordinate, setSelectedCoordinate] = useState<GeoCoordinate | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<SelectedLocation | null>(null);
   const [activeModal, setActiveModal] = useState<ModalType>(null);
 
+  const [regions, setRegions] = useState<SelectedLocation[]>([]);
+  const [catalogError, setCatalogError] = useState(false);
+  useEffect(() => { let active = true; apiService.getRegions().then(data => {
+    if (active) setRegions(data.features.map(mapRegion));
+  }).catch(() => { if (active) setCatalogError(true); }); return () => { active = false; }; }, []);
+  const menuRegions = [...DEMO_REGION_IDS.map(id => regions.find(r => r.id === id)).filter((r): r is SelectedLocation => !!r),
+    ...regions.filter(r => r.hasObservationalData && !DEMO_REGION_IDS.includes(r.id)), PRESET_REGIONS[0]];
+
   // Handle geographic point click on the 3D globe
   const handleSelectCoordinate = useCallback((coord: GeoCoordinate) => {
     setSelectedCoordinate(coord);
 
     // Check if the clicked coordinate is close to any registered preset hotspot
-    const matchedPreset = PRESET_REGIONS.find((preset) => {
-      const dLat = Math.abs(preset.lat - coord.lat);
-      const dLng = Math.abs(preset.lng - coord.lng);
-      return dLat < 2.5 && dLng < 2.5;
-    });
+    const matchedPreset = regions.find(r => r.id === gridId(coord.lat, coord.lng));
 
     if (matchedPreset) {
       setSelectedLocation(matchedPreset);
@@ -39,7 +45,7 @@ export const App: React.FC = () => {
         description: 'Interactive point sampled via precision 3D raycasting on the Earth digital twin.',
       });
     }
-  }, []);
+  }, [regions]);
 
   // Handle direct selection from Hotspots dropdown
   const handleSelectPreset = useCallback((location: SelectedLocation) => {
@@ -75,6 +81,7 @@ export const App: React.FC = () => {
         selectedCoordinate={selectedCoordinate}
         onSelectCoordinate={handleSelectCoordinate}
         onDeselect={handleDeselect}
+        regions={regions}
       />
 
       {/* Top Telemetry Header HUD */}
@@ -83,7 +90,10 @@ export const App: React.FC = () => {
         selectedCoordinate={selectedCoordinate}
         selectedLocation={selectedLocation}
         onSelectPreset={handleSelectPreset}
+        regions={menuRegions}
       />
+
+      {catalogError && <div className="fixed bottom-4 left-4 z-40 bg-space-900 p-3 text-amber-200 text-xs">Regional API unavailable; synthetic demonstration remains available.</div>}
 
       {/* Sliding Right-side Telemetry & Information Panel */}
       <SlidingPanel

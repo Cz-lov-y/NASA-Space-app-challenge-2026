@@ -1,10 +1,11 @@
 import React from 'react';
 import { Globe2, Navigation, Info, HelpCircle, FileText, ChevronDown } from 'lucide-react';
 import { GeoCoordinate, ModalType, SelectedLocation } from '../../types/globe';
-import { PRESET_REGIONS } from '../../mock/regions';
+
 import { formatCoordinates } from '../../utils/coordinates';
 
 interface HeaderHUDProps {
+  regions: SelectedLocation[];
   onOpenModal: (type: ModalType) => void;
   selectedCoordinate: GeoCoordinate | null;
   selectedLocation: SelectedLocation | null;
@@ -12,6 +13,7 @@ interface HeaderHUDProps {
 }
 
 export const HeaderHUD: React.FC<HeaderHUDProps> = ({
+  regions,
   onOpenModal,
   selectedCoordinate,
   selectedLocation,
@@ -64,15 +66,15 @@ export const HeaderHUD: React.FC<HeaderHUDProps> = ({
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-space-850 hover:bg-space-800 border border-cyan-500/30 text-xs font-mono text-cyan-200 transition-colors"
             >
-              <span>{selectedLocation ? selectedLocation.name : 'Target Hotspots'}</span>
+              <span>{selectedLocation ? selectedLocation.name : 'Real data regions'}</span>
               <ChevronDown className="w-3.5 h-3.5 text-cyan-400" />
             </button>
             {isDropdownOpen && (
-              <div className="absolute right-0 mt-1.5 w-60 py-1 rounded-xl bg-space-900/95 border border-cyan-500/30 shadow-2xl backdrop-blur-xl z-40 animate-in fade-in slide-in-from-top-1">
+              <div className="absolute right-0 mt-1.5 w-72 max-h-96 overflow-y-auto py-1 rounded-xl bg-space-900/95 border border-cyan-500/30 shadow-2xl backdrop-blur-xl z-40 animate-in fade-in slide-in-from-top-1">
                 <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400 border-b border-slate-800">
-                  Registered Regions
+                  Registered Regions · {regions.filter(r => !r.isSyntheticDemo).length} real
                 </div>
-                {PRESET_REGIONS.map((preset) => (
+                {regions.map((preset) => (
                   <button
                     key={preset.id}
                     onClick={() => {

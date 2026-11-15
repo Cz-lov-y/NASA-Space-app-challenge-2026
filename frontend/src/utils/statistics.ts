@@ -9,11 +9,11 @@ export interface LinearRegressionResult {
 }
 
 /**
- * Calculates Ordinary Least Squares (OLS) linear trend for a time series
+ * Exploratory demo-only OLS; scientific inference comes from backend annual fits.
  */
 export function calculateOLSTrend(observations: TimeSeriesObservation[]): LinearRegressionResult | null {
   const valid = observations
-    .filter((obs) => obs.value !== null && !isNaN(obs.value))
+    .filter((obs) => typeof obs.value === 'number' && Number.isFinite(obs.value) && Number.isFinite(Date.parse(obs.date)))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   if (valid.length < 3) return null;
@@ -76,25 +76,19 @@ export function calculateOLSTrend(observations: TimeSeriesObservation[]): Linear
  */
 export function calculateZScores(
   observations: TimeSeriesObservation[]
-): Array<{ date: string; zScore: number; rawValue: number }> {
-  const valid = observations
-    .filter((obs) => obs.value !== null && !isNaN(obs.value))
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-  if (valid.length === 0) return [];
-
-  const values = valid.map((obs) => obs.value as number);
-  const mean = values.reduce((a, b) => a + b, 0) / values.length;
-  const variance = values.reduce((a, b) => a + (b - mean) ** 2, 0) / Math.max(1, values.length - 1);
+): Array<{ date: string; zScore: number | null; rawValue: number | null }> {
+  const ordered = [...observations].filter((obs) => Number.isFinite(Date.parse(obs.date)))
+    .sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+  const values = ordered.map((obs) => obs.value)
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+  const mean = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+  const variance = values.length ? values.reduce((a, b) => a + (b - mean) ** 2, 0) / Math.max(1, values.length - 1) : 0;
   const stdDev = Math.sqrt(variance);
-
-  return valid.map((obs) => {
-    const val = obs.value as number;
-    const zScore = stdDev === 0 ? 0 : (val - mean) / stdDev;
-    return {
-      date: obs.date,
-      zScore: Number(zScore.toFixed(3)),
-      rawValue: val,
-    };
+  // Retain every supplied monthly slot; missing observations remain null.
+  return ordered.map((obs) => {
+    const valid = typeof obs.value === 'number' && Number.isFinite(obs.value);
+    const value = valid ? obs.value as number : null;
+    return { date: obs.date, rawValue: value,
+      zScore: value === null ? null : stdDev === 0 ? 0 : (value - mean) / stdDev };
   });
 }

@@ -192,3 +192,66 @@ Additional focused tests cover the eight-year boundary, a dropped month and larg
 interior gap, partial-export family changes, reliability failures retained in the
 family, compact-vs-detailed consistency, null pending significance and CLI source
 path protection. Their generated input values remain explicitly synthetic tests.
+
+## Frontend scientific display integration
+
+`src.region_transport.build_region_detail(bundle)` wraps the existing
+`regional-detail-1` export for HTTP/static adapters. Original observations and QA
+fields remain intact. Its additional `annual_fits` mapping uses stored annual OLS
+slope, intercept and time origin; it performs no regression. Fit points appear
+only at actually analyzed calendar years and use January 1 as a UTC annual anchor.
+They are fitted values, not extra monthly observations. Insufficient fits are null;
+stale screening is withheld. `scientific_display` explicitly carries analysis kind,
+fixed analysis period, screening category/classification, QA state and limitations.
+Five transport tests verify coefficients, units, annual counts, real gaps,
+null/insufficient estimates, strict JSON and stale-result handling.
+
+The merged React chart/audit components now preserve their visual structure while
+using stored backend results for scientific inference. `StatisticalAudit` accepts
+optional `detail` alongside the selected paired/available `analysis`. It reads the
+stored category and distinguishes pending paired screening from single-indicator
+soil diagnostics. It no longer computes sign-based classifications or mixes a
+client monthly slope with backend annual confidence intervals/p-values. Numeric
+formatting preserves nulls and reports the actual small p-value in scientific
+notation. Raw monthly rows/finite counts and annual inference counts are labeled
+separately; missing fractions remain unavailable when unreported, and source QA
+false displays review pending.
+
+Chart labels include both canonical soil depths and physical units. UTC calendar
+years are used when filtering. Z-score calculations use finite values while
+retaining supplied null monthly slots. Client OLS chart lines are restricted to
+explicitly synthetic demonstrations and labeled exploratory; real observations
+are never refitted in the browser. The parent panel currently disables real-data
+trend lines. The backend's `annual_fits` is available for a later plotted annual
+fit implementation; do not claim those coordinates are already drawn.
+
+Validation: frontend TypeScript compilation passed. A Node/React server-render
+check verified stored slope authority, pending classification, null p-values,
+truthful small-p formatting, unknown coverage and preserved missing z-score dates.
+The combined transport/regional/statistics Python check passed 70 tests and
+66 subtests. The controller owns the full build and actual browser interaction
+checks against the HTTP adapter.
+
+### Preserve standalone diagnostics during partial MODIS imports
+
+Once the first real annual NDVI export arrives, a cell can have only one common
+complete paired year while its GLDAS record still spans 22 years. The batch now
+retains both the original insufficient paired analysis and a separate standalone
+`available_indicator_analysis`, preferentially for `soil_water_0_100cm`. The latter
+uses its own source record without alignment to the partial NDVI series. Paired
+classification stays insufficient, and neither standalone test enters the paired
+worldwide family. At eight common complete paired years, the regular paired
+analysis becomes eligible and replaces the standalone display path.
+
+When this diagnostic is present, frontend/API consumers should select
+`available_indicator_analysis || paired_analysis` for numerical display while
+continuing to use the separate stored screening category. The compact map and
+annual-fit transport make that same selection. They retain both counts: for an
+initial annual import, `paired_year_count=1` and `available_year_count=22`.
+The audit explicitly explains the separate soil record and its analyzed period;
+standalone trends must not be presented as paired divergence evidence.
+
+Two regression tests cover the first annual NDVI import, unchanged insufficient
+paired results/family, retained 22-year soil trend and 22 transported annual fit
+points. Combined checks now pass 72 tests and 66 subtests; TypeScript compilation
+also passes. Existing monthly values and missing months are untouched.

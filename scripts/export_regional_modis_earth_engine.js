@@ -1,5 +1,5 @@
-// LIVE STATUS: worldwide pilot fails polar raster bounds. Do not launch annual tasks
-// until resolved; see docs/member_b_regional_steps.md. QA/resolution are unchanged.
+// LIVE STATUS: full-world mode fails polar raster bounds; nonpolar pilot CSV passed
+// structural/provenance checks. Source-pixel review pending. QA/resolution unchanged.
 // Paste into Earth Engine CODE EDITOR (code.earthengine.google.com), not Cloud Shell.
 // Native MOD13A3.061 QA/scaling retained. Start with MODE='pilot'.
 var NONPOLAR_ONLY = false; // Explicit partial fallback:576cells; all648 remain in local catalog.

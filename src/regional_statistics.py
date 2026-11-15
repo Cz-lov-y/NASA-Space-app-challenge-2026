@@ -34,6 +34,21 @@ def _features(catalog, region_ids):
     return deepcopy(catalog)
 
 
+
+def _available_diagnostic(selected, alpha, min_years):
+    """Preserve a standalone record without aligning it to a partial other series."""
+    for name in ("soil_water_0_100cm", "ndvi"):
+        single = selected[selected.variable == name]
+        if not single.empty and single.value.notna().any():
+            diagnostic = analyze_region(single, vegetation_variables=("ndvi",),
+                soil_moisture_variable="soil_water_0_100cm", alpha=alpha, min_years=min_years)
+            diagnostic["limitations"].insert(0,
+                "Available-indicator diagnostic only: paired regional screening is pending or insufficient; "
+                "these p-values have not been adjusted across regions and must not color the divergence map.")
+            return diagnostic
+    return None
+
+
 def build_regional_screening(monthly: pd.DataFrame, catalog=None, *, alpha: float = 0.05,
                              min_years: int = 8, dataset_version: str | None = None) -> dict:
     """Analyze the frozen 2003–2024 primary pair without geographic fabrication.
@@ -105,16 +120,7 @@ def build_regional_screening(monthly: pd.DataFrame, catalog=None, *, alpha: floa
             record["screening"].update(classification="unsupported", reasons=["outside_product_support"])
         elif missing:
             record["screening"]["reasons"] = [f"missing_primary_variable:{v}" for v in missing]
-            available = selected.groupby("variable")["value"].count().gt(0)
-            available_names = available[available].index.tolist()
-            if available_names:
-                record["available_indicator_analysis"] = analyze_region(
-                    selected[selected.variable.isin(available_names)],
-                    vegetation_variables=("ndvi",), soil_moisture_variable="soil_water_0_100cm",
-                    alpha=alpha, min_years=min_years)
-                record["available_indicator_analysis"]["limitations"].insert(0,
-                    "Available-indicator diagnostic only: paired regional screening remains pending; "
-                    "these p-values have not been adjusted across regions and must not color the divergence map.")
+            record["available_indicator_analysis"] = _available_diagnostic(selected, alpha, min_years)
         else:
             result = analyze_region(selected, vegetation_variables=("ndvi",),
                                     soil_moisture_variable="soil_water_0_100cm",
@@ -123,6 +129,8 @@ def build_regional_screening(monthly: pd.DataFrame, catalog=None, *, alpha: floa
             eligible = all(result["analysis"][v]["status"] == "ok" for v in PRIMARY_VARIABLES)
             record["status"] = "eligible" if eligible else "insufficient"
             record["screening"].update(classification="insufficient", reasons=["insufficient_common_complete_years"])
+            if not eligible:
+                record["available_indicator_analysis"] = _available_diagnostic(selected, alpha, min_years)
             if eligible:
                 for variable in PRIMARY_VARIABLES:
                     p = result["analysis"][variable]["mann_kendall"]["p_value"]
@@ -193,7 +201,7 @@ def build_screening_summary(report: dict) -> dict:
     features = []
     for record in report["regions"]:
         paired, available = record.get("analysis"), record.get("available_indicator_analysis")
-        result = paired or available
+        result = available or paired
         screening = record["screening"]
         indicators = {}
         for variable, analysis in (result or {}).get("analysis", {}).items():
@@ -218,7 +226,7 @@ def build_screening_summary(report: dict) -> dict:
             "category": screening["category"], "provisional": screening["provisional"],
             "qa_reviewed": screening["qa_reviewed"],
             "synthetic_demo": (result or {}).get("data_quality", {}).get("synthetic_demo", False),
-            "analysis_kind": "paired" if paired else "available_indicator" if available else "none",
+            "analysis_kind": "available_indicator" if available else "paired" if paired else "none",
             "analysis_period": deepcopy((result or {}).get("observation_period")),
             "paired_year_count": len((paired or {}).get("observation_period", {}).get("years", [])),
             "available_year_count": len((available or {}).get("observation_period", {}).get("years", [])),

@@ -152,8 +152,8 @@ def main(argv=None):
     if not args.submit and not args.status:
         result={'mode':'dry_plan','project':args.project,'task_count':len(plan),'tasks':plan,
                 'region_count':len(export_grid(args.nonpolar)),'scope':'nonpolar' if args.nonpolar else 'full','catalog_region_count':648,'source':COLLECTION,'native_projection':True,'qa_rule':QA_RULE,
-                'cloud_validation_status':'partial_nonpolar_export_not_yet_validated' if args.nonpolar else 'failed_polar_bounds',
-                'note':'No cloud calls. Current worldwide pilot fails polar raster bounds; resolve this before retrying or submitting annual tasks.'}
+                'cloud_validation_status':'nonpolar_pilot_structurally_validated_source_pixel_review_pending' if args.nonpolar else 'failed_polar_bounds',
+                'note':'No cloud calls. Nonpolar pilot CSV passed structural/provenance checks; source-pixel validation pending. Full-world mode still fails polar raster bounds.'}
     else:
         try: import ee
         except ImportError as exc: raise SystemExit('Install requirements-earthengine.txt in the existing environment first.') from exc

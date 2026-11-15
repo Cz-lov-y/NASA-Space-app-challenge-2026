@@ -10,6 +10,7 @@ interface IndicatorFilterProps {
   maxYear: number;
   onChangeYearRange: (range: [number, number]) => void;
   showTrendline: boolean;
+  allowTrendline?: boolean;
   onToggleTrendline: () => void;
   chartMode: 'timeseries' | 'zscore';
   onChangeChartMode: (mode: 'timeseries' | 'zscore') => void;
@@ -17,6 +18,8 @@ interface IndicatorFilterProps {
 
 const INDICATOR_LABELS: Record<string, { label: string; color: string; badge: string }> = {
   ndvi: { label: 'NDVI (Greenness)', color: 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10', badge: 'bg-emerald-500' },
+  soil_water_0_100cm: { label: 'Soil Water (0–100 cm)', color: 'text-cyan-400 border-cyan-500/40 bg-cyan-500/10', badge: 'bg-cyan-500' },
+  soil_water_0_10cm: { label: 'Soil Water (0–10 cm)', color: 'text-purple-400 border-purple-500/40 bg-purple-500/10', badge: 'bg-purple-500' },
   soil_moisture: { label: 'Soil Moisture', color: 'text-cyan-400 border-cyan-500/40 bg-cyan-500/10', badge: 'bg-cyan-500' },
   temperature: { label: 'Surface Temp', color: 'text-amber-400 border-amber-500/40 bg-amber-500/10', badge: 'bg-amber-500' },
   precipitation: { label: 'Precipitation', color: 'text-blue-400 border-blue-500/40 bg-blue-500/10', badge: 'bg-blue-500' },
@@ -31,6 +34,7 @@ export const IndicatorFilter: React.FC<IndicatorFilterProps> = ({
   maxYear,
   onChangeYearRange,
   showTrendline,
+  allowTrendline = true,
   onToggleTrendline,
   chartMode,
   onChangeChartMode,
@@ -65,15 +69,16 @@ export const IndicatorFilter: React.FC<IndicatorFilterProps> = ({
         {chartMode === 'timeseries' && (
           <button
             onClick={onToggleTrendline}
+            disabled={!allowTrendline}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-mono transition-colors ${
               showTrendline
                 ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
                 : 'border-slate-800 bg-space-950 text-slate-400 hover:text-slate-200'
             }`}
-            title="Toggle OLS linear regression dashed lines"
+            title="Exploratory OLS lines are available for synthetic demonstrations only"
           >
             {showTrendline ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-            <span>{showTrendline ? 'Trendlines On' : 'Trendlines Off'}</span>
+            <span>{!allowTrendline ? 'Annual fit: see audit' : showTrendline ? 'Trendlines On' : 'Trendlines Off'}</span>
           </button>
         )}
       </div>
@@ -82,7 +87,7 @@ export const IndicatorFilter: React.FC<IndicatorFilterProps> = ({
       <div>
         <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 uppercase mb-2">
           <span>Active Environmental Indicators:</span>
-          <span className="text-[10px] text-slate-400">SELECT 1–4</span>
+          <span className="text-[10px] text-slate-400">SELECT AVAILABLE</span>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {availableIndicators.map((variable) => {

@@ -20,6 +20,12 @@ const INDICATOR_CONFIG: Record<
     unit: 'index',
     yAxisIndex: 0,
   },
+  soil_water_0_100cm: {
+    label: 'Soil Water (0–100 cm)', color: '#00e5ff', unit: 'kg m-2', yAxisIndex: 1,
+  },
+  soil_water_0_10cm: {
+    label: 'Soil Water (0–10 cm)', color: '#a855f7', unit: 'kg m-2', yAxisIndex: 1,
+  },
   soil_moisture: {
     label: 'Soil Moisture',
     color: '#00e5ff', // Electric Cyan
@@ -49,7 +55,7 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
   // Filter by indicator and year range
   const filtered = useMemo(() => {
     return observations.filter((obs) => {
-      const year = new Date(obs.date).getFullYear();
+      const year = new Date(obs.date).getUTCFullYear();
       return (
         selectedIndicators.includes(obs.variable) &&
         year >= yearRange[0] &&
@@ -127,14 +133,14 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
       });
 
       // 2. Trendline (if enabled and sufficient observations)
-      if (showTrendline && varObs.length >= 3) {
+      if (showTrendline && varObs.length >= 3 && varObs.every((obs) => obs.source.toUpperCase().includes('SYNTHETIC'))) {
         const trend = calculateOLSTrend(varObs);
         if (trend) {
           const trendMap = new Map(trend.trendline.map((t) => [t.date, t.value]));
           const trendData = dates.map((date) => trendMap.get(date) ?? null);
 
           seriesList.push({
-            name: `${config.label} Trend`,
+            name: `${config.label} Exploratory Demo Fit`,
             type: 'line',
             yAxisIndex: yAxisIdx,
             data: trendData,
@@ -153,9 +159,9 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
 
     const primaryUnit = hasNDVI
       ? 'NDVI Index'
-      : (INDICATOR_CONFIG[selectedIndicators[0]]?.unit || '');
+      : (filtered.find((obs) => obs.variable === selectedIndicators[0])?.unit || INDICATOR_CONFIG[selectedIndicators[0]]?.unit || '');
     const secondaryUnit = useDualAxis
-      ? (INDICATOR_CONFIG[selectedIndicators.find((i) => i !== 'ndvi') || '']?.unit || '')
+      ? (filtered.find((obs) => obs.variable !== 'ndvi')?.unit || INDICATOR_CONFIG[selectedIndicators.find((i) => i !== 'ndvi') || '']?.unit || '')
       : '';
 
     return {

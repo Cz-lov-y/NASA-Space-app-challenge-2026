@@ -8,6 +8,55 @@ measurements to verifiable government policy and conservation evidence.
 
 ## Current status
 
+The 3D globe now loads the real regional catalog and NASA-derived soil observations
+through the local Python API. Cyan markers show cells with observations; paired
+greening/drying screening remains pending until sufficient regional NDVI arrives.
+The existing human-designed globe, drawer and charts are retained. The Scientific
+Audit displays stored backend annual results rather than a client-side monthly fit.
+
+### Run the real-data globe locally
+
+Use Python 3.12 with `requirements-data.txt` and Node 22. From the repository root,
+start the backend in one terminal:
+
+```sh
+.venv/bin/python scripts/serve_regional_api.py --port 8000
+```
+
+Start the frontend in another terminal:
+
+```sh
+cd frontend
+npm ci
+npm run dev -- --host 127.0.0.1
+```
+
+Open http://127.0.0.1:3000/ and select **Real data regions → Canadian interior**
+or **Central US**. The menu and cyan dots use actual grid IDs, with source QA and
+paired-analysis limitations visible. Globe clicks resolve to the containing 10°
+cell; a cell average is not a measurement of the clicked point.
+
+The default API permits offline exact-context cached research only. To enable
+automatic live research after region selection, restart the backend with
+`--enable-live`; it reads private local `.env` settings server-side. An uncached
+selection can use up to six basic searches and one model request. Credentials
+never go to browser code. See [the HTTP API guide](docs/regional_api.md).
+
+All 22 annual nonpolar MODIS exports (2003–2024) have been submitted to Earth
+Engine. Their completion is asynchronous. To retrieve completed annual files,
+then rebuild the local backend artifacts:
+
+```sh
+.venv/bin/python scripts/sync_regional_modis_drive.py --poll-tasks --ingest
+.venv/bin/python scripts/prepare_regional_backend.py
+```
+
+Cloud tooling needs the optional `requirements-earthengine.txt` and authorized
+Earth Engine/Drive access. The known polar export defect leaves 16 supported
+northern cells pending NDVI; the full 648-cell catalog remains available.
+
+### Existing Streamlit demonstration
+
 The coordinated regional backend work is described in [the team delivery plan](docs/team_demo_plan.md).
 Real regional GLDAS observations now cover 301 supported 10° cells for 2003–2024;
 the catalog retains all 648 worldwide cells. Regional NDVI exports are still required

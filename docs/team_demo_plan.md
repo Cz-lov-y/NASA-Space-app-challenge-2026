@@ -157,3 +157,44 @@ An explicitly partial nonpolar pilot completed as task `ELF7RDWO3DRQGYIJY2PJWY6Q
 The raw pilot is retained in `data/raw/modis_earth_engine/regional_validation/`, with `data/processed/regional/modis_pilot_audit.json`. Its audit correctly reports incomplete full-grid coverage (72 polar cells outside this export). The pilot has not been imported into the accepted monthly release; one month cannot establish a trend. Independent pixel validation remains pending. No annual tasks have been launched: stop after this milestone commit/push for human review. After continuation, the existing authenticated Python exporter can submit annual nonpolar tasks; the full polar export defect remains unresolved.
 
 The release remains scientifically provisional, and regional NDVI is not yet available. Passing backend integrity checks is separate from complete observations or a fully integrated frontend. After the milestone commit/push, stop for team review as requested.
+
+### Real-data globe integration — 2026-11-15
+
+Continuation authorized the next milestone. The controller submitted all 22 annual
+nonpolar MODIS tasks for 2003–2024 using the unchanged validated pilot method.
+Task IDs and a timestamped status snapshot are retained in
+`data/requests/earth_engine_annual_tasks.json`; cloud completion is asynchronous.
+B added Drive synchronization with immutable downloads and explicit validated
+incremental ingestion, so manual downloads are no longer required.
+
+C supplied a local HTTP API that serves the map catalog, region observations,
+authoritative statistics, cached research and bounded live jobs. Private settings
+remain server-side; live requests require the server's `--enable-live` flag.
+A supplied annual fitted coordinates from stored coefficients and fixed audit
+formatting, canonical soil-depth names, UTC dates and null gaps. A partial NDVI
+import retains the long standalone soil record while paired screening remains
+insufficient; it never fabricates paired years or promotes standalone p-values.
+
+The controller connected the existing human-designed React globe to these APIs:
+real grid markers/menu, geographic-cell selection, observations and provenance,
+backend statistical categories, and selection-triggered research with stale-response
+suppression. The visual design remains based on the team's frontend. Current cyan
+markers represent data availability, not detected environmental risk. Amber or
+purple marker classifications can only come from stored paired screening.
+
+Browser verification selected a real Canadian cell, displayed its 264 monthly
+0–100 cm observations, 22-year annual statistics in `kg m-2`, explicit pending
+paired screening, source QA limitations, and the genuine four-source cached brief.
+This verification made no paid provider requests. Source-pixel/footprint review
+and regional NDVI history remain pending. The milestone ends with commit/push and
+human review; queued Earth Engine tasks continue independently in the cloud.
+
+Final milestone verification: 178 Python tests and 68 subtests passed, the frontend
+production build passed, and headless Chrome verified actual backend slope values,
+264 finite monthly observations, 22 annual values, geographic boundary mapping,
+pending classification and the genuine cached report with no page errors. The
+local API was then started with live research enabled for interactive use; browser
+verification reused the Canada cache and made no new paid research calls. At the
+last cloud check, three annual tasks were running, 19 were queued, and no annual
+CSV had completed. This is a working real-soil-data demo; paired hotspots await
+sufficient NDVI history and remain scientifically provisional.
