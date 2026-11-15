@@ -191,3 +191,22 @@ After corrected sources have been imported successfully, a normal `--fetch` resu
 The controller completed all six current-version tile releases. The collection audit passed for **96 native cells and 76,032 monthly rows**, with **80 paired statistically eligible cells and 160 tests** in the disclosed combined family. All requested month/cell slots are present; source-QA gaps remain missing values rather than invented replacements. The browser checks covered all six areas.
 
 This snapshot replaces the earlier single-tile data-delivery status. It does not turn the six geographic pilots into worldwide fine-cell coverage or a confirmatory globally preregistered study. Central-US results had already been explored before the five expansion locations were chosen; the five expansion boxes were then fixed geographically before reviewing their own trend classifications. Scientific source-pixel/common-footprint review and spatial dependence limitations remain explicit.
+
+## Automatic worldwide native-cell job enumeration
+
+`scripts/global_screen_earth_engine.py` automatically partitions the GLDAS envelope into 1° jobs, each containing sixteen original 0.25° cells. It derives supported jobs from the union of actual native source masks across all available 2003–2024 monthly files. The local source scan found 242,753 native cells with some soil data across 17,284 supported 1° jobs. This is model support, not completed paired NDVI coverage.
+
+The script runs the existing exact-source v2 pipeline for each job: January pilot, 22 resumable annual MODIS requests, original CSV archive, monthly native GLDAS/NDVI merge, statistical screening and a map shard. It reuses the six existing tile releases when their bounding boxes coincide. Stored map/statistics paths and coverage status appear in `data/processed/fine/global/index.json`; no eager worldwide million-feature JSON is required. Every tile retains native source geometry and real missing values.
+
+```sh
+.venv/bin/python scripts/global_screen_earth_engine.py
+.venv/bin/python scripts/global_screen_earth_engine.py --fetch --max-tiles 1 --bbox -98 37 -97 38
+```
+
+The first command plans locally and performs no account calls. `--fetch` explicitly permits sequential retrieval using the existing account/project. Omitting `--max-tiles` iterates supported jobs automatically, while rerunning resumes completed request and tile checkpoints. `--max-tiles` limits attempted new/retried jobs per invocation, so existing completed tiles do not consume that budget. No manual global tile list is needed.
+
+A default `--min-free-gib 20` guard checks available disk space before each tile and checkpoints a graceful `low_disk_space` stop. Full acquisition can require hundreds of GB and hundreds of thousands of requests; automatic enumeration is not a claim that worldwide data have already finished or will fit this machine. A tile-specific geometry/remote-response error is recorded and later tiles can continue. Rerunning retries failed tiles and skips current successful ones. Quota, authentication, missing-source and filesystem failures stop the run to avoid repeatedly hitting a shared blocking condition. Earlier successful source files remain intact.
+
+For this demo-oriented bulk path, the expensive independent release audit is explicitly deferred (`release_audit_status: deferred_for_demo`). Essential file parsing, source identity, native geometry, source QA, scaling, missing-value and version checks still run. Per-tile screening is provisional and its multiple-testing family stays tile-local. `worldwide_testing_family_complete` remains false: globally adjusted significance cannot be inferred by collecting tile-local classifications. No p-value is presented as a risk probability. The complete-world acquisition and rigorous worldwide statistical review remain outstanding until their actual outputs exist.
+
+The Earth Engine GLDAS2.1 collection is [three-hourly](https://developers.google.com/earth-engine/datasets/catalog/NASA_GLDAS_V021_NOAH_G025_T3H); it is not silently substituted for the archived authoritative monthly GLDAS product. This pipeline retrieves MODIS aggregates and joins those existing native monthly soil observations.
