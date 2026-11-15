@@ -29,9 +29,10 @@ const SceneRig: React.FC<SceneRigProps> = ({
   isInteracting,
 }) => {
   const globeRootRef = useRef<THREE.Group>(null);
+  const cameraOffset = useRef(new THREE.Vector3());
 
   // Smoothly shift Earth group to the left when a location is selected
-  useFrame((_, delta) => {
+  useFrame(({ camera }, delta) => {
     if (globeRootRef.current) {
       // Offset left (-0.45 in world units) to make room for right-side drawer
       const targetX = selectedCoordinate ? -0.45 : 0;
@@ -41,6 +42,17 @@ const SceneRig: React.FC<SceneRigProps> = ({
         4.5,
         delta
       );
+      // OrbitControls measures zoom from its fixed target, but the globe moves
+      // sideways when a panel opens. Keep the camera and its near plane outside
+      // the actual shifted surface at every orbit angle.
+      const near = camera instanceof THREE.PerspectiveCamera || camera instanceof THREE.OrthographicCamera ? camera.near : 0.1;
+      const minimum = 1 + near + 0.025;
+      const offset = cameraOffset.current.subVectors(camera.position, globeRootRef.current.position);
+      if (offset.lengthSq() < minimum * minimum) {
+        if (offset.lengthSq() < 1e-12) offset.set(0, 0, 1);
+        camera.position.copy(globeRootRef.current.position).add(offset.setLength(minimum));
+        camera.lookAt(0, 0, 0);
+      }
     }
   });
 
@@ -121,7 +133,7 @@ export const EarthCanvas: React.FC<EarthCanvasProps> = ({
           ref={controlsRef}
           enableDamping
           dampingFactor={0.05}
-          minDistance={1.015}
+          minDistance={1.125}
           maxDistance={4.2}
           enablePan={false}
           rotateSpeed={0.65}

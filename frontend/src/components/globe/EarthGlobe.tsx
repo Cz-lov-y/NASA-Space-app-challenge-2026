@@ -22,7 +22,6 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
 }) => {
   const earthGroupRef = useRef<THREE.Group>(null);
   const earthMeshRef = useRef<THREE.Mesh>(null);
-  const cloudsRef = useRef<THREE.Mesh>(null);
   const focusTime = useRef(0);
   useEffect(() => { focusTime.current = selectedCoordinate ? 1.8 : 0; }, [selectedCoordinate]);
 
@@ -41,19 +40,8 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
   specularMap.colorSpace = THREE.NoColorSpace;
   cloudsMap.colorSpace = THREE.SRGBColorSpace;
 
-  // Track interaction pause timer for idle rotation
-  const lastInteractionTimeRef = useRef<number>(0);
-
-  // Handle continuous rotation & cloud drift
+  // Rotate to the selected location; otherwise the Earth stays still.
   useFrame((state, delta) => {
-    if (isInteracting) {
-      lastInteractionTimeRef.current = state.clock.getElapsedTime();
-    }
-
-    // Only rotate if user hasn't interacted for > 1.2 seconds
-    const timeSinceInteraction = state.clock.getElapsedTime() - lastInteractionTimeRef.current;
-    const shouldRotate = !selectedCoordinate && !isInteracting && timeSinceInteraction > 1.2;
-
     if (earthGroupRef.current && selectedCoordinate && focusTime.current > 0 && !isInteracting) {
       const localPoint = latLngToVector3(selectedCoordinate.lat, selectedCoordinate.lng, 1).normalize();
       const towardCamera = state.camera.getWorldPosition(new THREE.Vector3()).sub(earthGroupRef.current.getWorldPosition(new THREE.Vector3())).normalize();
@@ -74,14 +62,6 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
       focusTime.current -= delta;
     }
 
-    if (earthGroupRef.current && shouldRotate) {
-      earthGroupRef.current.rotation.y += delta * 0.04;
-    }
-
-    // Clouds drift continuously relative to Earth surface
-    if (cloudsRef.current) {
-      cloudsRef.current.rotation.y += delta * 0.055;
-    }
   });
 
   // Handle click on the Earth sphere
@@ -116,7 +96,7 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
       </mesh>
 
       {/* Cloud Layer (Slightly larger radius, semi-transparent) */}
-      <mesh ref={cloudsRef} scale={[1.009, 1.009, 1.009]}>
+      <mesh scale={[1.009, 1.009, 1.009]}>
         <sphereGeometry args={[1, 64, 64]} />
         <meshStandardMaterial
           map={cloudsMap}

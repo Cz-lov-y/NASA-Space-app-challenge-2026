@@ -120,3 +120,19 @@ def test_southern_alberta_is_first_and_other_priorities_preserve_order(tmp_path)
     ordered,count=mod.prioritize_southern_alberta(jobs,path)
     assert [j['id'] for j in ordered]==['south_alberta','us','central_alberta','outside']
     assert count==1
+
+
+def test_southern_prairies_then_canada_then_other_locations(tmp_path):
+    from shapely.geometry import box, mapping
+    path=tmp_path/'geography.json'
+    path.write_text(json.dumps({
+        'countries':[{'name':'Canada','geometry':mapping(box(-130,49,-80,70))}],
+        'regions':[{'name':name,'country':'Canada','geometry':mapping(box(west,49,west+5,60))}
+                   for name,west in [('Alberta',-120),('Saskatchewan',-115),('Manitoba',-110)]]}))
+    jobs=[{'id':'world','bbox':[-100,35,-99,36]},
+          {'id':'northern_canada','bbox':[-100,58,-99,59]},
+          {'id':'southern_saskatchewan','bbox':[-114,50,-113,51]},
+          {'id':'southern_manitoba','bbox':[-109,51,-108,52]}]
+    ordered,prairies,canada=mod.prioritize_canada_prairies(jobs,path)
+    assert [j['id'] for j in ordered]==['southern_saskatchewan','southern_manitoba','northern_canada','world']
+    assert prairies==2 and canada==3

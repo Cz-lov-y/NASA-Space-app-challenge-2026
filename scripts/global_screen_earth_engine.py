@@ -99,6 +99,29 @@ def prioritize_southern_alberta(jobs, boundary_path):
         (priority if south.intersection(box(*job['bbox'])).area>0 else remaining).append(job)
     return priority+remaining,len(priority)
 
+
+def prioritize_canada_prairies(jobs, boundary_path):
+    """Southern prairie provinces (49–53 N), then the rest of Canada."""
+    from shapely.geometry import shape, box
+    from shapely.ops import unary_union
+    from shapely.prepared import prep
+    collection=json.loads(Path(boundary_path).read_text())
+    countries=[f for f in collection['countries'] if f.get('name')=='Canada']
+    names={'Alberta','Saskatchewan','Manitoba'}
+    regions=[f for f in collection['regions'] if f.get('name') in names and f.get('country')=='Canada']
+    if len(countries)!=1 or {f['name'] for f in regions}!=names:
+        raise ValueError('Canada or a prairie province boundary is missing')
+    canada=prep(shape(countries[0]['geometry']))
+    south=unary_union([shape(f['geometry']) for f in regions]).intersection(box(-180,49,180,53))
+    if south.is_empty:raise ValueError('Southern prairie boundaries are empty')
+    first=[];second=[];remaining=[]
+    for job in jobs:
+        tile=box(*job['bbox'])
+        if south.intersection(tile).area>0:first.append(job)
+        elif canada.intersects(tile):second.append(job)
+        else:remaining.append(job)
+    return first+second+remaining,len(first),len(first)+len(second)
+
 def existing_tiles(registry):
     path=Path(registry)
     if not path.exists():return {}
@@ -107,7 +130,7 @@ def existing_tiles(registry):
 
 def run(*,project='tactical-attic-456217-t0',raw_directory=ROOT/'data/raw/gldas',
         cache_directory=ROOT/'.cache/global_screen',fetch=False,bbox=None,max_tiles=None,
-        reprocess=False,replace=False,min_free_gib=20,years_per_request=1,priority_north_america=False,priority_southern_alberta=False,request_workers=1):
+        reprocess=False,replace=False,min_free_gib=20,years_per_request=1,priority_north_america=False,priority_southern_alberta=False,request_workers=1,priority_canada_prairies=False):
     if isinstance(request_workers,bool) or not isinstance(request_workers,int) or not 1<=request_workers<=16:raise ValueError('--request-workers must be1to16')
     if not np.isfinite(min_free_gib) or min_free_gib<0:raise ValueError('--min-free-gib must be finite and nonnegative')
     if max_tiles is not None and max_tiles<1:raise ValueError('--max-tiles must be positive')
@@ -117,17 +140,20 @@ def run(*,project='tactical-attic-456217-t0',raw_directory=ROOT/'data/raw/gldas'
     existing=existing_tiles(ROOT/'data/processed/fine/tiles.json')
     jobs=list(iter_tiles(supported,bbox))
     priority_count=0
-    if priority_north_america or priority_southern_alberta:
+    if priority_north_america or priority_southern_alberta or priority_canada_prairies:
         jobs,priority_count=prioritize_north_america(jobs,ROOT/'data/processed/regional/naturalearth_countries.geojson')
     alberta_count=0
     if priority_southern_alberta:
         jobs,alberta_count=prioritize_southern_alberta(jobs,ROOT/'frontend/public/data/geography.json')
+    prairies_count=canada_count=0
+    if priority_canada_prairies:
+        jobs,prairies_count,canada_count=prioritize_canada_prairies(jobs,ROOT/'frontend/public/data/geography.json')
     report={'mode':'acquire' if fetch else 'dry_plan','project':project,'calculation_version':CALCULATION_VERSION,
         'grid':'Native GLDAS0.25degrees; exact16cell1degree jobs','native_envelope':[-180,-60,180,90],
         'support':support,'selected_supported_tiles':len(jobs),'annual_requests_before_cache':len(jobs)*request_count,'years_per_request':years_per_request,
         'pilot_requests_before_cache':len(jobs),'max_tiles_this_run':max_tiles,'export_tasks_submitted':0,
-        'priority':'Southern Alberta, then Canada, US and Puerto Rico' if priority_southern_alberta else 'Canada, US and Puerto Rico first' if priority_north_america else 'native grid order',
-        'southern_alberta_tiles':alberta_count,
+        'priority':'Southern Prairies, then Canada, US and Puerto Rico' if priority_canada_prairies else 'Southern Alberta, then Canada, US and Puerto Rico' if priority_southern_alberta else 'Canada, US and Puerto Rico first' if priority_north_america else 'native grid order',
+        'southern_alberta_tiles':alberta_count,'southern_prairie_tiles':prairies_count,'canada_tiles':canada_count,
         'priority_tiles':priority_count,'request_workers':request_workers,
         'worldwide_paired_complete':False,'worldwide_testing_family_complete':False,
         'statistical_scope':'Per-tile provisional screening; no worldwide BH claim or risk probability',
@@ -212,14 +238,14 @@ def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--project',default='tactical-attic-456217-t0')
     p.add_argument('--raw',type=Path,default=ROOT/'data/raw/gldas');p.add_argument('--cache',type=Path,default=ROOT/'.cache/global_screen')
     p.add_argument('--fetch',action='store_true');p.add_argument('--max-tiles',type=int);p.add_argument('--bbox',type=float,nargs=4)
-    p.add_argument('--priority-north-america',action='store_true');p.add_argument('--priority-southern-alberta',action='store_true');p.add_argument('--request-workers',type=int,default=1);p.add_argument('--years-per-request',type=int,default=1);p.add_argument('--reprocess',action='store_true');p.add_argument('--replace',action='store_true');p.add_argument('--min-free-gib',type=float,default=20)
+    p.add_argument('--priority-north-america',action='store_true');p.add_argument('--priority-southern-alberta',action='store_true');p.add_argument('--priority-canada-prairies',action='store_true');p.add_argument('--request-workers',type=int,default=1);p.add_argument('--years-per-request',type=int,default=1);p.add_argument('--reprocess',action='store_true');p.add_argument('--replace',action='store_true');p.add_argument('--min-free-gib',type=float,default=20)
     a=p.parse_args(argv)
     if not a.project.strip():p.error('--project must be nonempty')
     if a.bbox is not None:
         w,s,e,n=a.bbox
         if not(-180<=w<e<=180 and -60<=s<n<=90):p.error('--bbox must be a positive rectangle inside the GLDAS native envelope')
     result=run(project=a.project,raw_directory=a.raw,cache_directory=a.cache,fetch=a.fetch,bbox=a.bbox,
-        max_tiles=a.max_tiles,reprocess=a.reprocess,replace=a.replace,min_free_gib=a.min_free_gib,years_per_request=a.years_per_request,priority_north_america=a.priority_north_america,priority_southern_alberta=a.priority_southern_alberta,request_workers=a.request_workers)
+        max_tiles=a.max_tiles,reprocess=a.reprocess,replace=a.replace,min_free_gib=a.min_free_gib,years_per_request=a.years_per_request,priority_north_america=a.priority_north_america,priority_southern_alberta=a.priority_southern_alberta,request_workers=a.request_workers,priority_canada_prairies=a.priority_canada_prairies)
     print(json.dumps(result,indent=2))
 
 if __name__=='__main__':main()
