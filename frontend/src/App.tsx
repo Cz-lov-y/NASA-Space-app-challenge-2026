@@ -4,9 +4,8 @@ import { HeaderHUD } from './components/hud/HeaderHUD';
 import { SlidingPanel } from './components/panel/SlidingPanel';
 import { InfoModal } from './components/modals/InfoModal';
 import { GeoCoordinate, ModalType, SelectedLocation } from './types/globe';
-import { PRESET_REGIONS } from './mock/regions';
 import { apiService } from './services/api';
-import { mapRegion, gridId, fineGridId, DEMO_REGION_IDS } from './services/regions';
+import { mapRegion, gridId, fineGridId } from './services/regions';
 import { RegionalDetail } from './types/contracts';
 
 export const App: React.FC = () => {
@@ -58,15 +57,18 @@ export const App: React.FC = () => {
     return () => { active = false; };
   }, [tileId]);
   const navigateTile = useCallback((id: string, point: GeoCoordinate | null = null) => {
-    pendingPoint.current = point; setSelectedLocation(null); setSelectedCoordinate(point); setTileId(id);
-  }, []);
+    pendingPoint.current = point; setSelectedCoordinate(point);
+    if (id === tileId && point) {
+      setSelectedLocation(fineRegions.find(r => r.id === fineGridId(point.lat, point.lng)) || null);
+    } else {
+      setSelectedLocation(null); setTileId(id);
+    }
+  }, [tileId, fineRegions]);
   const [catalogError, setCatalogError] = useState(false);
   useEffect(() => { let active = true; apiService.getRegions().then(data => {
     if (active) setRegions(data.features.map(mapRegion));
   }).catch(() => { if (active) setCatalogError(true); }); return () => { active = false; }; }, []);
   const visibleRegions = fineMode ? fineRegions : regions;
-  const menuRegions = fineMode ? [...fineRegions, PRESET_REGIONS[0]] : [...DEMO_REGION_IDS.map(id => regions.find(r => r.id === id)).filter((r): r is SelectedLocation => !!r),
-    ...regions.filter(r => r.hasObservationalData && !DEMO_REGION_IDS.includes(r.id)), PRESET_REGIONS[0]];
 
   // Handle geographic point click on the 3D globe
   const handleSelectCoordinate = useCallback((coord: GeoCoordinate) => {
@@ -153,20 +155,18 @@ export const App: React.FC = () => {
       <HeaderHUD
         onOpenModal={setActiveModal}
         selectedCoordinate={selectedCoordinate}
-        selectedLocation={selectedLocation}
-        onSelectPreset={handleSelectPreset}
-        regions={menuRegions}
       />
 
       <div className="fixed top-20 left-4 z-30 w-56 max-w-[calc(100vw-2rem)] rounded-xl border border-cyan-500/20 bg-space-900/95 p-3 text-xs text-slate-200 shadow-lg backdrop-blur">
         <p className="font-semibold text-white">Explore Earth</p>
         <p className="mt-1 text-slate-400">Select a place on the globe to see its data.</p>
-        {fineMode && <label className="mt-3 block text-slate-400">Visit an example
-          <select aria-label="Fine data area" className="mt-1 block w-full rounded-lg border border-slate-700 bg-space-950 p-2 text-slate-100" value={tileId}
+        {fineMode && <label className="mt-3 block text-slate-400">Explore a place
+          <select aria-label="Explore an example location" className="mt-1 block w-full rounded-lg border border-slate-700 bg-space-950 p-2 text-slate-100" value=""
             onChange={e => {
               const tile = tiles.find(t => t.id === e.target.value);
               navigateTile(e.target.value, tile ? { lat: (tile.bbox[1] + tile.bbox[3]) / 2, lng: (tile.bbox[0] + tile.bbox[2]) / 2 } : null);
             }}>
+            <option value="" disabled>Choose an example…</option>
             {tiles.map(t => <option key={t.id} value={t.id}>{t.name}{t.status === 'pending' ? ' · pending' : ''}</option>)}
           </select>
         </label>}

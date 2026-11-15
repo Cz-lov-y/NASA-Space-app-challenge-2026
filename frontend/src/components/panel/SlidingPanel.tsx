@@ -156,7 +156,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-nasa-cyan animate-pulse" />
               <span className="text-xs font-mono font-bold tracking-widest text-nasa-cyan uppercase">
-                TARGET TELEMETRY LOG
+                Location overview
               </span>
             </div>
             <button
@@ -184,17 +184,13 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
               <h2 className="text-lg font-bold font-mono text-white tracking-wide">
                 {location.name}
               </h2>
-              {location.description && (
-                <p className="text-xs text-slate-400 leading-relaxed font-mono">
-                  {location.description}
-                </p>
-              )}
+
             </div>
 
             {/* Scientific Data Availability / Provenance Warning */}
             {isLoading ? (
               <div className="p-3 rounded-lg bg-space-900/50 border border-slate-800 animate-pulse text-xs font-mono text-cyan-300">
-                Querying regional telemetry index...
+                Loading location data…
               </div>
             ) : dataStatus?.hasData && dataStatus.isSynthetic ? (
               <div className="px-3.5 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-200 flex items-center justify-between text-xs font-mono">
@@ -212,9 +208,9 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
                 </span>
               </div>
             ) : dataStatus?.hasData ? (
-              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 flex items-center gap-2 text-xs font-mono">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>{dataStatus.statusMessage}</span>
+              <div className={`p-3 rounded-lg border flex items-center gap-2 text-xs font-mono ${dataStatus.detail?.screening?.classification === 'supported_signal' ? 'bg-red-50 border-red-200 text-red-700' : dataStatus.detail?.screening?.classification === 'no_detected_divergence' ? 'bg-green-50 border-green-200 text-green-800' : dataStatus.detail?.screening?.classification === 'uncertain_signal' ? 'bg-yellow-50 border-yellow-200 text-yellow-800' : 'bg-slate-50 border-slate-200 text-slate-700'}`}>
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{dataStatus.detail?.screening?.classification === 'supported_signal' ? 'A potential concern was detected.' : dataStatus.detail?.screening?.classification === 'no_detected_divergence' ? 'No concerning pattern detected.' : dataStatus.detail?.screening?.classification === 'uncertain_signal' ? 'The pattern here is uncertain.' : dataStatus.detail?.screening?.classification === 'insufficient' ? 'Not enough data for a clear result.' : 'Analysis is in progress.'} <span className="block mt-1 text-slate-400">Results are preliminary.</span></span>
               </div>
             ) : (
               <div className="p-4 rounded-xl bg-space-900/70 border border-slate-700/60 space-y-3">
@@ -254,17 +250,9 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
               </div>
             )}
 
-            {dataStatus?.detail && <div className="space-y-2 text-xs font-mono">
-              {retrieval && <p className="text-cyan-200">{retrieval.state === 'complete' ? 'Vegetation data aligned.' : ['queued', 'loading'].includes(retrieval.state) ? `Aligning vegetation data: ${retrieval.completed_years || 0}/${retrieval.total_years || 22} years` : retrieval.state === 'busy' ? 'Vegetation processing is busy.' : retrieval.state === 'failed' ? 'Vegetation data could not be loaded; soil data remain available.' : retrieval.state === 'unavailable' ? 'Vegetation retrieval is unavailable.' : 'Vegetation data pending.'}</p>}
-              {retrieval?.retryable && retrieval.retry_url && <button type="button" onClick={retryVegetation} className="border border-cyan-700 rounded px-2 py-1 text-cyan-200">Retry vegetation loading</button>}
-              <p className="text-amber-200">{dataStatus.detail.screening?.category || (dataStatus.detail.screening?.classification === 'unsupported' ? 'Outside GLDAS model coverage' : dataStatus.detail.screening?.classification === 'insufficient' ? 'Insufficient usable paired years' : 'Paired screening pending')} · source QA review pending</p>
-              {dataStatus.detail.screening?.family_scope && <p className="text-slate-400">{dataStatus.detail.screening.family_scope}. This is preliminary evidence, not a calibrated probability of harm.</p>}
-              <p className="text-slate-400">Colors describe preliminary evidence, not a probability of harm or proof of safety.</p>
-              <details className="rounded-lg border border-slate-700 p-3"><summary>NASA source and processing provenance</summary>
-                <pre className="whitespace-pre-wrap text-[10px] mt-2">{JSON.stringify(dataStatus.detail.provenance, null, 2)}</pre>
-              </details>
-              <a className="text-cyan-300 underline" href={`/api/v1/regions/${encodeURIComponent(dataStatus.detail.region_id)}`} target="_blank" rel="noreferrer">Open observations and analysis JSON</a>
-            </div>}
+            {retrieval && ['queued', 'loading'].includes(retrieval.state) && <p className="text-xs text-slate-400">Loading vegetation history…</p>}
+            {retrieval && ['failed', 'busy', 'unavailable'].includes(retrieval.state) && <p className="text-xs text-amber-200">Vegetation data are temporarily unavailable. Soil data can still be viewed.</p>}
+            {retrieval?.retryable && retrieval.retry_url && <button type="button" onClick={retryVegetation} className="border border-cyan-700 rounded px-2 py-1 text-cyan-200 text-xs">Try again</button>}
             {/* MILESTONE 2: Environmental Data Visualization & Statistical Dashboard */}
             {dataStatus?.hasData && dataStatus.observations && (
               <div className="space-y-3 pt-1">
@@ -279,7 +267,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
                     }`}
                   >
                     <BarChart3 className="w-4 h-4 text-nasa-cyan" />
-                    <span>Environmental Trends</span>
+                    <span>Trends</span>
                   </button>
                   <button
                     onClick={() => setActiveTab('audit')}
@@ -290,7 +278,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
                     }`}
                   >
                     <FileSpreadsheet className="w-4 h-4 text-nasa-cyan" />
-                    <span>Scientific Audit</span>
+                    <span>Details</span>
                   </button>
                 </div>
 
@@ -316,11 +304,11 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
                       <div className="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-slate-800/80 pb-1.5">
                         <span className="font-bold text-white uppercase">
                           {chartMode === 'timeseries'
-                            ? 'Interactive Multi-Indicator Trends'
-                            : 'Standardized Z-Score Comparison'}
+                            ? 'Changes over time'
+                            : 'Comparing changes'}
                         </span>
                         <span className="text-[10px] text-cyan-300">
-                          {chartMode === 'timeseries' ? 'DUAL-AXIS SCALING' : 'DIMENSIONLESS (σ)'}
+                          {chartMode === 'timeseries' ? '' : 'STANDARDIZED'}
                         </span>
                       </div>
 

@@ -52,7 +52,7 @@ export const IndicatorFilter: React.FC<IndicatorFilterProps> = ({
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            Timeseries Curves
+            Over time
           </button>
           <button
             onClick={() => onChangeChartMode('zscore')}
@@ -62,7 +62,7 @@ export const IndicatorFilter: React.FC<IndicatorFilterProps> = ({
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            Standardized Z-Score
+            Compare changes
           </button>
         </div>
 
@@ -78,7 +78,7 @@ export const IndicatorFilter: React.FC<IndicatorFilterProps> = ({
             title="Exploratory OLS lines are available for synthetic demonstrations only"
           >
             {showTrendline ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-            <span>{!allowTrendline ? 'Annual fit: see audit' : showTrendline ? 'Trendlines On' : 'Trendlines Off'}</span>
+            <span>{!allowTrendline ? 'Trend details in Details' : showTrendline ? 'Trendlines On' : 'Trendlines Off'}</span>
           </button>
         )}
       </div>
@@ -86,7 +86,7 @@ export const IndicatorFilter: React.FC<IndicatorFilterProps> = ({
       {/* Indicator Selection Toggles */}
       <div>
         <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 uppercase mb-2">
-          <span>Active Environmental Indicators:</span>
+          <span>Choose what to show</span>
           <span className="text-[10px] text-slate-400">SELECT AVAILABLE</span>
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -125,7 +125,7 @@ export const IndicatorFilter: React.FC<IndicatorFilterProps> = ({
         <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1.5">
           <div className="flex items-center gap-1.5">
             <SlidersHorizontal className="w-3 h-3 text-nasa-cyan" />
-            <span className="uppercase">Observation Window:</span>
+            <span className="uppercase">Time period</span>
           </div>
           <span className="text-nasa-cyan font-bold">
             {yearRange[0]} — {yearRange[1]} ({yearRange[1] - yearRange[0] + 1} yrs)

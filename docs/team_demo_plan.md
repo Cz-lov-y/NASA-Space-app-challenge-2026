@@ -303,3 +303,10 @@ Native-cell source data use GET `/api/v1/regions/{id}/observations`. Browser Typ
 The existing worldwide backfill continues under the user's free account; do not imply it is complete. Current v2 scripts have an optional two-year-per-request grouping, unchanged default one-year request and resumable receipts. The two-year option was tested with mocks only; no live efficiency or reliability claim is established. Local computations avoid recomputing for each UI change, but uncached MODIS source observations still need Earth Engine and cannot be manufactured. Earth Engine was already running before these edits and is not restarted automatically.
 
 Verification for this milestone: **319 Python tests and 68 subtests passed**, including browser/Python statistical parity cases; the production frontend build passed. Browser checks confirmed native observation loading with zero research calls, light controls, and that a drag does not select while a click does. Full world acquisition continues in the separate existing process, whose new files and index are not part of this code milestone.
+
+
+### Clearer public-facing navigation
+
+The redundant header region dropdown was removed. Explore Earth now provides a clear example selector that focuses the globe and opens a cell, including when the same example is chosen again. Selection focus aligns geographic north with screen-up; dragging still rotates without selecting. The location panel uses a short plain-language preliminary result and loading message; detailed statistics remain under Details. It no longer repeats internal QA state, algorithm scope or raw provenance in the main view. Existing methodological context remains available in the map's About section and Details; uncertainty and missing data are not presented as certainty.
+
+Browser checks selected Canada without AI calls or page errors; the production build passed. A numerical orientation check covered four latitudes and longitudes. **319 Python tests and 68 subtests passed**. The existing worldwide acquisition continues in the background; its generated source and index changes are outside this frontend commit.

@@ -56,7 +56,19 @@ export const EarthGlobe: React.FC<EarthGlobeProps> = ({
     if (earthGroupRef.current && selectedCoordinate && focusTime.current > 0 && !isInteracting) {
       const localPoint = latLngToVector3(selectedCoordinate.lat, selectedCoordinate.lng, 1).normalize();
       const towardCamera = state.camera.getWorldPosition(new THREE.Vector3()).sub(earthGroupRef.current.getWorldPosition(new THREE.Vector3())).normalize();
-      const target = new THREE.Quaternion().setFromUnitVectors(localPoint, towardCamera);
+      // Map both the selected surface normal and its north tangent to the
+      // camera-facing normal and screen-up tangent. Aligning only the normals
+      // leaves an arbitrary roll, especially after a tilted orbit.
+      const localNorth = new THREE.Vector3(0, 1, 0).addScaledVector(localPoint, -localPoint.y);
+      if (localNorth.lengthSq() < 1e-12) localNorth.set(0, 0, selectedCoordinate.lat >= 0 ? -1 : 1);
+      localNorth.normalize();
+      const localEast = new THREE.Vector3().crossVectors(localNorth, localPoint).normalize();
+      const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(state.camera.getWorldQuaternion(new THREE.Quaternion()));
+      const screenEast = new THREE.Vector3().crossVectors(cameraUp, towardCamera).normalize();
+      const screenNorth = new THREE.Vector3().crossVectors(towardCamera, screenEast).normalize();
+      const source = new THREE.Matrix4().makeBasis(localEast, localNorth, localPoint);
+      const destination = new THREE.Matrix4().makeBasis(screenEast, screenNorth, towardCamera);
+      const target = new THREE.Quaternion().setFromRotationMatrix(destination.multiply(source.invert()));
       earthGroupRef.current.quaternion.slerp(target, 1 - Math.exp(-5 * delta));
       focusTime.current -= delta;
     }
