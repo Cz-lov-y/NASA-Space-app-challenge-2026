@@ -48,8 +48,7 @@ npm ci
 npm run dev -- --host 127.0.0.1
 ```
 
-Open http://127.0.0.1:3000/ and select a **0.25° cell** from the left-hand pilot
-grid or the real-data menu. Use the **Area** selector to switch between the six available tiles. White globe markers also navigate to areas. The checkbox
+Open http://127.0.0.1:3000/ and select a place on the globe or use the example selector. Use the **Area** selector to switch between the six available tiles. White globe markers also navigate to areas. The checkbox
 also offers the historical 10° overview. Measurements belong to cell footprints.
 
 Policy/scientific research requires clicking **Get policy & scientific context**.
@@ -168,3 +167,6 @@ The fine pilot acquisition, strict importer, resumable direct retrieval and Driv
 
 
 The native MODIS area calculation is now versioned as `modis_sinusoidal_sphere_native_pixel_v2`: native pixel areas and geographic cell areas use the same sinusoidal sphere. Earlier fine source files remain archived as historical evidence. See [the resolution and collection methodology](docs/fine_resolution.md).
+
+
+The Explore Earth card keeps the map controls compact; open **About this map** for the legend and screening scope. The global native pairing job runs with `.venv/bin/python scripts/global_screen_earth_engine.py --fetch` and checkpoints completed tiles under `data/processed/fine/global/`. It may take days and stop when free disk space falls below 20 GiB or a service-wide failure occurs. Original QA gaps and unsupported cells remain explicit.

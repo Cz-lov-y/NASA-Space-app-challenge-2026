@@ -68,6 +68,15 @@ def cached_native_modis(bundle,*,cache_directory=CACHE):
         if hashlib.sha256(original).hexdigest()!=source['sha256']:
             raise ValueError('Cached annual MODIS source checksum mismatch')
     ndvi=validate_frame(pd.read_csv(io.BytesIO(content),dtype={'unit':str},float_precision='round_trip'),catalog)
+    archived=[]
+    for source in metadata['sources']:
+        archived.append(validate_frame(pd.read_csv(source['path'],dtype={'unit':str},float_precision='round_trip'),catalog))
+    if len(archived)!=22:
+        raise ValueError('Cached native MODIS must retain22annual source records')
+    original=pd.concat(archived,ignore_index=True).sort_values(['region_id','date']).reset_index(drop=True)
+    retained=ndvi.sort_values(['region_id','date']).reset_index(drop=True)
+    if set(original.columns)!=set(retained.columns) or not original.equals(retained.reindex(columns=original.columns)):
+        raise ValueError('Cached native MODIS does not match archived annual source observations')
     months=set(pd.date_range('2003-01-01','2024-12-01',freq='MS').strftime('%Y-%m-%d'))
     if len(ndvi)!=264 or set(ndvi.date)!=months:
         raise ValueError('Cached MODIS must preserve264actual monthly slots')
@@ -149,18 +158,40 @@ class NativeModisJobs:
             rid=uuid.uuid4().hex
             job={'request_id':rid,'region_id':bundle['region_id'],'context_key':key,'state':'queued',
                  'completed_years':0,'total_years':22,'current_year':None,'error_code':None,'retryable':False}
+            progress_path=_directory(bundle,self.cache_directory)/'progress.json'
+            try:
+                saved=json.loads(progress_path.read_text())
+                if saved.get('region_id')==bundle['region_id'] and saved.get('context_key')==key:
+                    completed=saved.get('completed_years',0)
+                    if isinstance(completed,int) and 0<=completed<=22:job['completed_years']=completed
+            except (OSError,ValueError,KeyError,TypeError):pass
+            def persist():
+                try:
+                    payload=self._snapshot(job)
+                    payload['updated_at']=datetime.now(timezone.utc).isoformat()
+                    _atomic(progress_path,(json.dumps(payload,allow_nan=False)+'\n').encode())
+                except OSError:pass  # Source receipts remain authoritative/replayable.
             def progress(**changes):
-                with self.lock:job.update(changes)
+                with self.lock:
+                    job.update(changes)
+                    persist()
             def run():
-                with self.lock:job['state']='loading'
+                with self.lock:
+                    job['state']='loading'
+                    persist()
                 try:
                     merged=self.runner(deepcopy(bundle),cache_directory=self.cache_directory,progress=progress)
                     from src.global_screening import screen_global_cell
                     save_screened_summary(screen_global_cell(merged),cache_directory=self.cache_directory)
-                    with self.lock:job.update(state='complete',completed_years=22,retryable=False)
+                    with self.lock:
+                        job.update(state='complete',completed_years=22,retryable=False)
+                        persist()
                 except Exception:
-                    with self.lock:job.update(state='failed',error_code='native_modis_unavailable',retryable=True)
+                    with self.lock:
+                        job.update(state='failed',error_code='native_modis_unavailable',retryable=True)
+                        persist()
             self.jobs[rid]=job;self.by_key[key]=rid
+            persist()
             job['future']=self.executor.submit(run)
             return self._snapshot(job)
     def poll(self,request_id,*,region_id,context_key):
@@ -259,20 +290,21 @@ def all_screened_summaries(*,cache_directory=CACHE,index_path=BATCH_INDEX,limit=
             if record['geometry']==canonical['geometry'] and record['properties'].get('probability') is None:
                 features.append(record)
         except (OSError,ValueError,KeyError,TypeError):continue
-    batch_offset=max(0,offset-len(paths));remaining=limit-len(features)
+    batch_offset=max(0,offset-len(paths))
+    batch_end=max(0,offset+limit-len(paths))
     for number,(key,record) in enumerate(sorted(batches.items())):
         start=number*16;end=start+16
         if end<=batch_offset:continue
-        if remaining<=0:break
+        if start>=batch_end:break
         try:
             candidate=Path(record['directory']);directory=(candidate if candidate.is_absolute() else ROOT/candidate).resolve()
             if not directory.is_relative_to((ROOT/'data/processed/fine').resolve()):continue
             payload=fine_map(directory=directory)
-            selected=payload['features'][max(0,batch_offset-start):][:remaining]
+            selected=payload['features'][max(0,batch_offset-start):min(16,batch_end-start)]
             for feature in selected:
                 feature['properties'].update(probability=None,globally_adjusted=False,
                     family_scope='single-tile exploratory; not worldwide adjusted',provisional=True,qa_reviewed=False)
-            features.extend(selected);remaining=limit-len(features)
+            features.extend(selected)
         except (OSError,ValueError,KeyError,TypeError):continue
     return {'type':'FeatureCollection','schema_version':'global-screened-cells-1','features':features,
             'total':total,'offset':offset,'limit':limit,'has_more':offset+limit<total,

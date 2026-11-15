@@ -131,3 +131,53 @@ def test_failed_native_data_job_is_honest_and_retry_requires_explicit_action(tmp
         assert calls==[RID]
         assert jobs.submit(data,retry=True)['request_id']!=request['request_id']
     finally:jobs.close()
+
+
+def test_failed_progress_survives_restart_and_new_selection_resumes(native,tmp_path):
+    base,_=native
+    def fail(bundle,**kwargs):
+        kwargs['progress'](completed_years=5,total_years=22,current_year=2008)
+        raise ValueError('private remote error')
+    first=modis.NativeModisJobs(cache_directory=tmp_path,runner=fail)
+    request=first.submit(base)
+    try:
+        deadline=time.monotonic()+2
+        while time.monotonic()<deadline:
+            state=first.poll(request['request_id'],region_id=RID,context_key=request['context_key'])
+            if state['state']=='failed':break
+            time.sleep(.005)
+        saved=json.loads((modis._directory(base,tmp_path)/'progress.json').read_text())
+        assert saved['state']=='failed' and saved['completed_years']==5
+        assert 'private' not in str(saved)
+    finally:first.close()
+    started,release=Event(),Event()
+    def resume(bundle,**kwargs):
+        started.set();assert release.wait(2)
+        raise ValueError('test termination')
+    second=modis.NativeModisJobs(cache_directory=tmp_path,runner=resume)
+    try:
+        new=second.submit(base)
+        assert new['request_id']!=request['request_id']
+        assert new['completed_years']==5 and started.wait(1)
+    finally:release.set();second.close()
+
+
+def test_corrupt_solo_snapshot_does_not_duplicate_batch_cells_across_pages(tmp_path,monkeypatch):
+    import src.fine_workflow as workflow
+    from src.fine_grid import cell_feature
+    root=tmp_path/'root';root.mkdir()
+    monkeypatch.setattr(modis,'ROOT',root)
+    solo=tmp_path/'cache/gldas025_r388_c0328'/modis.CALCULATION_VERSION/'screening_summary.json'
+    solo.parent.mkdir(parents=True);solo.write_text('invalid JSON TEST ONLY')
+    directory=root/'data/processed/fine/global/global_r100_c200';directory.mkdir(parents=True)
+    index=directory.parent/'index.json'
+    index.write_text(json.dumps({'schema_version':'global-native-tile-index-1','calculation_version':modis.CALCULATION_VERSION,
+        'tiles':{'global_r100_c200':{'ready':True,'calculation_version':modis.CALCULATION_VERSION,
+                                   'directory':str(directory),'bbox':[20,40,21,41]}}}))
+    features=[cell_feature(r,c) for r in range(400,404) for c in range(800,804)]
+    monkeypatch.setattr(workflow,'fine_map',lambda **kwargs:{'features':deepcopy(features)})
+    first=modis.all_screened_summaries(cache_directory=tmp_path/'cache',index_path=index,limit=3,offset=0)
+    second=modis.all_screened_summaries(cache_directory=tmp_path/'cache',index_path=index,limit=3,offset=3)
+    assert [f['id'] for f in first['features']]==[f['id'] for f in features[:2]]
+    assert [f['id'] for f in second['features']]==[f['id'] for f in features[2:5]]
+    assert not {f['id'] for f in first['features']} & {f['id'] for f in second['features']}

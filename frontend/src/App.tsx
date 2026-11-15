@@ -57,7 +57,6 @@ export const App: React.FC = () => {
     }).catch(() => { if (active) setFineError(true); }).finally(() => { if (active) setTileLoading(false); });
     return () => { active = false; };
   }, [tileId]);
-  const currentTile = tiles.find(t => t.id === tileId);
   const navigateTile = useCallback((id: string, point: GeoCoordinate | null = null) => {
     pendingPoint.current = point; setSelectedLocation(null); setSelectedCoordinate(point); setTileId(id);
   }, []);
@@ -159,32 +158,33 @@ export const App: React.FC = () => {
         regions={menuRegions}
       />
 
-      <div className="fixed top-20 left-4 z-30 rounded-lg bg-space-900/95 border border-cyan-500/30 p-3 text-xs text-cyan-100 max-w-xs">
-        <label className="flex items-center gap-2"><input type="checkbox" checked={fineMode} onChange={e => { setFineMode(e.target.checked); handleDeselect(); }} />Native 0.25° cells</label>
-        <p className="mt-2 text-slate-300">{fineMode ? `${fineRegions.length} real cells · ${currentTile?.name || 'Loading area'} · 2003–2024. ${fineRegions.filter(r => (r.pairedYearCount || 0) >= 8).length} cells with sufficient paired years. Source QA review pending.` : '10° legacy overview. Fine coverage is being prepared.'}</p>
-        {fineMode && <label className="block mt-2">Area
-          <select aria-label="Fine data area" className="block mt-1 w-full rounded bg-space-950 border border-cyan-700 p-2" value={tileId}
-            onChange={e => navigateTile(e.target.value)}>
+      <div className="fixed top-20 left-4 z-30 w-56 max-w-[calc(100vw-2rem)] rounded-xl border border-cyan-500/20 bg-space-900/95 p-3 text-xs text-slate-200 shadow-lg backdrop-blur">
+        <p className="font-semibold text-white">Explore Earth</p>
+        <p className="mt-1 text-slate-400">Select a place on the globe to see its data.</p>
+        {fineMode && <label className="mt-3 block text-slate-400">Visit an example
+          <select aria-label="Fine data area" className="mt-1 block w-full rounded-lg border border-slate-700 bg-space-950 p-2 text-slate-100" value={tileId}
+            onChange={e => {
+              const tile = tiles.find(t => t.id === e.target.value);
+              navigateTile(e.target.value, tile ? { lat: (tile.bbox[1] + tile.bbox[3]) / 2, lng: (tile.bbox[0] + tile.bbox[2]) / 2 } : null);
+            }}>
             {tiles.map(t => <option key={t.id} value={t.id}>{t.name}{t.status === 'pending' ? ' · pending' : ''}</option>)}
           </select>
         </label>}
-        {fineMode && tileLoading && <p className="mt-2">Loading native cells…</p>}
-        {fineMode && family && <p className="mt-2 text-slate-400">The six marked areas have {family.catalog_regions} declared cells and {family.family_size} tests. The grid below shows one area; cells elsewhere are not in this family.</p>}
-        {fineMode && <p className="mt-2 text-slate-400">Click land between 60°S and 90°N for its 0.25° soil history. Vegetation is loaded and aligned for supported cells; the six marked areas are preloaded. Oceans and some land cells have no GLDAS values.</p>}
-        {fineMode && <p className="mt-2 text-slate-400">Purple: uncertain signal · amber: supported signal · cyan: data available. Colors show evidence categories, not a probability.</p>}
-        {fineMode && <p className="mt-2 text-slate-400">Diamonds are individual-cell or tile screenings; circles are from the jointly adjusted six-area collection. A worldwide scan is not yet complete.</p>}
-        {fineMode && screenedTotal > 0 && <p className="mt-2 text-slate-400">{screenedTotal} extra cells processed; showing {screenedOffset + 1}–{Math.min(screenedOffset + 1000, screenedTotal)}. {screenedTotal > 1000 && <><button type="button" disabled={!screenedOffset} onClick={() => setScreenedOffset(Math.max(0, screenedOffset - 1000))} className="text-cyan-300 underline disabled:text-slate-600">Previous</button>{' · '}<button type="button" disabled={screenedOffset + 1000 >= screenedTotal} onClick={() => setScreenedOffset(screenedOffset + 1000)} className="text-cyan-300 underline disabled:text-slate-600">Next</button></>}</p>}
-        {fineMode && fineError && <p>Fine data for this area are unavailable.</p>}
-        {fineMode && fineRegions.length > 0 && <>
-          <p className="mt-2">{currentTile ? `${currentTile.bbox.join(', ')} · north ↑` : 'Native cells · north ↑'}</p>
-          <div className="grid grid-cols-4 gap-1 mt-2" aria-label="Native cell pilot map">
-            {[...fineRegions].sort((a,b) => b.lat-a.lat || a.lng-b.lng).map(r => <button key={r.id}
-              title={r.name} aria-label={`Select ${r.name}`} onClick={() => handleSelectPreset(r)}
-              className={`border p-2 text-[10px] ${selectedLocation?.id === r.id ? 'bg-cyan-700 border-cyan-100' : 'bg-cyan-950 border-cyan-600'}`}>
-              {r.lat.toFixed(3)}<br />{r.lng.toFixed(3)}
-            </button>)}
-          </div>
-        </>}
+        {fineMode && tileLoading && <p className="mt-2 text-slate-400">Loading area…</p>}
+        {fineMode && fineError && <p className="mt-2 text-amber-300">Area data unavailable.</p>}
+        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 border-t border-slate-700 pt-2 text-[11px] text-slate-400" aria-label="Map legend">
+          <span><span className="text-cyan-400">●</span> Data</span>
+          <span><span className="text-violet-400">●</span> Uncertain</span>
+          <span><span className="text-amber-400">●</span> Signal</span>
+        </div>
+        <details className="mt-2 text-[11px] text-slate-400">
+          <summary className="cursor-pointer text-cyan-200">About this map</summary>
+          <p className="mt-2">Colors show preliminary evidence, not a probability of harm. Circles use the six-area analysis; diamonds are individually screened cells. Global screening is still in progress.</p>
+          {fineMode && family && <p className="mt-1">The six-area analysis includes {family.catalog_regions} cells and {family.family_size} tests.</p>}
+          {fineMode && screenedTotal > 0 && <p className="mt-1">{screenedTotal} additional cells screened.</p>}
+          {fineMode && screenedTotal > 1000 && <p className="mt-1"><button type="button" disabled={!screenedOffset} onClick={() => setScreenedOffset(Math.max(0, screenedOffset - 1000))} className="text-cyan-300 underline disabled:text-slate-600">Previous</button>{' · '}<button type="button" disabled={screenedOffset + 1000 >= screenedTotal} onClick={() => setScreenedOffset(screenedOffset + 1000)} className="text-cyan-300 underline disabled:text-slate-600">Next</button></p>}
+          <label className="mt-2 flex items-center gap-2"><input type="checkbox" checked={fineMode} onChange={e => { setFineMode(e.target.checked); handleDeselect(); }} /> Native 0.25° cells</label>
+        </details>
       </div>
       {catalogError && <div className="fixed bottom-4 left-4 z-40 bg-space-900 p-3 text-amber-200 text-xs">Regional API unavailable; synthetic demonstration remains available.</div>}
 
