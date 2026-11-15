@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { TimeSeriesObservation } from '../../types/contracts';
 import { calculateOLSTrend } from '../../utils/statistics';
+import { ndviGapEstimates } from '../../utils/ndviEstimates';
 
 interface TimeseriesChartProps {
   observations: TimeSeriesObservation[];
@@ -132,6 +133,16 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
         },
       });
 
+      if (variable === 'ndvi') {
+        const estimated = ndviGapEstimates(dates, varObs);
+        if (estimated.some(point => point?.estimated)) seriesList.push({
+          name: 'Vegetation estimate', type: 'line', yAxisIndex: yAxisIdx,
+          data: estimated, smooth: false, symbol: 'none', connectNulls: false,
+          lineStyle: { width: 2, type: 'dashed', color: config.color },
+          itemStyle: { color: config.color },
+        });
+      }
+
       // 2. Trendline (if enabled and sufficient observations)
       if (showTrendline && varObs.length >= 3 && varObs.every((obs) => obs.source.toUpperCase().includes('SYNTHETIC'))) {
         const trend = calculateOLSTrend(varObs);
@@ -182,7 +193,7 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
           if (!params || params.length === 0) return '';
           let tip = `<div style="font-weight:bold;margin-bottom:6px;border-bottom:1px solid rgba(30,75,100,0.15);padding-bottom:4px;color:#08758f">${params[0].axisValue}</div>`;
           params.forEach((item) => {
-            if (item.value === null || item.value === undefined) return;
+            if (item.value === null || item.value === undefined || (item.seriesName === 'Vegetation estimate' && !item.data?.estimated)) return;
             tip += `<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin:3px 0;">
               <span style="display:inline-flex;align-items:center;gap:6px;">
                 <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${item.color};"></span>
@@ -196,7 +207,7 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
       },
       legend: {
         top: 2,
-        data: selectedIndicators.map((v) => INDICATOR_CONFIG[v]?.label).filter(Boolean),
+        data: seriesList.map(series => series.name),
         textStyle: {
           color: '#475f70',
           fontSize: 11,
@@ -298,13 +309,15 @@ export const TimeseriesChart: React.FC<TimeseriesChartProps> = ({
   }
 
   return (
-    <div className="w-full h-72 sm:h-80">
+    <div className="w-full">
       <ReactECharts
         option={option}
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: '100%', height: 320 }}
         notMerge
         lazyUpdate
       />
+      {option.series.some((series: any) => series.name === 'Vegetation estimate') &&
+        <p className="mt-2 text-xs text-slate-500">Dashed green lines are estimates between observed months; solid lines show observations.</p>}
     </div>
   );
 };
