@@ -98,7 +98,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({ type, isOpen, onClose }) =
                     <div>
                       <p className="font-medium text-white text-sm">Explore a place</p>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        Choose an example location to explore its environmental history, or select a point on the globe.
+                        Select any point on the globe to explore its environmental history. Places with a stronger signal appear in the list as you explore.
                       </p>
                     </div>
                   </div>

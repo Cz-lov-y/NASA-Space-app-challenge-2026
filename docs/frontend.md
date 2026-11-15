@@ -69,3 +69,5 @@ or `lat`/`lon` data. Do not plot guessed coordinates.
   deployment, and a coherent demo narrative are working.
 
 Do not claim a verified environmental finding until these gates are met.
+
+The globe no longer presents the six pilot areas as examples or uses their precomputed classifications for map colors. A selected native cell is analyzed in the browser using the same logic as its details panel. Previously processed cells on the first map page appear gray until explored; a session's stronger-signal cells appear as clickable locations in the side list. This session list is not a complete inventory of all screened cells and is reset on refresh. Existing pilot datasets remain available to the backend and are not deleted. Source observations from a prepared area can still be loaded, but their stored pilot screening result is not used to color the map.
