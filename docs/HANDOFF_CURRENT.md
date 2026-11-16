@@ -1,3 +1,5 @@
+> **Live status:** The current public demo and active cloud worker are described in the [README](../README.md) and the latest entries at the end of this file. Earlier notes preserve historical context.
+
 # EarthRisk handoff — 2026-11-15
 
 > Update: The automatic pairing milestone described below was subsequently completed and committed. The sections describing an interrupted/uncommitted working tree are historical. See the latest section in `docs/team_demo_plan.md` for current status.
@@ -71,6 +73,11 @@ The user changed the priority on 2026-11-15. The active worker uses `--priority-
 
 ### Live deployment and location search
 
-As of 2026-11-15, the passcode-protected demo is live at `https://34-31-40-122.sslip.io/` on Compute Engine VM `earthrisk-demo` in `us-central1-a`. The cloud VM is now the sole Earth Engine global writer; the old local worker was stopped at cutover and the local data is a stale snapshot. The initial data snapshot plus final 12-tile delta were transferred with matching SHA-256 checksums, and the VM worker subsequently advanced the completed index. `earthrisk-api`, `earthrisk-gateway`, `earthrisk-worker`, and Caddy are systemd services. The passcode and service credentials are private; see `docs/WEB_DEPLOYMENT_PLAN.md`, not this file, for operational details. Frontend builds may be updated with `deploy/publish_frontend.sh`; server code and data require a separate process.
+As of 2026-11-15, the public demo is live at `https://34-31-40-122.sslip.io/` on Compute Engine VM `earthrisk-demo` in `us-central1-a`. The cloud VM is now the sole Earth Engine global writer; the old local worker was stopped at cutover and the local data is a stale snapshot. The initial data snapshot plus final 12-tile delta were transferred with matching SHA-256 checksums, and the VM worker subsequently advanced the completed index. `earthrisk-api`, `earthrisk-gateway`, `earthrisk-worker`, and Caddy are systemd services. Provider credentials remain private; live research is rate-limited. See `docs/WEB_DEPLOYMENT_PLAN.md` for operational details. Frontend builds may be updated with `deploy/publish_frontend.sh`; server code and data require a separate process.
 
 The globe defaults to North America and offers north-up, zoom and reset controls. Search uses a bundled Natural Earth populated-place, province and country index. The top of the location panel gives a deterministic, browser-generated three-bullet explanation from the active trends and screening, without a model or search API call. A grouped stronger-signal area cycles through its cells on repeated clicks. Seasonal NDVI estimates may contribute to the result; see `docs/frontend.md` for limitations.
+
+
+### Public submission mode
+
+The demo no longer requires a passcode. Live AI research is limited to three requests per IP per hour and 30 service-wide per rolling 24 hours; the service-wide counter persists on disk. Cached reads do not consume this quota. The VM remains the single writer and new completed data is served from the VM, with the first-1,000-cell map limit still in place.

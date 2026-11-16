@@ -1,0 +1,4590 @@
+{
+  "schema_version": "regional-screening-1",
+  "dataset_version": "1522e61a5a6b0d1f45ce3ac7e6c6c81b31558c59e9ce9e0b5a4a59ea6fd82be0",
+  "input_sha256": "1522e61a5a6b0d1f45ce3ac7e6c6c81b31558c59e9ce9e0b5a4a59ea6fd82be0",
+  "observation_period": {
+    "start": "2003-01-01",
+    "end": "2024-12-31"
+  },
+  "primary_variables": [
+    "ndvi",
+    "soil_water_0_100cm"
+  ],
+  "settings": {
+    "alpha": 0.05,
+    "min_years": 8,
+    "min_months_per_year": 12
+  },
+  "multiple_testing": {
+    "method": "benjamini_hochberg",
+    "family_size": 10,
+    "eligible_regions": 5,
+    "catalog_regions": 16,
+    "supported_regions": 5,
+    "pending_regions": 0,
+    "insufficient_regions": 0,
+    "complete_period_regions": 0,
+    "provisional": true,
+    "family_definition": "Both finite primary-indicator MK tests for every region with sufficient common complete years; no direction/significance/reliability selection.",
+    "scope": "Only this frozen fine pilot catalog; never a worldwide or coarse-grid family.",
+    "family_id": "fine-pilot-42d258ff651cecde6f6365984ee42916a1f732f6d1bf0a3160a2d61078724299"
+  },
+  "limitations": [
+    "Provisional statistical screening; source QA and common spatial footprints remain unreviewed.",
+    "BH assumes independence or suitable positive dependence; spatial dependence has not been validated.",
+    "Worldwide-adjusted map classifications are separate from unchanged within-region analysis results.",
+    "No detected divergence does not establish environmental safety; opposing trends do not establish causation.",
+    "No missing observations are interpolated. Known low-coverage/rejected rows are excluded only in the analysis copy.",
+    "Grid cells without both primary indicators remain pending; global means are never assigned to cells.",
+    "Available-indicator diagnostics are not part of the paired worldwide family; their significance is exploratory across regions.",
+    "Fine pilot only; neighboring native model cells may be spatially dependent. Worldwide fine coverage remains pending."
+  ],
+  "regions": [
+    {
+      "region_id": "gldas025_r040_c0448",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -68.0,
+              -50.0
+            ],
+            [
+              -67.75,
+              -50.0
+            ],
+            [
+              -67.75,
+              -49.75
+            ],
+            [
+              -68.0,
+              -49.75
+            ],
+            [
+              -68.0,
+              -50.0
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -68.0,
+        -50.0,
+        -67.75,
+        -49.75
+      ],
+      "centroid": [
+        -67.875,
+        -49.875
+      ],
+      "properties": {
+        "region_id": "gldas025_r040_c0448",
+        "name": "gldas025_r040_c0448",
+        "bbox": [
+          -68.0,
+          -50.0,
+          -67.75,
+          -49.75
+        ],
+        "centroid": [
+          -67.875,
+          -49.875
+        ],
+        "region_area_m2": 498017683.3903418,
+        "crs": "EPSG:4326",
+        "grid_row": 40,
+        "grid_col": 448,
+        "native_resolution_degrees": 0.25,
+        "data_status": "incomplete_ndvi",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "Argentina",
+            "country_code": "AR",
+            "overlap_area_m2": 265529374.3547821,
+            "region_area_fraction": 0.5331725824415406,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 264,
+          "soil_water_0_100cm": 264
+        },
+        "ndvi_valid_months": 249,
+        "ndvi_exported_months": 264
+      },
+      "status": "eligible",
+      "analysis": {
+        "schema_version": "0.3",
+        "region": "gldas025_r040_c0448",
+        "observation_period": {
+          "start": "2003-01-01",
+          "end": "2020-12-31",
+          "years": [
+            2003,
+            2005,
+            2006,
+            2008,
+            2010,
+            2011,
+            2017,
+            2020
+          ],
+          "aggregation": "annual_mean"
+        },
+        "variables": [
+          "ndvi",
+          "soil_water_0_100cm"
+        ],
+        "analysis": {
+          "ndvi": {
+            "status": "ok",
+            "data_quality": {
+              "input_rows": 264,
+              "valid_observations": 249,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.05681818181818177,
+              "raw_excluded_years": [
+                2004,
+                2007,
+                2009,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2018,
+                2019,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "available_years": [
+                2003,
+                2005,
+                2006,
+                2008,
+                2010,
+                2011,
+                2017,
+                2020
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2008,
+                2010,
+                2011,
+                2017,
+                2020
+              ],
+              "n_years": 8,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2020-12-31"
+              },
+              "expected_observations": 216,
+              "analyzed_valid_observations": 96,
+              "missing_fraction": 0.5555555555555556,
+              "excluded_years": [
+                2004,
+                2007,
+                2009,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2018,
+                2019
+              ],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2007,
+                2009,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2018,
+                2019
+              ],
+              "alignment_excluded_years": []
+            },
+            "linear_regression": {
+              "slope": 0.00010164897212832314,
+              "intercept": 0.2503406759369671,
+              "time_origin": 2003.0,
+              "p_value": 0.9524813569757626,
+              "r_squared": 0.0006428324063146795,
+              "standard_error": 0.001636209277994773,
+              "confidence_interval": [
+                -0.0039020109011504564,
+                0.004105308845407103
+              ],
+              "confidence_level": 0.95
+            },
+            "theil_sen": {
+              "slope": -0.0013924948171087968,
+              "intercept": 0.25486766096824487,
+              "time_origin": 2003.0,
+              "confidence_level": 0.95,
+              "confidence_interval": [
+                -0.006118319220933219,
+                0.0043637353170511125
+              ]
+            },
+            "mann_kendall": {
+              "s": -4,
+              "variance": 65.33333333333333,
+              "z": -0.3711537444790451,
+              "p_value": 0.7105230229164895,
+              "tau_a": -0.14285714285714285,
+              "significant": false,
+              "direction": "no_significant_trend",
+              "method": "asymptotic_mann_kendall_ties_continuity_corrected"
+            },
+            "sensitivity": {
+              "leave_one_year_out_slope_range": [
+                -0.0023307760806433125,
+                3.5924911576408945e-05
+              ],
+              "direction_stable": false,
+              "ols_sen_direction_agree": false
+            },
+            "autocorrelation": {
+              "lag1": null,
+              "adjacent_pairs": 2,
+              "threshold": 1.3859292911256331,
+              "flagged": true,
+              "status": "not_assessable"
+            },
+            "reliable": false,
+            "reliability_reasons": [
+              "excess_missing_observations",
+              "leave_one_year_out_direction_unstable",
+              "trend_methods_disagree",
+              "autocorrelation_flagged_or_not_assessable"
+            ],
+            "unit": "1",
+            "slope_unit": "1/year",
+            "source": "MOD13A3.061",
+            "adjusted_p_value": 1.0
+          },
+          "soil_water_0_100cm": {
+            "status": "ok",
+            "data_quality": {
+              "input_rows": 264,
+              "valid_observations": 264,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.0,
+              "raw_excluded_years": [],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2008,
+                2010,
+                2011,
+                2017,
+                2020
+              ],
+              "n_years": 8,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2020-12-31"
+              },
+              "expected_observations": 216,
+              "analyzed_valid_observations": 96,
+              "missing_fraction": 0.5555555555555556,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2007,
+                2009,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2018,
+                2019
+              ],
+              "alignment_excluded_years": [
+                2004,
+                2007,
+                2009,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2018,
+                2019,
+                2021,
+                2022,
+                2023,
+                2024
+              ]
+            },
+            "linear_regression": {
+              "slope": -0.2585122598324963,
+              "intercept": 269.73279403565357,
+              "time_origin": 2003.0,
+              "p_value": 0.48151136316582266,
+              "r_squared": 0.08575406079506875,
+              "standard_error": 0.34459557124379797,
+              "confidence_interval": [
+                -1.1017072469610194,
+                0.5846827272960269
+              ],
+              "confidence_level": 0.95
+            },
+            "theil_sen": {
+              "slope": -0.012875750329756387,
+              "intercept": 268.4069839000702,
+              "time_origin": 2003.0,
+              "confidence_level": 0.95,
+              "confidence_interval": [
+                -1.2259066899617608,
+                1.0273010465833938
+              ]
+            },
+            "mann_kendall": {
+              "s": 0,
+              "variance": 65.33333333333333,
+              "z": 0.0,
+              "p_value": 1.0,
+              "tau_a": 0.0,
+              "significant": false,
+              "direction": "no_significant_trend",
+              "method": "asymptotic_mann_kendall_ties_continuity_corrected"
+            },
+            "sensitivity": {
+              "leave_one_year_out_slope_range": [
+                -0.4244591508592878,
+                0.3645162582397461
+              ],
+              "direction_stable": false,
+              "ols_sen_direction_agree": true
+            },
+            "autocorrelation": {
+              "lag1": null,
+              "adjacent_pairs": 2,
+              "threshold": 1.3859292911256331,
+              "flagged": true,
+              "status": "not_assessable"
+            },
+            "reliable": false,
+            "reliability_reasons": [
+              "excess_missing_observations",
+              "leave_one_year_out_direction_unstable",
+              "autocorrelation_flagged_or_not_assessable"
+            ],
+            "unit": "kg m-2",
+            "slope_unit": "kg m-2/year",
+            "source": "GLDAS_NOAH025_M.2.1",
+            "adjusted_p_value": 1.0
+          }
+        },
+        "trends": {
+          "ndvi": {
+            "variable": "ndvi",
+            "unit": "1",
+            "n_observations": 8,
+            "slope_per_year": 0.00010164897212832314,
+            "slope_95ci": [
+              -0.0039020109011504564,
+              0.004105308845407103
+            ],
+            "p_value": 0.9524813569757626,
+            "theil_sen_slope_per_year": -0.0013924948171087968,
+            "theil_sen_95ci": [
+              -0.006118319220933219,
+              0.0043637353170511125
+            ],
+            "kendall_tau": -0.14285714285714285,
+            "kendall_p_value": 0.7105230229164895,
+            "kendall_method": "asymptotic_mann_kendall_ties_continuity_corrected",
+            "kendall_tau_variant": "tau_a"
+          },
+          "soil_water_0_100cm": {
+            "variable": "soil_water_0_100cm",
+            "unit": "kg m-2",
+            "n_observations": 8,
+            "slope_per_year": -0.2585122598324963,
+            "slope_95ci": [
+              -1.1017072469610194,
+              0.5846827272960269
+            ],
+            "p_value": 0.48151136316582266,
+            "theil_sen_slope_per_year": -0.012875750329756387,
+            "theil_sen_95ci": [
+              -1.2259066899617608,
+              1.0273010465833938
+            ],
+            "kendall_tau": 0.0,
+            "kendall_p_value": 1.0,
+            "kendall_method": "asymptotic_mann_kendall_ties_continuity_corrected",
+            "kendall_tau_variant": "tau_a"
+          }
+        },
+        "trend_slopes": {
+          "ndvi": 0.00010164897212832314,
+          "soil_water_0_100cm": -0.2585122598324963
+        },
+        "confidence_intervals": {
+          "ndvi": [
+            -0.0039020109011504564,
+            0.004105308845407103
+          ],
+          "soil_water_0_100cm": [
+            -1.1017072469610194,
+            0.5846827272960269
+          ]
+        },
+        "p_values": {
+          "ndvi": 0.9524813569757626,
+          "soil_water_0_100cm": 0.48151136316582266
+        },
+        "adjusted_p_values": {
+          "ndvi": 1.0,
+          "soil_water_0_100cm": 1.0
+        },
+        "data_quality": {
+          "n_raw_rows": 528,
+          "sources": [
+            "GLDAS_NOAH025_M.2.1",
+            "MOD13A3.061"
+          ],
+          "synthetic_demo": false,
+          "qa_reviewed": false,
+          "by_variable": {
+            "ndvi": {
+              "input_rows": 264,
+              "valid_observations": 249,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.05681818181818177,
+              "raw_excluded_years": [
+                2004,
+                2007,
+                2009,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2018,
+                2019,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "available_years": [
+                2003,
+                2005,
+                2006,
+                2008,
+                2010,
+                2011,
+                2017,
+                2020
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2008,
+                2010,
+                2011,
+                2017,
+                2020
+              ],
+              "n_years": 8,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2020-12-31"
+              },
+              "expected_observations": 216,
+              "analyzed_valid_observations": 96,
+              "missing_fraction": 0.5555555555555556,
+              "excluded_years": [
+                2004,
+                2007,
+                2009,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2018,
+                2019
+              ],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2007,
+                2009,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2018,
+                2019
+              ],
+              "alignment_excluded_years": []
+            },
+            "soil_water_0_100cm": {
+              "input_rows": 264,
+              "valid_observations": 264,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.0,
+              "raw_excluded_years": [],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2008,
+                2010,
+                2011,
+                2017,
+                2020
+              ],
+              "n_years": 8,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2020-12-31"
+              },
+              "expected_observations": 216,
+              "analyzed_valid_observations": 96,
+              "missing_fraction": 0.5555555555555556,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2007,
+                2009,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2018,
+                2019
+              ],
+              "alignment_excluded_years": [
+                2004,
+                2007,
+                2009,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2018,
+                2019,
+                2021,
+                2022,
+                2023,
+                2024
+              ]
+            }
+          }
+        },
+        "divergence_detected": false,
+        "divergence_status": "uncertain_signal",
+        "divergence": {
+          "category": "Uncertain Signal",
+          "pairs": [
+            {
+              "vegetation": "ndvi",
+              "soil_moisture": "soil_water_0_100cm",
+              "category": "Uncertain Signal",
+              "reasons": [
+                "quality_or_robustness_checks_failed",
+                "adjusted_significance_not_established",
+                "directional_confidence_intervals_not_established"
+              ]
+            }
+          ],
+          "reasons": []
+        },
+        "limitations": [
+          "Greenness is not ecosystem health; divergence does not establish degradation or causation.",
+          "Monthly inputs use equal-weight calendar-year means; default requires all 12 months. No imputation.",
+          "All indicators share valid calendar years; extra indicators can reduce the common record.",
+          "P-values and slope intervals assume independent annual observations. Residual lag-1 is only a screen, not a correction or proof of independence.",
+          "BH correction covers MK tests for indicators in this call, not regions or repeated exploratory analyses; it assumes independence or suitable positive dependence.",
+          "Confidence intervals are marginal, not simultaneous, prediction, or ecological-damage intervals.",
+          "Sensitivity checks assess direction, not significance stability or alternate spatial aggregation.",
+          "Source strings are supplied by the caller; NASA provenance, QA flags, spatial comparability and physical units must be verified upstream.",
+          "If any source label contains SYNTHETIC (case-insensitive), the entire result is marked synthetic_demo=true, including mixtures of real and synthetic sources; this is a label heuristic, not provenance verification.",
+          "Raw coverage uses supplied calendar years. Reliability uses contributing observations within final analysis bounds, including unusable interior years as gaps; unobserved endpoint years cannot be inferred.",
+          "Numerically constant series use a 100-epsilon relative tolerance across trend methods and residual checks; this is not an ecological effect-size threshold."
+        ],
+        "settings": {
+          "frequency": "monthly",
+          "alpha": 0.05,
+          "min_years": 8,
+          "min_months_per_year": 12,
+          "max_missing_fraction": 0.2
+        }
+      },
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": "Uncertain Signal",
+        "classification": "uncertain_signal",
+        "adjusted_p_values": {
+          "ndvi": 0.966350082890391,
+          "soil_water_0_100cm": 1.0
+        },
+        "reasons": [
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established",
+          "quality_or_robustness_checks_failed"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 15,
+        "divergence": {
+          "category": "Uncertain Signal",
+          "pairs": [
+            {
+              "vegetation": "ndvi",
+              "soil_moisture": "soil_water_0_100cm",
+              "category": "Uncertain Signal",
+              "reasons": [
+                "quality_or_robustness_checks_failed",
+                "adjusted_significance_not_established",
+                "directional_confidence_intervals_not_established"
+              ]
+            }
+          ],
+          "reasons": []
+        },
+        "synthetic_demo": false
+      }
+    },
+    {
+      "region_id": "gldas025_r040_c0449",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -67.75,
+              -50.0
+            ],
+            [
+              -67.5,
+              -50.0
+            ],
+            [
+              -67.5,
+              -49.75
+            ],
+            [
+              -67.75,
+              -49.75
+            ],
+            [
+              -67.75,
+              -50.0
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -67.75,
+        -50.0,
+        -67.5,
+        -49.75
+      ],
+      "centroid": [
+        -67.625,
+        -49.875
+      ],
+      "properties": {
+        "region_id": "gldas025_r040_c0449",
+        "name": "gldas025_r040_c0449",
+        "bbox": [
+          -67.75,
+          -50.0,
+          -67.5,
+          -49.75
+        ],
+        "centroid": [
+          -67.625,
+          -49.875
+        ],
+        "region_area_m2": 498017683.3903418,
+        "crs": "EPSG:4326",
+        "grid_row": 40,
+        "grid_col": 449,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "Argentina",
+            "country_code": "AR",
+            "overlap_area_m2": 462.087264418602,
+            "region_area_fraction": 9.278531261638397e-07,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 240,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 288
+      }
+    },
+    {
+      "region_id": "gldas025_r040_c0450",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -67.5,
+              -50.0
+            ],
+            [
+              -67.25,
+              -50.0
+            ],
+            [
+              -67.25,
+              -49.75
+            ],
+            [
+              -67.5,
+              -49.75
+            ],
+            [
+              -67.5,
+              -50.0
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -67.5,
+        -50.0,
+        -67.25,
+        -49.75
+      ],
+      "centroid": [
+        -67.375,
+        -49.875
+      ],
+      "properties": {
+        "region_id": "gldas025_r040_c0450",
+        "name": "gldas025_r040_c0450",
+        "bbox": [
+          -67.5,
+          -50.0,
+          -67.25,
+          -49.75
+        ],
+        "centroid": [
+          -67.375,
+          -49.875
+        ],
+        "region_area_m2": 498017683.3903418,
+        "crs": "EPSG:4326",
+        "grid_row": 40,
+        "grid_col": 450,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [],
+        "jurisdiction_status": "no_country_overlap_in_coarse_boundary",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "no_valid_observations",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 0,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 528
+      }
+    },
+    {
+      "region_id": "gldas025_r040_c0451",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -67.25,
+              -50.0
+            ],
+            [
+              -67.0,
+              -50.0
+            ],
+            [
+              -67.0,
+              -49.75
+            ],
+            [
+              -67.25,
+              -49.75
+            ],
+            [
+              -67.25,
+              -50.0
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -67.25,
+        -50.0,
+        -67.0,
+        -49.75
+      ],
+      "centroid": [
+        -67.125,
+        -49.875
+      ],
+      "properties": {
+        "region_id": "gldas025_r040_c0451",
+        "name": "gldas025_r040_c0451",
+        "bbox": [
+          -67.25,
+          -50.0,
+          -67.0,
+          -49.75
+        ],
+        "centroid": [
+          -67.125,
+          -49.875
+        ],
+        "region_area_m2": 498017683.3903418,
+        "crs": "EPSG:4326",
+        "grid_row": 40,
+        "grid_col": 451,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [],
+        "jurisdiction_status": "no_country_overlap_in_coarse_boundary",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "no_valid_observations",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 0,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 528
+      }
+    },
+    {
+      "region_id": "gldas025_r041_c0448",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -68.0,
+              -49.75
+            ],
+            [
+              -67.75,
+              -49.75
+            ],
+            [
+              -67.75,
+              -49.5
+            ],
+            [
+              -68.0,
+              -49.5
+            ],
+            [
+              -68.0,
+              -49.75
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -68.0,
+        -49.75,
+        -67.75,
+        -49.5
+      ],
+      "centroid": [
+        -67.875,
+        -49.625
+      ],
+      "properties": {
+        "region_id": "gldas025_r041_c0448",
+        "name": "gldas025_r041_c0448",
+        "bbox": [
+          -68.0,
+          -49.75,
+          -67.75,
+          -49.5
+        ],
+        "centroid": [
+          -67.875,
+          -49.625
+        ],
+        "region_area_m2": 500591185.134882,
+        "crs": "EPSG:4326",
+        "grid_row": 41,
+        "grid_col": 448,
+        "native_resolution_degrees": 0.25,
+        "data_status": "incomplete_ndvi",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "Argentina",
+            "country_code": "AR",
+            "overlap_area_m2": 500590596.5367584,
+            "region_area_fraction": 0.999998824193991,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 264,
+          "soil_water_0_100cm": 264
+        },
+        "ndvi_valid_months": 250,
+        "ndvi_exported_months": 264
+      },
+      "status": "eligible",
+      "analysis": {
+        "schema_version": "0.3",
+        "region": "gldas025_r041_c0448",
+        "observation_period": {
+          "start": "2003-01-01",
+          "end": "2020-12-31",
+          "years": [
+            2003,
+            2005,
+            2006,
+            2010,
+            2011,
+            2014,
+            2017,
+            2019,
+            2020
+          ],
+          "aggregation": "annual_mean"
+        },
+        "variables": [
+          "ndvi",
+          "soil_water_0_100cm"
+        ],
+        "analysis": {
+          "ndvi": {
+            "status": "ok",
+            "data_quality": {
+              "input_rows": 264,
+              "valid_observations": 250,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.05303030303030298,
+              "raw_excluded_years": [
+                2004,
+                2007,
+                2008,
+                2009,
+                2012,
+                2013,
+                2015,
+                2016,
+                2018,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "available_years": [
+                2003,
+                2005,
+                2006,
+                2010,
+                2011,
+                2014,
+                2017,
+                2019,
+                2020
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2010,
+                2011,
+                2014,
+                2017,
+                2019,
+                2020
+              ],
+              "n_years": 9,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2020-12-31"
+              },
+              "expected_observations": 216,
+              "analyzed_valid_observations": 108,
+              "missing_fraction": 0.5,
+              "excluded_years": [
+                2004,
+                2007,
+                2008,
+                2009,
+                2012,
+                2013,
+                2015,
+                2016,
+                2018
+              ],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2007,
+                2008,
+                2009,
+                2012,
+                2013,
+                2015,
+                2016,
+                2018
+              ],
+              "alignment_excluded_years": []
+            },
+            "linear_regression": {
+              "slope": 0.00015982450797170705,
+              "intercept": 0.24336329537801563,
+              "time_origin": 2003.0,
+              "p_value": 0.9111012694659668,
+              "r_squared": 0.0019103528343121425,
+              "standard_error": 0.0013807731648178118,
+              "confidence_interval": [
+                -0.003105185203505011,
+                0.003424834219448425
+              ],
+              "confidence_level": 0.95
+            },
+            "theil_sen": {
+              "slope": -0.00035569432235150154,
+              "intercept": 0.24252138354536318,
+              "time_origin": 2003.0,
+              "confidence_level": 0.95,
+              "confidence_interval": [
+                -0.0040322678670542565,
+                0.004369739586354178
+              ]
+            },
+            "mann_kendall": {
+              "s": -2,
+              "variance": 92.0,
+              "z": -0.10425720702853739,
+              "p_value": 0.9169652366288644,
+              "tau_a": -0.05555555555555555,
+              "significant": false,
+              "direction": "no_significant_trend",
+              "method": "asymptotic_mann_kendall_ties_continuity_corrected"
+            },
+            "sensitivity": {
+              "leave_one_year_out_slope_range": [
+                -0.0008966475235742547,
+                0.000617232692498059
+              ],
+              "direction_stable": false,
+              "ols_sen_direction_agree": false
+            },
+            "autocorrelation": {
+              "lag1": null,
+              "adjacent_pairs": 3,
+              "threshold": 1.1316065276116665,
+              "flagged": true,
+              "status": "not_assessable"
+            },
+            "reliable": false,
+            "reliability_reasons": [
+              "excess_missing_observations",
+              "leave_one_year_out_direction_unstable",
+              "trend_methods_disagree",
+              "autocorrelation_flagged_or_not_assessable"
+            ],
+            "unit": "1",
+            "slope_unit": "1/year",
+            "source": "MOD13A3.061",
+            "adjusted_p_value": 0.9169652366288644
+          },
+          "soil_water_0_100cm": {
+            "status": "ok",
+            "data_quality": {
+              "input_rows": 264,
+              "valid_observations": 264,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.0,
+              "raw_excluded_years": [],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2010,
+                2011,
+                2014,
+                2017,
+                2019,
+                2020
+              ],
+              "n_years": 9,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2020-12-31"
+              },
+              "expected_observations": 216,
+              "analyzed_valid_observations": 108,
+              "missing_fraction": 0.5,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2007,
+                2008,
+                2009,
+                2012,
+                2013,
+                2015,
+                2016,
+                2018
+              ],
+              "alignment_excluded_years": [
+                2004,
+                2007,
+                2008,
+                2009,
+                2012,
+                2013,
+                2015,
+                2016,
+                2018,
+                2021,
+                2022,
+                2023,
+                2024
+              ]
+            },
+            "linear_regression": {
+              "slope": -0.10230254940157824,
+              "intercept": 260.9702724542147,
+              "time_origin": 2003.0,
+              "p_value": 0.7992903376117363,
+              "r_squared": 0.009867711274730556,
+              "standard_error": 0.3873252691574834,
+              "confidence_interval": [
+                -1.018181274106066,
+                0.8135761753029095
+              ],
+              "confidence_level": 0.95
+            },
+            "theil_sen": {
+              "slope": -0.07163226150330665,
+              "intercept": 258.48449019931604,
+              "time_origin": 2003.0,
+              "confidence_level": 0.95,
+              "confidence_interval": [
+                -0.9466721514860765,
+                0.79009124967787
+              ]
+            },
+            "mann_kendall": {
+              "s": -4,
+              "variance": 92.0,
+              "z": -0.3127716210856122,
+              "p_value": 0.754454177494089,
+              "tau_a": -0.1111111111111111,
+              "significant": false,
+              "direction": "no_significant_trend",
+              "method": "asymptotic_mann_kendall_ties_continuity_corrected"
+            },
+            "sensitivity": {
+              "leave_one_year_out_slope_range": [
+                -0.12153782305263203,
+                0.17518446842829505
+              ],
+              "direction_stable": false,
+              "ols_sen_direction_agree": true
+            },
+            "autocorrelation": {
+              "lag1": null,
+              "adjacent_pairs": 3,
+              "threshold": 1.1316065276116665,
+              "flagged": true,
+              "status": "not_assessable"
+            },
+            "reliable": false,
+            "reliability_reasons": [
+              "excess_missing_observations",
+              "leave_one_year_out_direction_unstable",
+              "autocorrelation_flagged_or_not_assessable"
+            ],
+            "unit": "kg m-2",
+            "slope_unit": "kg m-2/year",
+            "source": "GLDAS_NOAH025_M.2.1",
+            "adjusted_p_value": 0.9169652366288644
+          }
+        },
+        "trends": {
+          "ndvi": {
+            "variable": "ndvi",
+            "unit": "1",
+            "n_observations": 9,
+            "slope_per_year": 0.00015982450797170705,
+            "slope_95ci": [
+              -0.003105185203505011,
+              0.003424834219448425
+            ],
+            "p_value": 0.9111012694659668,
+            "theil_sen_slope_per_year": -0.00035569432235150154,
+            "theil_sen_95ci": [
+              -0.0040322678670542565,
+              0.004369739586354178
+            ],
+            "kendall_tau": -0.05555555555555555,
+            "kendall_p_value": 0.9169652366288644,
+            "kendall_method": "asymptotic_mann_kendall_ties_continuity_corrected",
+            "kendall_tau_variant": "tau_a"
+          },
+          "soil_water_0_100cm": {
+            "variable": "soil_water_0_100cm",
+            "unit": "kg m-2",
+            "n_observations": 9,
+            "slope_per_year": -0.10230254940157824,
+            "slope_95ci": [
+              -1.018181274106066,
+              0.8135761753029095
+            ],
+            "p_value": 0.7992903376117363,
+            "theil_sen_slope_per_year": -0.07163226150330665,
+            "theil_sen_95ci": [
+              -0.9466721514860765,
+              0.79009124967787
+            ],
+            "kendall_tau": -0.1111111111111111,
+            "kendall_p_value": 0.754454177494089,
+            "kendall_method": "asymptotic_mann_kendall_ties_continuity_corrected",
+            "kendall_tau_variant": "tau_a"
+          }
+        },
+        "trend_slopes": {
+          "ndvi": 0.00015982450797170705,
+          "soil_water_0_100cm": -0.10230254940157824
+        },
+        "confidence_intervals": {
+          "ndvi": [
+            -0.003105185203505011,
+            0.003424834219448425
+          ],
+          "soil_water_0_100cm": [
+            -1.018181274106066,
+            0.8135761753029095
+          ]
+        },
+        "p_values": {
+          "ndvi": 0.9111012694659668,
+          "soil_water_0_100cm": 0.7992903376117363
+        },
+        "adjusted_p_values": {
+          "ndvi": 0.9169652366288644,
+          "soil_water_0_100cm": 0.9169652366288644
+        },
+        "data_quality": {
+          "n_raw_rows": 528,
+          "sources": [
+            "GLDAS_NOAH025_M.2.1",
+            "MOD13A3.061"
+          ],
+          "synthetic_demo": false,
+          "qa_reviewed": false,
+          "by_variable": {
+            "ndvi": {
+              "input_rows": 264,
+              "valid_observations": 250,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.05303030303030298,
+              "raw_excluded_years": [
+                2004,
+                2007,
+                2008,
+                2009,
+                2012,
+                2013,
+                2015,
+                2016,
+                2018,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "available_years": [
+                2003,
+                2005,
+                2006,
+                2010,
+                2011,
+                2014,
+                2017,
+                2019,
+                2020
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2010,
+                2011,
+                2014,
+                2017,
+                2019,
+                2020
+              ],
+              "n_years": 9,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2020-12-31"
+              },
+              "expected_observations": 216,
+              "analyzed_valid_observations": 108,
+              "missing_fraction": 0.5,
+              "excluded_years": [
+                2004,
+                2007,
+                2008,
+                2009,
+                2012,
+                2013,
+                2015,
+                2016,
+                2018
+              ],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2007,
+                2008,
+                2009,
+                2012,
+                2013,
+                2015,
+                2016,
+                2018
+              ],
+              "alignment_excluded_years": []
+            },
+            "soil_water_0_100cm": {
+              "input_rows": 264,
+              "valid_observations": 264,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.0,
+              "raw_excluded_years": [],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2010,
+                2011,
+                2014,
+                2017,
+                2019,
+                2020
+              ],
+              "n_years": 9,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2020-12-31"
+              },
+              "expected_observations": 216,
+              "analyzed_valid_observations": 108,
+              "missing_fraction": 0.5,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2007,
+                2008,
+                2009,
+                2012,
+                2013,
+                2015,
+                2016,
+                2018
+              ],
+              "alignment_excluded_years": [
+                2004,
+                2007,
+                2008,
+                2009,
+                2012,
+                2013,
+                2015,
+                2016,
+                2018,
+                2021,
+                2022,
+                2023,
+                2024
+              ]
+            }
+          }
+        },
+        "divergence_detected": false,
+        "divergence_status": "uncertain_signal",
+        "divergence": {
+          "category": "Uncertain Signal",
+          "pairs": [
+            {
+              "vegetation": "ndvi",
+              "soil_moisture": "soil_water_0_100cm",
+              "category": "Uncertain Signal",
+              "reasons": [
+                "quality_or_robustness_checks_failed",
+                "adjusted_significance_not_established",
+                "directional_confidence_intervals_not_established"
+              ]
+            }
+          ],
+          "reasons": []
+        },
+        "limitations": [
+          "Greenness is not ecosystem health; divergence does not establish degradation or causation.",
+          "Monthly inputs use equal-weight calendar-year means; default requires all 12 months. No imputation.",
+          "All indicators share valid calendar years; extra indicators can reduce the common record.",
+          "P-values and slope intervals assume independent annual observations. Residual lag-1 is only a screen, not a correction or proof of independence.",
+          "BH correction covers MK tests for indicators in this call, not regions or repeated exploratory analyses; it assumes independence or suitable positive dependence.",
+          "Confidence intervals are marginal, not simultaneous, prediction, or ecological-damage intervals.",
+          "Sensitivity checks assess direction, not significance stability or alternate spatial aggregation.",
+          "Source strings are supplied by the caller; NASA provenance, QA flags, spatial comparability and physical units must be verified upstream.",
+          "If any source label contains SYNTHETIC (case-insensitive), the entire result is marked synthetic_demo=true, including mixtures of real and synthetic sources; this is a label heuristic, not provenance verification.",
+          "Raw coverage uses supplied calendar years. Reliability uses contributing observations within final analysis bounds, including unusable interior years as gaps; unobserved endpoint years cannot be inferred.",
+          "Numerically constant series use a 100-epsilon relative tolerance across trend methods and residual checks; this is not an ecological effect-size threshold."
+        ],
+        "settings": {
+          "frequency": "monthly",
+          "alpha": 0.05,
+          "min_years": 8,
+          "min_months_per_year": 12,
+          "max_missing_fraction": 0.2
+        }
+      },
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": "Uncertain Signal",
+        "classification": "uncertain_signal",
+        "adjusted_p_values": {
+          "ndvi": 1.0,
+          "soil_water_0_100cm": 0.966350082890391
+        },
+        "reasons": [
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established",
+          "quality_or_robustness_checks_failed"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 14,
+        "divergence": {
+          "category": "Uncertain Signal",
+          "pairs": [
+            {
+              "vegetation": "ndvi",
+              "soil_moisture": "soil_water_0_100cm",
+              "category": "Uncertain Signal",
+              "reasons": [
+                "quality_or_robustness_checks_failed",
+                "adjusted_significance_not_established",
+                "directional_confidence_intervals_not_established"
+              ]
+            }
+          ],
+          "reasons": []
+        },
+        "synthetic_demo": false
+      }
+    },
+    {
+      "region_id": "gldas025_r041_c0449",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -67.75,
+              -49.75
+            ],
+            [
+              -67.5,
+              -49.75
+            ],
+            [
+              -67.5,
+              -49.5
+            ],
+            [
+              -67.75,
+              -49.5
+            ],
+            [
+              -67.75,
+              -49.75
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -67.75,
+        -49.75,
+        -67.5,
+        -49.5
+      ],
+      "centroid": [
+        -67.625,
+        -49.625
+      ],
+      "properties": {
+        "region_id": "gldas025_r041_c0449",
+        "name": "gldas025_r041_c0449",
+        "bbox": [
+          -67.75,
+          -49.75,
+          -67.5,
+          -49.5
+        ],
+        "centroid": [
+          -67.625,
+          -49.625
+        ],
+        "region_area_m2": 500591185.134882,
+        "crs": "EPSG:4326",
+        "grid_row": 41,
+        "grid_col": 449,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "Argentina",
+            "country_code": "AR",
+            "overlap_area_m2": 139620032.40360856,
+            "region_area_fraction": 0.2789102895728949,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 250,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 278
+      }
+    },
+    {
+      "region_id": "gldas025_r041_c0450",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -67.5,
+              -49.75
+            ],
+            [
+              -67.25,
+              -49.75
+            ],
+            [
+              -67.25,
+              -49.5
+            ],
+            [
+              -67.5,
+              -49.5
+            ],
+            [
+              -67.5,
+              -49.75
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -67.5,
+        -49.75,
+        -67.25,
+        -49.5
+      ],
+      "centroid": [
+        -67.375,
+        -49.625
+      ],
+      "properties": {
+        "region_id": "gldas025_r041_c0450",
+        "name": "gldas025_r041_c0450",
+        "bbox": [
+          -67.5,
+          -49.75,
+          -67.25,
+          -49.5
+        ],
+        "centroid": [
+          -67.375,
+          -49.625
+        ],
+        "region_area_m2": 500591185.134882,
+        "crs": "EPSG:4326",
+        "grid_row": 41,
+        "grid_col": 450,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [],
+        "jurisdiction_status": "no_country_overlap_in_coarse_boundary",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "no_valid_observations",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 0,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 528
+      }
+    },
+    {
+      "region_id": "gldas025_r041_c0451",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -67.25,
+              -49.75
+            ],
+            [
+              -67.0,
+              -49.75
+            ],
+            [
+              -67.0,
+              -49.5
+            ],
+            [
+              -67.25,
+              -49.5
+            ],
+            [
+              -67.25,
+              -49.75
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -67.25,
+        -49.75,
+        -67.0,
+        -49.5
+      ],
+      "centroid": [
+        -67.125,
+        -49.625
+      ],
+      "properties": {
+        "region_id": "gldas025_r041_c0451",
+        "name": "gldas025_r041_c0451",
+        "bbox": [
+          -67.25,
+          -49.75,
+          -67.0,
+          -49.5
+        ],
+        "centroid": [
+          -67.125,
+          -49.625
+        ],
+        "region_area_m2": 500591185.134882,
+        "crs": "EPSG:4326",
+        "grid_row": 41,
+        "grid_col": 451,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [],
+        "jurisdiction_status": "no_country_overlap_in_coarse_boundary",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "no_valid_observations",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 0,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 528
+      }
+    },
+    {
+      "region_id": "gldas025_r042_c0448",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -68.0,
+              -49.5
+            ],
+            [
+              -67.75,
+              -49.5
+            ],
+            [
+              -67.75,
+              -49.25
+            ],
+            [
+              -68.0,
+              -49.25
+            ],
+            [
+              -68.0,
+              -49.5
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -68.0,
+        -49.5,
+        -67.75,
+        -49.25
+      ],
+      "centroid": [
+        -67.875,
+        -49.375
+      ],
+      "properties": {
+        "region_id": "gldas025_r042_c0448",
+        "name": "gldas025_r042_c0448",
+        "bbox": [
+          -68.0,
+          -49.5,
+          -67.75,
+          -49.25
+        ],
+        "centroid": [
+          -67.875,
+          -49.375
+        ],
+        "region_area_m2": 503155156.3448088,
+        "crs": "EPSG:4326",
+        "grid_row": 42,
+        "grid_col": 448,
+        "native_resolution_degrees": 0.25,
+        "data_status": "incomplete_ndvi",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "Argentina",
+            "country_code": "AR",
+            "overlap_area_m2": 503154575.0526581,
+            "region_area_fraction": 0.9999988447059651,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 264,
+          "soil_water_0_100cm": 264
+        },
+        "ndvi_valid_months": 254,
+        "ndvi_exported_months": 264
+      },
+      "status": "eligible",
+      "analysis": {
+        "schema_version": "0.3",
+        "region": "gldas025_r042_c0448",
+        "observation_period": {
+          "start": "2003-01-01",
+          "end": "2019-12-31",
+          "years": [
+            2003,
+            2004,
+            2005,
+            2006,
+            2008,
+            2010,
+            2011,
+            2012,
+            2014,
+            2015,
+            2017,
+            2018,
+            2019
+          ],
+          "aggregation": "annual_mean"
+        },
+        "variables": [
+          "ndvi",
+          "soil_water_0_100cm"
+        ],
+        "analysis": {
+          "ndvi": {
+            "status": "ok",
+            "data_quality": {
+              "input_rows": 264,
+              "valid_observations": 254,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.037878787878787845,
+              "raw_excluded_years": [
+                2007,
+                2009,
+                2013,
+                2016,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2008,
+                2010,
+                2011,
+                2012,
+                2014,
+                2015,
+                2017,
+                2018,
+                2019
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2008,
+                2010,
+                2011,
+                2012,
+                2014,
+                2015,
+                2017,
+                2018,
+                2019
+              ],
+              "n_years": 13,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2019-12-31"
+              },
+              "expected_observations": 204,
+              "analyzed_valid_observations": 156,
+              "missing_fraction": 0.23529411764705888,
+              "excluded_years": [
+                2007,
+                2009,
+                2013,
+                2016
+              ],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2007,
+                2009,
+                2013,
+                2016
+              ],
+              "alignment_excluded_years": []
+            },
+            "linear_regression": {
+              "slope": 0.0012272396073503469,
+              "intercept": 0.22913478826473305,
+              "time_origin": 2003.0,
+              "p_value": 0.2409152320511196,
+              "r_squared": 0.12257105302020012,
+              "standard_error": 0.00099002244540284,
+              "confidence_interval": [
+                -0.0009517851031389381,
+                0.0034062643178396318
+              ],
+              "confidence_level": 0.95
+            },
+            "theil_sen": {
+              "slope": 0.0012310716408971425,
+              "intercept": 0.22610134215940422,
+              "time_origin": 2003.0,
+              "confidence_level": 0.95,
+              "confidence_interval": [
+                -0.0014900627887702855,
+                0.003735634681409687
+              ]
+            },
+            "mann_kendall": {
+              "s": 16,
+              "variance": 268.6666666666667,
+              "z": 0.9151333141298446,
+              "p_value": 0.36012164775537825,
+              "tau_a": 0.20512820512820512,
+              "significant": false,
+              "direction": "no_significant_trend",
+              "method": "asymptotic_mann_kendall_ties_continuity_corrected"
+            },
+            "sensitivity": {
+              "leave_one_year_out_slope_range": [
+                0.0006409771727884389,
+                0.0020258564084656683
+              ],
+              "direction_stable": true,
+              "ols_sen_direction_agree": true
+            },
+            "autocorrelation": {
+              "lag1": 0.11500855000317871,
+              "adjacent_pairs": 8,
+              "threshold": 0.6929646455628166,
+              "flagged": false,
+              "status": "screen_only"
+            },
+            "reliable": false,
+            "reliability_reasons": [
+              "excess_missing_observations"
+            ],
+            "unit": "1",
+            "slope_unit": "1/year",
+            "source": "MOD13A3.061",
+            "adjusted_p_value": 0.36012164775537825
+          },
+          "soil_water_0_100cm": {
+            "status": "ok",
+            "data_quality": {
+              "input_rows": 264,
+              "valid_observations": 264,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.0,
+              "raw_excluded_years": [],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2008,
+                2010,
+                2011,
+                2012,
+                2014,
+                2015,
+                2017,
+                2018,
+                2019
+              ],
+              "n_years": 13,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2019-12-31"
+              },
+              "expected_observations": 204,
+              "analyzed_valid_observations": 156,
+              "missing_fraction": 0.23529411764705888,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2007,
+                2009,
+                2013,
+                2016
+              ],
+              "alignment_excluded_years": [
+                2007,
+                2009,
+                2013,
+                2016,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ]
+            },
+            "linear_regression": {
+              "slope": 0.3639461298230073,
+              "intercept": 252.80263134881005,
+              "time_origin": 2003.0,
+              "p_value": 0.4063906812490056,
+              "r_squared": 0.0634571527304042,
+              "standard_error": 0.42156475814412125,
+              "confidence_interval": [
+                -0.5639116468698242,
+                1.2918039065158389
+              ],
+              "confidence_level": 0.95
+            },
+            "theil_sen": {
+              "slope": 0.5063304558778426,
+              "intercept": 250.8319906748258,
+              "time_origin": 2003.0,
+              "confidence_level": 0.95,
+              "confidence_interval": [
+                -0.6847571690877203,
+                1.4446751011742454
+              ]
+            },
+            "mann_kendall": {
+              "s": 20,
+              "variance": 268.6666666666667,
+              "z": 1.1591688645644698,
+              "p_value": 0.24638736002924666,
+              "tau_a": 0.2564102564102564,
+              "significant": false,
+              "direction": "no_significant_trend",
+              "method": "asymptotic_mann_kendall_ties_continuity_corrected"
+            },
+            "sensitivity": {
+              "leave_one_year_out_slope_range": [
+                0.4151583671569823,
+                0.8690295086966533
+              ],
+              "direction_stable": true,
+              "ols_sen_direction_agree": true
+            },
+            "autocorrelation": {
+              "lag1": -0.13198199228600668,
+              "adjacent_pairs": 8,
+              "threshold": 0.6929646455628166,
+              "flagged": false,
+              "status": "screen_only"
+            },
+            "reliable": false,
+            "reliability_reasons": [
+              "excess_missing_observations"
+            ],
+            "unit": "kg m-2",
+            "slope_unit": "kg m-2/year",
+            "source": "GLDAS_NOAH025_M.2.1",
+            "adjusted_p_value": 0.36012164775537825
+          }
+        },
+        "trends": {
+          "ndvi": {
+            "variable": "ndvi",
+            "unit": "1",
+            "n_observations": 13,
+            "slope_per_year": 0.0012272396073503469,
+            "slope_95ci": [
+              -0.0009517851031389381,
+              0.0034062643178396318
+            ],
+            "p_value": 0.2409152320511196,
+            "theil_sen_slope_per_year": 0.0012310716408971425,
+            "theil_sen_95ci": [
+              -0.0014900627887702855,
+              0.003735634681409687
+            ],
+            "kendall_tau": 0.20512820512820512,
+            "kendall_p_value": 0.36012164775537825,
+            "kendall_method": "asymptotic_mann_kendall_ties_continuity_corrected",
+            "kendall_tau_variant": "tau_a"
+          },
+          "soil_water_0_100cm": {
+            "variable": "soil_water_0_100cm",
+            "unit": "kg m-2",
+            "n_observations": 13,
+            "slope_per_year": 0.3639461298230073,
+            "slope_95ci": [
+              -0.5639116468698242,
+              1.2918039065158389
+            ],
+            "p_value": 0.4063906812490056,
+            "theil_sen_slope_per_year": 0.5063304558778426,
+            "theil_sen_95ci": [
+              -0.6847571690877203,
+              1.4446751011742454
+            ],
+            "kendall_tau": 0.2564102564102564,
+            "kendall_p_value": 0.24638736002924666,
+            "kendall_method": "asymptotic_mann_kendall_ties_continuity_corrected",
+            "kendall_tau_variant": "tau_a"
+          }
+        },
+        "trend_slopes": {
+          "ndvi": 0.0012272396073503469,
+          "soil_water_0_100cm": 0.3639461298230073
+        },
+        "confidence_intervals": {
+          "ndvi": [
+            -0.0009517851031389381,
+            0.0034062643178396318
+          ],
+          "soil_water_0_100cm": [
+            -0.5639116468698242,
+            1.2918039065158389
+          ]
+        },
+        "p_values": {
+          "ndvi": 0.2409152320511196,
+          "soil_water_0_100cm": 0.4063906812490056
+        },
+        "adjusted_p_values": {
+          "ndvi": 0.36012164775537825,
+          "soil_water_0_100cm": 0.36012164775537825
+        },
+        "data_quality": {
+          "n_raw_rows": 528,
+          "sources": [
+            "GLDAS_NOAH025_M.2.1",
+            "MOD13A3.061"
+          ],
+          "synthetic_demo": false,
+          "qa_reviewed": false,
+          "by_variable": {
+            "ndvi": {
+              "input_rows": 264,
+              "valid_observations": 254,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.037878787878787845,
+              "raw_excluded_years": [
+                2007,
+                2009,
+                2013,
+                2016,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2008,
+                2010,
+                2011,
+                2012,
+                2014,
+                2015,
+                2017,
+                2018,
+                2019
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2008,
+                2010,
+                2011,
+                2012,
+                2014,
+                2015,
+                2017,
+                2018,
+                2019
+              ],
+              "n_years": 13,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2019-12-31"
+              },
+              "expected_observations": 204,
+              "analyzed_valid_observations": 156,
+              "missing_fraction": 0.23529411764705888,
+              "excluded_years": [
+                2007,
+                2009,
+                2013,
+                2016
+              ],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2007,
+                2009,
+                2013,
+                2016
+              ],
+              "alignment_excluded_years": []
+            },
+            "soil_water_0_100cm": {
+              "input_rows": 264,
+              "valid_observations": 264,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.0,
+              "raw_excluded_years": [],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2008,
+                2010,
+                2011,
+                2012,
+                2014,
+                2015,
+                2017,
+                2018,
+                2019
+              ],
+              "n_years": 13,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2019-12-31"
+              },
+              "expected_observations": 204,
+              "analyzed_valid_observations": 156,
+              "missing_fraction": 0.23529411764705888,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2007,
+                2009,
+                2013,
+                2016
+              ],
+              "alignment_excluded_years": [
+                2007,
+                2009,
+                2013,
+                2016,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ]
+            }
+          }
+        },
+        "divergence_detected": false,
+        "divergence_status": "uncertain_signal",
+        "divergence": {
+          "category": "Uncertain Signal",
+          "pairs": [
+            {
+              "vegetation": "ndvi",
+              "soil_moisture": "soil_water_0_100cm",
+              "category": "Uncertain Signal",
+              "reasons": [
+                "quality_or_robustness_checks_failed",
+                "adjusted_significance_not_established",
+                "directional_confidence_intervals_not_established"
+              ]
+            }
+          ],
+          "reasons": []
+        },
+        "limitations": [
+          "Greenness is not ecosystem health; divergence does not establish degradation or causation.",
+          "Monthly inputs use equal-weight calendar-year means; default requires all 12 months. No imputation.",
+          "All indicators share valid calendar years; extra indicators can reduce the common record.",
+          "P-values and slope intervals assume independent annual observations. Residual lag-1 is only a screen, not a correction or proof of independence.",
+          "BH correction covers MK tests for indicators in this call, not regions or repeated exploratory analyses; it assumes independence or suitable positive dependence.",
+          "Confidence intervals are marginal, not simultaneous, prediction, or ecological-damage intervals.",
+          "Sensitivity checks assess direction, not significance stability or alternate spatial aggregation.",
+          "Source strings are supplied by the caller; NASA provenance, QA flags, spatial comparability and physical units must be verified upstream.",
+          "If any source label contains SYNTHETIC (case-insensitive), the entire result is marked synthetic_demo=true, including mixtures of real and synthetic sources; this is a label heuristic, not provenance verification.",
+          "Raw coverage uses supplied calendar years. Reliability uses contributing observations within final analysis bounds, including unusable interior years as gaps; unobserved endpoint years cannot be inferred.",
+          "Numerically constant series use a 100-epsilon relative tolerance across trend methods and residual checks; this is not an ecological effect-size threshold."
+        ],
+        "settings": {
+          "frequency": "monthly",
+          "alpha": 0.05,
+          "min_years": 8,
+          "min_months_per_year": 12,
+          "max_missing_fraction": 0.2
+        }
+      },
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": "Uncertain Signal",
+        "classification": "uncertain_signal",
+        "adjusted_p_values": {
+          "ndvi": 0.9003041193884456,
+          "soil_water_0_100cm": 0.8212912000974889
+        },
+        "reasons": [
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established",
+          "quality_or_robustness_checks_failed"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 10,
+        "divergence": {
+          "category": "Uncertain Signal",
+          "pairs": [
+            {
+              "vegetation": "ndvi",
+              "soil_moisture": "soil_water_0_100cm",
+              "category": "Uncertain Signal",
+              "reasons": [
+                "quality_or_robustness_checks_failed",
+                "adjusted_significance_not_established",
+                "directional_confidence_intervals_not_established"
+              ]
+            }
+          ],
+          "reasons": []
+        },
+        "synthetic_demo": false
+      }
+    },
+    {
+      "region_id": "gldas025_r042_c0449",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -67.75,
+              -49.5
+            ],
+            [
+              -67.5,
+              -49.5
+            ],
+            [
+              -67.5,
+              -49.25
+            ],
+            [
+              -67.75,
+              -49.25
+            ],
+            [
+              -67.75,
+              -49.5
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -67.75,
+        -49.5,
+        -67.5,
+        -49.25
+      ],
+      "centroid": [
+        -67.625,
+        -49.375
+      ],
+      "properties": {
+        "region_id": "gldas025_r042_c0449",
+        "name": "gldas025_r042_c0449",
+        "bbox": [
+          -67.75,
+          -49.5,
+          -67.5,
+          -49.25
+        ],
+        "centroid": [
+          -67.625,
+          -49.375
+        ],
+        "region_area_m2": 503155156.3448088,
+        "crs": "EPSG:4326",
+        "grid_row": 42,
+        "grid_col": 449,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "Argentina",
+            "country_code": "AR",
+            "overlap_area_m2": 413606891.2900543,
+            "region_area_fraction": 0.8220265380856244,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 252,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 276
+      }
+    },
+    {
+      "region_id": "gldas025_r042_c0450",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -67.5,
+              -49.5
+            ],
+            [
+              -67.25,
+              -49.5
+            ],
+            [
+              -67.25,
+              -49.25
+            ],
+            [
+              -67.5,
+              -49.25
+            ],
+            [
+              -67.5,
+              -49.5
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -67.5,
+        -49.5,
+        -67.25,
+        -49.25
+      ],
+      "centroid": [
+        -67.375,
+        -49.375
+      ],
+      "properties": {
+        "region_id": "gldas025_r042_c0450",
+        "name": "gldas025_r042_c0450",
+        "bbox": [
+          -67.5,
+          -49.5,
+          -67.25,
+          -49.25
+        ],
+        "centroid": [
+          -67.375,
+          -49.375
+        ],
+        "region_area_m2": 503155156.3448088,
+        "crs": "EPSG:4326",
+        "grid_row": 42,
+        "grid_col": 450,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "Argentina",
+            "country_code": "AR",
+            "overlap_area_m2": 5480871.336771011,
+            "region_area_fraction": 0.010893004409588137,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "no_valid_observations",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 0,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 528
+      }
+    },
+    {
+      "region_id": "gldas025_r042_c0451",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -67.25,
+              -49.5
+            ],
+            [
+              -67.0,
+              -49.5
+            ],
+            [
+              -67.0,
+              -49.25
+            ],
+            [
+              -67.25,
+              -49.25
+            ],
+            [
+              -67.25,
+              -49.5
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -67.25,
+        -49.5,
+        -67.0,
+        -49.25
+      ],
+      "centroid": [
+        -67.125,
+        -49.375
+      ],
+      "properties": {
+        "region_id": "gldas025_r042_c0451",
+        "name": "gldas025_r042_c0451",
+        "bbox": [
+          -67.25,
+          -49.5,
+          -67.0,
+          -49.25
+        ],
+        "centroid": [
+          -67.125,
+          -49.375
+        ],
+        "region_area_m2": 503155156.3448088,
+        "crs": "EPSG:4326",
+        "grid_row": 42,
+        "grid_col": 451,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [],
+        "jurisdiction_status": "no_country_overlap_in_coarse_boundary",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "no_valid_observations",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 0,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 528
+      }
+    },
+    {
+      "region_id": "gldas025_r043_c0448",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -68.0,
+              -49.25
+            ],
+            [
+              -67.75,
+              -49.25
+            ],
+            [
+              -67.75,
+              -49.0
+            ],
+            [
+              -68.0,
+              -49.0
+            ],
+            [
+              -68.0,
+              -49.25
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -68.0,
+        -49.25,
+        -67.75,
+        -49.0
+      ],
+      "centroid": [
+        -67.875,
+        -49.125
+      ],
+      "properties": {
+        "region_id": "gldas025_r043_c0448",
+        "name": "gldas025_r043_c0448",
+        "bbox": [
+          -68.0,
+          -49.25,
+          -67.75,
+          -49.0
+        ],
+        "centroid": [
+          -67.875,
+          -49.125
+        ],
+        "region_area_m2": 505709548.2058636,
+        "crs": "EPSG:4326",
+        "grid_row": 43,
+        "grid_col": 448,
+        "native_resolution_degrees": 0.25,
+        "data_status": "incomplete_ndvi",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "Argentina",
+            "country_code": "AR",
+            "overlap_area_m2": 505708974.3497162,
+            "region_area_fraction": 0.9999988652455754,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 264,
+          "soil_water_0_100cm": 264
+        },
+        "ndvi_valid_months": 256,
+        "ndvi_exported_months": 264
+      },
+      "status": "eligible",
+      "analysis": {
+        "schema_version": "0.3",
+        "region": "gldas025_r043_c0448",
+        "observation_period": {
+          "start": "2003-01-01",
+          "end": "2019-12-31",
+          "years": [
+            2003,
+            2005,
+            2006,
+            2007,
+            2008,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019
+          ],
+          "aggregation": "annual_mean"
+        },
+        "variables": [
+          "ndvi",
+          "soil_water_0_100cm"
+        ],
+        "analysis": {
+          "ndvi": {
+            "status": "ok",
+            "data_quality": {
+              "input_rows": 264,
+              "valid_observations": 256,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.030303030303030276,
+              "raw_excluded_years": [
+                2004,
+                2009,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "available_years": [
+                2003,
+                2005,
+                2006,
+                2007,
+                2008,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2007,
+                2008,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019
+              ],
+              "n_years": 15,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2019-12-31"
+              },
+              "expected_observations": 204,
+              "analyzed_valid_observations": 180,
+              "missing_fraction": 0.11764705882352944,
+              "excluded_years": [
+                2004,
+                2009
+              ],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2009
+              ],
+              "alignment_excluded_years": []
+            },
+            "linear_regression": {
+              "slope": 0.0007363731747972658,
+              "intercept": 0.214243195513196,
+              "time_origin": 2003.0,
+              "p_value": 0.3346462786599975,
+              "r_squared": 0.07168952665101525,
+              "standard_error": 0.0007349284365467265,
+              "confidence_interval": [
+                -0.0008513431842614856,
+                0.0023240895338560172
+              ],
+              "confidence_level": 0.95
+            },
+            "theil_sen": {
+              "slope": 0.0009949731405855414,
+              "intercept": 0.21060055108691242,
+              "time_origin": 2003.0,
+              "confidence_level": 0.95,
+              "confidence_interval": [
+                -0.0008217893055733561,
+                0.002252029821425522
+              ]
+            },
+            "mann_kendall": {
+              "s": 27,
+              "variance": 408.3333333333333,
+              "z": 1.286666314194023,
+              "p_value": 0.19821061903884263,
+              "tau_a": 0.2571428571428571,
+              "significant": false,
+              "direction": "no_significant_trend",
+              "method": "asymptotic_mann_kendall_ties_continuity_corrected"
+            },
+            "sensitivity": {
+              "leave_one_year_out_slope_range": [
+                0.00085516837803253,
+                0.0014944690244845169
+              ],
+              "direction_stable": true,
+              "ols_sen_direction_agree": true
+            },
+            "autocorrelation": {
+              "lag1": -0.07780723849631269,
+              "adjacent_pairs": 12,
+              "threshold": 0.5658032638058332,
+              "flagged": false,
+              "status": "screen_only"
+            },
+            "reliable": true,
+            "reliability_reasons": [],
+            "unit": "1",
+            "slope_unit": "1/year",
+            "source": "MOD13A3.061",
+            "adjusted_p_value": 0.19821061903884263
+          },
+          "soil_water_0_100cm": {
+            "status": "ok",
+            "data_quality": {
+              "input_rows": 264,
+              "valid_observations": 264,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.0,
+              "raw_excluded_years": [],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2007,
+                2008,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019
+              ],
+              "n_years": 15,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2019-12-31"
+              },
+              "expected_observations": 204,
+              "analyzed_valid_observations": 180,
+              "missing_fraction": 0.11764705882352944,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2009
+              ],
+              "alignment_excluded_years": [
+                2004,
+                2009,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ]
+            },
+            "linear_regression": {
+              "slope": 0.502366232199127,
+              "intercept": 327.9543771118176,
+              "time_origin": 2003.0,
+              "p_value": 0.294688589432668,
+              "r_squared": 0.08401069993004384,
+              "standard_error": 0.4600729102603837,
+              "confidence_interval": [
+                -0.49156086281502454,
+                1.4962933272132786
+              ],
+              "confidence_level": 0.95
+            },
+            "theil_sen": {
+              "slope": 0.8497427449081918,
+              "intercept": 321.3315546006867,
+              "time_origin": 2003.0,
+              "confidence_level": 0.95,
+              "confidence_interval": [
+                -0.09565496444702148,
+                1.6948607308523995
+              ]
+            },
+            "mann_kendall": {
+              "s": 33,
+              "variance": 408.3333333333333,
+              "z": 1.5835893097772593,
+              "p_value": 0.11328720822235319,
+              "tau_a": 0.3142857142857143,
+              "significant": false,
+              "direction": "no_significant_trend",
+              "method": "asymptotic_mann_kendall_ties_continuity_corrected"
+            },
+            "sensitivity": {
+              "leave_one_year_out_slope_range": [
+                0.7920702828301197,
+                1.0095239052405725
+              ],
+              "direction_stable": true,
+              "ols_sen_direction_agree": true
+            },
+            "autocorrelation": {
+              "lag1": 0.08731524572824823,
+              "adjacent_pairs": 12,
+              "threshold": 0.5658032638058332,
+              "flagged": false,
+              "status": "screen_only"
+            },
+            "reliable": true,
+            "reliability_reasons": [],
+            "unit": "kg m-2",
+            "slope_unit": "kg m-2/year",
+            "source": "GLDAS_NOAH025_M.2.1",
+            "adjusted_p_value": 0.19821061903884263
+          }
+        },
+        "trends": {
+          "ndvi": {
+            "variable": "ndvi",
+            "unit": "1",
+            "n_observations": 15,
+            "slope_per_year": 0.0007363731747972658,
+            "slope_95ci": [
+              -0.0008513431842614856,
+              0.0023240895338560172
+            ],
+            "p_value": 0.3346462786599975,
+            "theil_sen_slope_per_year": 0.0009949731405855414,
+            "theil_sen_95ci": [
+              -0.0008217893055733561,
+              0.002252029821425522
+            ],
+            "kendall_tau": 0.2571428571428571,
+            "kendall_p_value": 0.19821061903884263,
+            "kendall_method": "asymptotic_mann_kendall_ties_continuity_corrected",
+            "kendall_tau_variant": "tau_a"
+          },
+          "soil_water_0_100cm": {
+            "variable": "soil_water_0_100cm",
+            "unit": "kg m-2",
+            "n_observations": 15,
+            "slope_per_year": 0.502366232199127,
+            "slope_95ci": [
+              -0.49156086281502454,
+              1.4962933272132786
+            ],
+            "p_value": 0.294688589432668,
+            "theil_sen_slope_per_year": 0.8497427449081918,
+            "theil_sen_95ci": [
+              -0.09565496444702148,
+              1.6948607308523995
+            ],
+            "kendall_tau": 0.3142857142857143,
+            "kendall_p_value": 0.11328720822235319,
+            "kendall_method": "asymptotic_mann_kendall_ties_continuity_corrected",
+            "kendall_tau_variant": "tau_a"
+          }
+        },
+        "trend_slopes": {
+          "ndvi": 0.0007363731747972658,
+          "soil_water_0_100cm": 0.502366232199127
+        },
+        "confidence_intervals": {
+          "ndvi": [
+            -0.0008513431842614856,
+            0.0023240895338560172
+          ],
+          "soil_water_0_100cm": [
+            -0.49156086281502454,
+            1.4962933272132786
+          ]
+        },
+        "p_values": {
+          "ndvi": 0.3346462786599975,
+          "soil_water_0_100cm": 0.294688589432668
+        },
+        "adjusted_p_values": {
+          "ndvi": 0.19821061903884263,
+          "soil_water_0_100cm": 0.19821061903884263
+        },
+        "data_quality": {
+          "n_raw_rows": 528,
+          "sources": [
+            "GLDAS_NOAH025_M.2.1",
+            "MOD13A3.061"
+          ],
+          "synthetic_demo": false,
+          "qa_reviewed": false,
+          "by_variable": {
+            "ndvi": {
+              "input_rows": 264,
+              "valid_observations": 256,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.030303030303030276,
+              "raw_excluded_years": [
+                2004,
+                2009,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "available_years": [
+                2003,
+                2005,
+                2006,
+                2007,
+                2008,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2007,
+                2008,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019
+              ],
+              "n_years": 15,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2019-12-31"
+              },
+              "expected_observations": 204,
+              "analyzed_valid_observations": 180,
+              "missing_fraction": 0.11764705882352944,
+              "excluded_years": [
+                2004,
+                2009
+              ],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2009
+              ],
+              "alignment_excluded_years": []
+            },
+            "soil_water_0_100cm": {
+              "input_rows": 264,
+              "valid_observations": 264,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.0,
+              "raw_excluded_years": [],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2007,
+                2008,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019
+              ],
+              "n_years": 15,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2019-12-31"
+              },
+              "expected_observations": 204,
+              "analyzed_valid_observations": 180,
+              "missing_fraction": 0.11764705882352944,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2009
+              ],
+              "alignment_excluded_years": [
+                2004,
+                2009,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ]
+            }
+          }
+        },
+        "divergence_detected": false,
+        "divergence_status": "no_detected_divergence",
+        "divergence": {
+          "category": "No Detected Divergence",
+          "pairs": [
+            {
+              "vegetation": "ndvi",
+              "soil_moisture": "soil_water_0_100cm",
+              "category": "No Detected Divergence",
+              "reasons": [
+                "required_opposing_directions_absent"
+              ]
+            }
+          ],
+          "reasons": []
+        },
+        "limitations": [
+          "Greenness is not ecosystem health; divergence does not establish degradation or causation.",
+          "Monthly inputs use equal-weight calendar-year means; default requires all 12 months. No imputation.",
+          "All indicators share valid calendar years; extra indicators can reduce the common record.",
+          "P-values and slope intervals assume independent annual observations. Residual lag-1 is only a screen, not a correction or proof of independence.",
+          "BH correction covers MK tests for indicators in this call, not regions or repeated exploratory analyses; it assumes independence or suitable positive dependence.",
+          "Confidence intervals are marginal, not simultaneous, prediction, or ecological-damage intervals.",
+          "Sensitivity checks assess direction, not significance stability or alternate spatial aggregation.",
+          "Source strings are supplied by the caller; NASA provenance, QA flags, spatial comparability and physical units must be verified upstream.",
+          "If any source label contains SYNTHETIC (case-insensitive), the entire result is marked synthetic_demo=true, including mixtures of real and synthetic sources; this is a label heuristic, not provenance verification.",
+          "Raw coverage uses supplied calendar years. Reliability uses contributing observations within final analysis bounds, including unusable interior years as gaps; unobserved endpoint years cannot be inferred.",
+          "Numerically constant series use a 100-epsilon relative tolerance across trend methods and residual checks; this is not an ecological effect-size threshold."
+        ],
+        "settings": {
+          "frequency": "monthly",
+          "alpha": 0.05,
+          "min_years": 8,
+          "min_months_per_year": 12,
+          "max_missing_fraction": 0.2
+        }
+      },
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": "No Detected Divergence",
+        "classification": "no_detected_divergence",
+        "adjusted_p_values": {
+          "ndvi": 0.8212912000974889,
+          "soil_water_0_100cm": 0.8212912000974889
+        },
+        "reasons": [
+          "required_opposing_directions_absent"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 8,
+        "divergence": {
+          "category": "No Detected Divergence",
+          "pairs": [
+            {
+              "vegetation": "ndvi",
+              "soil_moisture": "soil_water_0_100cm",
+              "category": "No Detected Divergence",
+              "reasons": [
+                "required_opposing_directions_absent"
+              ]
+            }
+          ],
+          "reasons": []
+        },
+        "synthetic_demo": false
+      }
+    },
+    {
+      "region_id": "gldas025_r043_c0449",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -67.75,
+              -49.25
+            ],
+            [
+              -67.5,
+              -49.25
+            ],
+            [
+              -67.5,
+              -49.0
+            ],
+            [
+              -67.75,
+              -49.0
+            ],
+            [
+              -67.75,
+              -49.25
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -67.75,
+        -49.25,
+        -67.5,
+        -49.0
+      ],
+      "centroid": [
+        -67.625,
+        -49.125
+      ],
+      "properties": {
+        "region_id": "gldas025_r043_c0449",
+        "name": "gldas025_r043_c0449",
+        "bbox": [
+          -67.75,
+          -49.25,
+          -67.5,
+          -49.0
+        ],
+        "centroid": [
+          -67.625,
+          -49.125
+        ],
+        "region_area_m2": 505709548.2058636,
+        "crs": "EPSG:4326",
+        "grid_row": 43,
+        "grid_col": 449,
+        "native_resolution_degrees": 0.25,
+        "data_status": "incomplete_ndvi",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "Argentina",
+            "country_code": "AR",
+            "overlap_area_m2": 505708974.3497162,
+            "region_area_fraction": 0.9999988652455754,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 264,
+          "soil_water_0_100cm": 264
+        },
+        "ndvi_valid_months": 259,
+        "ndvi_exported_months": 264
+      },
+      "status": "eligible",
+      "analysis": {
+        "schema_version": "0.3",
+        "region": "gldas025_r043_c0449",
+        "observation_period": {
+          "start": "2003-01-01",
+          "end": "2021-12-31",
+          "years": [
+            2003,
+            2005,
+            2006,
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019,
+            2021
+          ],
+          "aggregation": "annual_mean"
+        },
+        "variables": [
+          "ndvi",
+          "soil_water_0_100cm"
+        ],
+        "analysis": {
+          "ndvi": {
+            "status": "ok",
+            "data_quality": {
+              "input_rows": 264,
+              "valid_observations": 259,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.018939393939393923,
+              "raw_excluded_years": [
+                2004,
+                2020,
+                2022,
+                2023,
+                2024
+              ],
+              "available_years": [
+                2003,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2021
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2021
+              ],
+              "n_years": 17,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2021-12-31"
+              },
+              "expected_observations": 228,
+              "analyzed_valid_observations": 204,
+              "missing_fraction": 0.10526315789473684,
+              "excluded_years": [
+                2004,
+                2020
+              ],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2020
+              ],
+              "alignment_excluded_years": []
+            },
+            "linear_regression": {
+              "slope": 0.00035481814683568436,
+              "intercept": 0.17255376110274992,
+              "time_origin": 2003.0,
+              "p_value": 0.5822530469456936,
+              "r_squared": 0.0206398140759925,
+              "standard_error": 0.0006310714394631263,
+              "confidence_interval": [
+                -0.0009902787860237498,
+                0.0016999150796951188
+              ],
+              "confidence_level": 0.95
+            },
+            "theil_sen": {
+              "slope": 0.00019502829332249775,
+              "intercept": 0.17429397235042626,
+              "time_origin": 2003.0,
+              "confidence_level": 0.95,
+              "confidence_interval": [
+                -0.0009934084901721152,
+                0.0014923306313592724
+              ]
+            },
+            "mann_kendall": {
+              "s": 10,
+              "variance": 589.3333333333334,
+              "z": 0.3707336495572356,
+              "p_value": 0.7108359248149255,
+              "tau_a": 0.07352941176470588,
+              "significant": false,
+              "direction": "no_significant_trend",
+              "method": "asymptotic_mann_kendall_ties_continuity_corrected"
+            },
+            "sensitivity": {
+              "leave_one_year_out_slope_range": [
+                -6.790565453954993e-05,
+                0.0005047289644748169
+              ],
+              "direction_stable": false,
+              "ols_sen_direction_agree": true
+            },
+            "autocorrelation": {
+              "lag1": 0.03123423080786533,
+              "adjacent_pairs": 14,
+              "threshold": 0.5238320341483518,
+              "flagged": false,
+              "status": "screen_only"
+            },
+            "reliable": false,
+            "reliability_reasons": [
+              "leave_one_year_out_direction_unstable"
+            ],
+            "unit": "1",
+            "slope_unit": "1/year",
+            "source": "MOD13A3.061",
+            "adjusted_p_value": 0.7730800663123129
+          },
+          "soil_water_0_100cm": {
+            "status": "ok",
+            "data_quality": {
+              "input_rows": 264,
+              "valid_observations": 264,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.0,
+              "raw_excluded_years": [],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2021
+              ],
+              "n_years": 17,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2021-12-31"
+              },
+              "expected_observations": 228,
+              "analyzed_valid_observations": 204,
+              "missing_fraction": 0.10526315789473684,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2020
+              ],
+              "alignment_excluded_years": [
+                2004,
+                2020,
+                2022,
+                2023,
+                2024
+              ]
+            },
+            "linear_regression": {
+              "slope": -0.039978195639217215,
+              "intercept": 254.44990077673222,
+              "time_origin": 2003.0,
+              "p_value": 0.9178085016794556,
+              "r_squared": 0.0007337168074015509,
+              "standard_error": 0.38093768878329926,
+              "confidence_interval": [
+                -0.8519276592829718,
+                0.7719712680045373
+              ],
+              "confidence_level": 0.95
+            },
+            "theil_sen": {
+              "slope": 0.10612960700150437,
+              "intercept": 250.60899642710282,
+              "time_origin": 2003.0,
+              "confidence_level": 0.95,
+              "confidence_interval": [
+                -0.8206316033999137,
+                1.1511034965515137
+              ]
+            },
+            "mann_kendall": {
+              "s": 8,
+              "variance": 589.3333333333334,
+              "z": 0.2883483941000721,
+              "p_value": 0.7730800663123129,
+              "tau_a": 0.058823529411764705,
+              "significant": false,
+              "direction": "no_significant_trend",
+              "method": "asymptotic_mann_kendall_ties_continuity_corrected"
+            },
+            "sensitivity": {
+              "leave_one_year_out_slope_range": [
+                -0.05846893125110242,
+                0.3488396803538004
+              ],
+              "direction_stable": false,
+              "ols_sen_direction_agree": false
+            },
+            "autocorrelation": {
+              "lag1": -0.30418292328684765,
+              "adjacent_pairs": 14,
+              "threshold": 0.5238320341483518,
+              "flagged": false,
+              "status": "screen_only"
+            },
+            "reliable": false,
+            "reliability_reasons": [
+              "leave_one_year_out_direction_unstable",
+              "trend_methods_disagree"
+            ],
+            "unit": "kg m-2",
+            "slope_unit": "kg m-2/year",
+            "source": "GLDAS_NOAH025_M.2.1",
+            "adjusted_p_value": 0.7730800663123129
+          }
+        },
+        "trends": {
+          "ndvi": {
+            "variable": "ndvi",
+            "unit": "1",
+            "n_observations": 17,
+            "slope_per_year": 0.00035481814683568436,
+            "slope_95ci": [
+              -0.0009902787860237498,
+              0.0016999150796951188
+            ],
+            "p_value": 0.5822530469456936,
+            "theil_sen_slope_per_year": 0.00019502829332249775,
+            "theil_sen_95ci": [
+              -0.0009934084901721152,
+              0.0014923306313592724
+            ],
+            "kendall_tau": 0.07352941176470588,
+            "kendall_p_value": 0.7108359248149255,
+            "kendall_method": "asymptotic_mann_kendall_ties_continuity_corrected",
+            "kendall_tau_variant": "tau_a"
+          },
+          "soil_water_0_100cm": {
+            "variable": "soil_water_0_100cm",
+            "unit": "kg m-2",
+            "n_observations": 17,
+            "slope_per_year": -0.039978195639217215,
+            "slope_95ci": [
+              -0.8519276592829718,
+              0.7719712680045373
+            ],
+            "p_value": 0.9178085016794556,
+            "theil_sen_slope_per_year": 0.10612960700150437,
+            "theil_sen_95ci": [
+              -0.8206316033999137,
+              1.1511034965515137
+            ],
+            "kendall_tau": 0.058823529411764705,
+            "kendall_p_value": 0.7730800663123129,
+            "kendall_method": "asymptotic_mann_kendall_ties_continuity_corrected",
+            "kendall_tau_variant": "tau_a"
+          }
+        },
+        "trend_slopes": {
+          "ndvi": 0.00035481814683568436,
+          "soil_water_0_100cm": -0.039978195639217215
+        },
+        "confidence_intervals": {
+          "ndvi": [
+            -0.0009902787860237498,
+            0.0016999150796951188
+          ],
+          "soil_water_0_100cm": [
+            -0.8519276592829718,
+            0.7719712680045373
+          ]
+        },
+        "p_values": {
+          "ndvi": 0.5822530469456936,
+          "soil_water_0_100cm": 0.9178085016794556
+        },
+        "adjusted_p_values": {
+          "ndvi": 0.7730800663123129,
+          "soil_water_0_100cm": 0.7730800663123129
+        },
+        "data_quality": {
+          "n_raw_rows": 528,
+          "sources": [
+            "GLDAS_NOAH025_M.2.1",
+            "MOD13A3.061"
+          ],
+          "synthetic_demo": false,
+          "qa_reviewed": false,
+          "by_variable": {
+            "ndvi": {
+              "input_rows": 264,
+              "valid_observations": 259,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.018939393939393923,
+              "raw_excluded_years": [
+                2004,
+                2020,
+                2022,
+                2023,
+                2024
+              ],
+              "available_years": [
+                2003,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2021
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2021
+              ],
+              "n_years": 17,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2021-12-31"
+              },
+              "expected_observations": 228,
+              "analyzed_valid_observations": 204,
+              "missing_fraction": 0.10526315789473684,
+              "excluded_years": [
+                2004,
+                2020
+              ],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2020
+              ],
+              "alignment_excluded_years": []
+            },
+            "soil_water_0_100cm": {
+              "input_rows": 264,
+              "valid_observations": 264,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.0,
+              "raw_excluded_years": [],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2021
+              ],
+              "n_years": 17,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2021-12-31"
+              },
+              "expected_observations": 228,
+              "analyzed_valid_observations": 204,
+              "missing_fraction": 0.10526315789473684,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [
+                2004,
+                2020
+              ],
+              "alignment_excluded_years": [
+                2004,
+                2020,
+                2022,
+                2023,
+                2024
+              ]
+            }
+          }
+        },
+        "divergence_detected": false,
+        "divergence_status": "uncertain_signal",
+        "divergence": {
+          "category": "Uncertain Signal",
+          "pairs": [
+            {
+              "vegetation": "ndvi",
+              "soil_moisture": "soil_water_0_100cm",
+              "category": "Uncertain Signal",
+              "reasons": [
+                "quality_or_robustness_checks_failed",
+                "adjusted_significance_not_established",
+                "directional_confidence_intervals_not_established"
+              ]
+            }
+          ],
+          "reasons": []
+        },
+        "limitations": [
+          "Greenness is not ecosystem health; divergence does not establish degradation or causation.",
+          "Monthly inputs use equal-weight calendar-year means; default requires all 12 months. No imputation.",
+          "All indicators share valid calendar years; extra indicators can reduce the common record.",
+          "P-values and slope intervals assume independent annual observations. Residual lag-1 is only a screen, not a correction or proof of independence.",
+          "BH correction covers MK tests for indicators in this call, not regions or repeated exploratory analyses; it assumes independence or suitable positive dependence.",
+          "Confidence intervals are marginal, not simultaneous, prediction, or ecological-damage intervals.",
+          "Sensitivity checks assess direction, not significance stability or alternate spatial aggregation.",
+          "Source strings are supplied by the caller; NASA provenance, QA flags, spatial comparability and physical units must be verified upstream.",
+          "If any source label contains SYNTHETIC (case-insensitive), the entire result is marked synthetic_demo=true, including mixtures of real and synthetic sources; this is a label heuristic, not provenance verification.",
+          "Raw coverage uses supplied calendar years. Reliability uses contributing observations within final analysis bounds, including unusable interior years as gaps; unobserved endpoint years cannot be inferred.",
+          "Numerically constant series use a 100-epsilon relative tolerance across trend methods and residual checks; this is not an ecological effect-size threshold."
+        ],
+        "settings": {
+          "frequency": "monthly",
+          "alpha": 0.05,
+          "min_years": 8,
+          "min_months_per_year": 12,
+          "max_missing_fraction": 0.2
+        }
+      },
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": "Uncertain Signal",
+        "classification": "uncertain_signal",
+        "adjusted_p_values": {
+          "ndvi": 0.966350082890391,
+          "soil_water_0_100cm": 0.966350082890391
+        },
+        "reasons": [
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established",
+          "quality_or_robustness_checks_failed"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 5,
+        "divergence": {
+          "category": "Uncertain Signal",
+          "pairs": [
+            {
+              "vegetation": "ndvi",
+              "soil_moisture": "soil_water_0_100cm",
+              "category": "Uncertain Signal",
+              "reasons": [
+                "quality_or_robustness_checks_failed",
+                "adjusted_significance_not_established",
+                "directional_confidence_intervals_not_established"
+              ]
+            }
+          ],
+          "reasons": []
+        },
+        "synthetic_demo": false
+      }
+    },
+    {
+      "region_id": "gldas025_r043_c0450",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -67.5,
+              -49.25
+            ],
+            [
+              -67.25,
+              -49.25
+            ],
+            [
+              -67.25,
+              -49.0
+            ],
+            [
+              -67.5,
+              -49.0
+            ],
+            [
+              -67.5,
+              -49.25
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -67.5,
+        -49.25,
+        -67.25,
+        -49.0
+      ],
+      "centroid": [
+        -67.375,
+        -49.125
+      ],
+      "properties": {
+        "region_id": "gldas025_r043_c0450",
+        "name": "gldas025_r043_c0450",
+        "bbox": [
+          -67.5,
+          -49.25,
+          -67.25,
+          -49.0
+        ],
+        "centroid": [
+          -67.375,
+          -49.125
+        ],
+        "region_area_m2": 505709548.2058636,
+        "crs": "EPSG:4326",
+        "grid_row": 43,
+        "grid_col": 450,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "Argentina",
+            "country_code": "AR",
+            "overlap_area_m2": 196024033.16099548,
+            "region_area_fraction": 0.38762177589179764,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "no_valid_observations",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 0,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 528
+      }
+    },
+    {
+      "region_id": "gldas025_r043_c0451",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -67.25,
+              -49.25
+            ],
+            [
+              -67.0,
+              -49.25
+            ],
+            [
+              -67.0,
+              -49.0
+            ],
+            [
+              -67.25,
+              -49.0
+            ],
+            [
+              -67.25,
+              -49.25
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -67.25,
+        -49.25,
+        -67.0,
+        -49.0
+      ],
+      "centroid": [
+        -67.125,
+        -49.125
+      ],
+      "properties": {
+        "region_id": "gldas025_r043_c0451",
+        "name": "gldas025_r043_c0451",
+        "bbox": [
+          -67.25,
+          -49.25,
+          -67.0,
+          -49.0
+        ],
+        "centroid": [
+          -67.125,
+          -49.125
+        ],
+        "region_area_m2": 505709548.2058636,
+        "crs": "EPSG:4326",
+        "grid_row": 43,
+        "grid_col": 451,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [],
+        "jurisdiction_status": "no_country_overlap_in_coarse_boundary",
+        "tile_id": "global_r010_c112",
+        "ndvi_status": "no_valid_observations",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 0,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 528
+      }
+    }
+  ],
+  "source_csv_sha256": "8ec225d0150fb0a89f739dd1319d438db903f95848d7fb95be2ee9791d3579df",
+  "source_catalog_sha256": "8f0d5acdc6c63739e263fe608baf2e613893d6210ebc1b76b67bc03bb7bb844d"
+}

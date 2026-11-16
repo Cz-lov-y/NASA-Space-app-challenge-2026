@@ -1,0 +1,1352 @@
+{
+  "type": "FeatureCollection",
+  "schema_version": "regional-map-1",
+  "dataset_version": "b012b60b25394bd0577e4e6ea445777ccaed3f4114d03c2e0eff3283aeb1cc9f",
+  "input_sha256": "b012b60b25394bd0577e4e6ea445777ccaed3f4114d03c2e0eff3283aeb1cc9f",
+  "observation_period": {
+    "start": "2003-01-01",
+    "end": "2024-12-31"
+  },
+  "primary_variables": [
+    "ndvi",
+    "soil_water_0_100cm"
+  ],
+  "settings": {
+    "alpha": 0.05,
+    "min_years": 8,
+    "min_months_per_year": 12
+  },
+  "multiple_testing": {
+    "method": "benjamini_hochberg",
+    "family_size": 22,
+    "eligible_regions": 11,
+    "catalog_regions": 16,
+    "supported_regions": 11,
+    "pending_regions": 0,
+    "insufficient_regions": 0,
+    "complete_period_regions": 10,
+    "provisional": true,
+    "family_definition": "Both finite primary-indicator MK tests for every region with sufficient common complete years; no direction/significance/reliability selection.",
+    "scope": "Only this frozen fine pilot catalog; never a worldwide or coarse-grid family.",
+    "family_id": "fine-pilot-2c0ce0a9e41d20ee0ec6fc70ae355d40adbe795273fd8a42de2e07c958605b88"
+  },
+  "limitations": [
+    "Provisional statistical screening; source QA and common spatial footprints remain unreviewed.",
+    "BH assumes independence or suitable positive dependence; spatial dependence has not been validated.",
+    "Worldwide-adjusted map classifications are separate from unchanged within-region analysis results.",
+    "No detected divergence does not establish environmental safety; opposing trends do not establish causation.",
+    "No missing observations are interpolated. Known low-coverage/rejected rows are excluded only in the analysis copy.",
+    "Grid cells without both primary indicators remain pending; global means are never assigned to cells.",
+    "Available-indicator diagnostics are not part of the paired worldwide family; their significance is exploratory across regions.",
+    "Fine pilot only; neighboring native model cells may be spatially dependent. Worldwide fine coverage remains pending.",
+    "Compact rendering artifact; inspect detailed screening.json for uncertainty intervals and reliability reasons.",
+    "available_year_count counts standalone diagnostic years; paired_year_count counts shared analyzed years. Source coverage years are per indicator before alignment."
+  ],
+  "features": [
+    {
+      "type": "Feature",
+      "id": "gldas025_r348_c0396",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -81.0,
+              27.0
+            ],
+            [
+              -80.75,
+              27.0
+            ],
+            [
+              -80.75,
+              27.25
+            ],
+            [
+              -81.0,
+              27.25
+            ],
+            [
+              -81.0,
+              27.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r348_c0396",
+        "name": "gldas025_r348_c0396",
+        "bbox": [
+          -81.0,
+          27.0,
+          -80.75,
+          27.25
+        ],
+        "centroid": [
+          -80.875,
+          27.125
+        ],
+        "status": "eligible",
+        "classification": "uncertain_signal",
+        "category": "Uncertain Signal",
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "paired",
+        "analysis_period": {
+          "start": "2003-01-01",
+          "end": "2024-12-31",
+          "aggregation": "annual_mean"
+        },
+        "paired_year_count": 22,
+        "available_year_count": 0,
+        "reasons": [
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established",
+          "quality_or_robustness_checks_failed"
+        ],
+        "quality_flags": [
+          "coverage_review_required"
+        ],
+        "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": 0.003887028030283169,
+            "sen_slope_per_year": 0.0038032367856803886,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": false,
+            "worldwide_adjusted_p_value": 0.06735282716611839,
+            "worldwide_significant": false
+          },
+          "soil_water_0_100cm": {
+            "unit": "kg m-2",
+            "slope_per_year": -0.5902999076110907,
+            "sen_slope_per_year": -0.6717768226351056,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.19657488999235573,
+            "worldwide_significant": false
+          }
+        },
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r348_c0397",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.75,
+              27.0
+            ],
+            [
+              -80.5,
+              27.0
+            ],
+            [
+              -80.5,
+              27.25
+            ],
+            [
+              -80.75,
+              27.25
+            ],
+            [
+              -80.75,
+              27.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r348_c0397",
+        "name": "gldas025_r348_c0397",
+        "bbox": [
+          -80.75,
+          27.0,
+          -80.5,
+          27.25
+        ],
+        "centroid": [
+          -80.625,
+          27.125
+        ],
+        "status": "eligible",
+        "classification": "uncertain_signal",
+        "category": "Uncertain Signal",
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "paired",
+        "analysis_period": {
+          "start": "2003-01-01",
+          "end": "2024-12-31",
+          "aggregation": "annual_mean"
+        },
+        "paired_year_count": 22,
+        "available_year_count": 0,
+        "reasons": [
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established"
+        ],
+        "quality_flags": [
+          "coverage_review_required"
+        ],
+        "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": 0.002691130588429281,
+            "sen_slope_per_year": 0.003358719026386847,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.06735282716611839,
+            "worldwide_significant": false
+          },
+          "soil_water_0_100cm": {
+            "unit": "kg m-2",
+            "slope_per_year": -0.6131505608984965,
+            "sen_slope_per_year": -0.645078991850216,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.39987397069632524,
+            "worldwide_significant": false
+          }
+        },
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r348_c0398",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.5,
+              27.0
+            ],
+            [
+              -80.25,
+              27.0
+            ],
+            [
+              -80.25,
+              27.25
+            ],
+            [
+              -80.5,
+              27.25
+            ],
+            [
+              -80.5,
+              27.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r348_c0398",
+        "name": "gldas025_r348_c0398",
+        "bbox": [
+          -80.5,
+          27.0,
+          -80.25,
+          27.25
+        ],
+        "centroid": [
+          -80.375,
+          27.125
+        ],
+        "status": "eligible",
+        "classification": "uncertain_signal",
+        "category": "Uncertain Signal",
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "paired",
+        "analysis_period": {
+          "start": "2003-01-01",
+          "end": "2024-12-31",
+          "aggregation": "annual_mean"
+        },
+        "paired_year_count": 22,
+        "available_year_count": 0,
+        "reasons": [
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established",
+          "quality_or_robustness_checks_failed"
+        ],
+        "quality_flags": [
+          "coverage_review_required"
+        ],
+        "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.00034328946994855857,
+            "sen_slope_per_year": -0.0005164653003763379,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": false,
+            "worldwide_adjusted_p_value": 0.6729360321800955,
+            "worldwide_significant": false
+          },
+          "soil_water_0_100cm": {
+            "unit": "kg m-2",
+            "slope_per_year": -0.3994586789717942,
+            "sen_slope_per_year": -0.31638692220051895,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.645200971420008,
+            "worldwide_significant": false
+          }
+        },
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r348_c0399",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.25,
+              27.0
+            ],
+            [
+              -80.0,
+              27.0
+            ],
+            [
+              -80.0,
+              27.25
+            ],
+            [
+              -80.25,
+              27.25
+            ],
+            [
+              -80.25,
+              27.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r348_c0399",
+        "name": "gldas025_r348_c0399",
+        "bbox": [
+          -80.25,
+          27.0,
+          -80.0,
+          27.25
+        ],
+        "centroid": [
+          -80.125,
+          27.125
+        ],
+        "status": "unsupported",
+        "classification": "unsupported",
+        "category": null,
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "none",
+        "analysis_period": null,
+        "paired_year_count": 0,
+        "available_year_count": 0,
+        "reasons": [
+          "outside_product_support"
+        ],
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "indicators": {},
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r349_c0396",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -81.0,
+              27.25
+            ],
+            [
+              -80.75,
+              27.25
+            ],
+            [
+              -80.75,
+              27.5
+            ],
+            [
+              -81.0,
+              27.5
+            ],
+            [
+              -81.0,
+              27.25
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r349_c0396",
+        "name": "gldas025_r349_c0396",
+        "bbox": [
+          -81.0,
+          27.25,
+          -80.75,
+          27.5
+        ],
+        "centroid": [
+          -80.875,
+          27.375
+        ],
+        "status": "eligible",
+        "classification": "uncertain_signal",
+        "category": "Uncertain Signal",
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "paired",
+        "analysis_period": {
+          "start": "2003-01-01",
+          "end": "2024-12-31",
+          "aggregation": "annual_mean"
+        },
+        "paired_year_count": 21,
+        "available_year_count": 0,
+        "reasons": [
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established"
+        ],
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": 0.0011213892531267207,
+            "sen_slope_per_year": 0.0006186811986367954,
+            "n_years": 21,
+            "source_coverage_year_count": 21,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.19657488999235573,
+            "worldwide_significant": false
+          },
+          "soil_water_0_100cm": {
+            "unit": "kg m-2",
+            "slope_per_year": -0.6239980052268989,
+            "sen_slope_per_year": -0.6423417833813452,
+            "n_years": 21,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.3428140932964736,
+            "worldwide_significant": false
+          }
+        },
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r349_c0397",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.75,
+              27.25
+            ],
+            [
+              -80.5,
+              27.25
+            ],
+            [
+              -80.5,
+              27.5
+            ],
+            [
+              -80.75,
+              27.5
+            ],
+            [
+              -80.75,
+              27.25
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r349_c0397",
+        "name": "gldas025_r349_c0397",
+        "bbox": [
+          -80.75,
+          27.25,
+          -80.5,
+          27.5
+        ],
+        "centroid": [
+          -80.625,
+          27.375
+        ],
+        "status": "eligible",
+        "classification": "uncertain_signal",
+        "category": "Uncertain Signal",
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "paired",
+        "analysis_period": {
+          "start": "2003-01-01",
+          "end": "2024-12-31",
+          "aggregation": "annual_mean"
+        },
+        "paired_year_count": 22,
+        "available_year_count": 0,
+        "reasons": [
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established"
+        ],
+        "quality_flags": [
+          "coverage_review_required"
+        ],
+        "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": 0.0006198191733036825,
+            "sen_slope_per_year": 0.0004030511338148468,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.6539187729779067,
+            "worldwide_significant": false
+          },
+          "soil_water_0_100cm": {
+            "unit": "kg m-2",
+            "slope_per_year": -0.5649581844021814,
+            "sen_slope_per_year": -0.36023026208082776,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.4075576887171715,
+            "worldwide_significant": false
+          }
+        },
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r349_c0398",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.5,
+              27.25
+            ],
+            [
+              -80.25,
+              27.25
+            ],
+            [
+              -80.25,
+              27.5
+            ],
+            [
+              -80.5,
+              27.5
+            ],
+            [
+              -80.5,
+              27.25
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r349_c0398",
+        "name": "gldas025_r349_c0398",
+        "bbox": [
+          -80.5,
+          27.25,
+          -80.25,
+          27.5
+        ],
+        "centroid": [
+          -80.375,
+          27.375
+        ],
+        "status": "eligible",
+        "classification": "uncertain_signal",
+        "category": "Uncertain Signal",
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "paired",
+        "analysis_period": {
+          "start": "2003-01-01",
+          "end": "2024-12-31",
+          "aggregation": "annual_mean"
+        },
+        "paired_year_count": 22,
+        "available_year_count": 0,
+        "reasons": [
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established",
+          "quality_or_robustness_checks_failed"
+        ],
+        "quality_flags": [
+          "coverage_review_required"
+        ],
+        "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": 0.0014404168806581633,
+            "sen_slope_per_year": 0.0014713913951145408,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": false,
+            "worldwide_adjusted_p_value": 0.08829701898359765,
+            "worldwide_significant": false
+          },
+          "soil_water_0_100cm": {
+            "unit": "kg m-2",
+            "slope_per_year": -0.3521650771782398,
+            "sen_slope_per_year": -0.28314818624864596,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": false,
+            "worldwide_adjusted_p_value": 0.7260124523878627,
+            "worldwide_significant": false
+          }
+        },
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r349_c0399",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.25,
+              27.25
+            ],
+            [
+              -80.0,
+              27.25
+            ],
+            [
+              -80.0,
+              27.5
+            ],
+            [
+              -80.25,
+              27.5
+            ],
+            [
+              -80.25,
+              27.25
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r349_c0399",
+        "name": "gldas025_r349_c0399",
+        "bbox": [
+          -80.25,
+          27.25,
+          -80.0,
+          27.5
+        ],
+        "centroid": [
+          -80.125,
+          27.375
+        ],
+        "status": "unsupported",
+        "classification": "unsupported",
+        "category": null,
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "none",
+        "analysis_period": null,
+        "paired_year_count": 0,
+        "available_year_count": 0,
+        "reasons": [
+          "outside_product_support"
+        ],
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "indicators": {},
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r350_c0396",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -81.0,
+              27.5
+            ],
+            [
+              -80.75,
+              27.5
+            ],
+            [
+              -80.75,
+              27.75
+            ],
+            [
+              -81.0,
+              27.75
+            ],
+            [
+              -81.0,
+              27.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r350_c0396",
+        "name": "gldas025_r350_c0396",
+        "bbox": [
+          -81.0,
+          27.5,
+          -80.75,
+          27.75
+        ],
+        "centroid": [
+          -80.875,
+          27.625
+        ],
+        "status": "eligible",
+        "classification": "uncertain_signal",
+        "category": "Uncertain Signal",
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "paired",
+        "analysis_period": {
+          "start": "2003-01-01",
+          "end": "2024-12-31",
+          "aggregation": "annual_mean"
+        },
+        "paired_year_count": 22,
+        "available_year_count": 0,
+        "reasons": [
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established"
+        ],
+        "quality_flags": [
+          "coverage_review_required"
+        ],
+        "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": 0.0016113829556060329,
+            "sen_slope_per_year": 0.0015080718197641786,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.06735282716611839,
+            "worldwide_significant": false
+          },
+          "soil_water_0_100cm": {
+            "unit": "kg m-2",
+            "slope_per_year": -0.5242581094879677,
+            "sen_slope_per_year": -0.4352525415874666,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.38919028099237196,
+            "worldwide_significant": false
+          }
+        },
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r350_c0397",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.75,
+              27.5
+            ],
+            [
+              -80.5,
+              27.5
+            ],
+            [
+              -80.5,
+              27.75
+            ],
+            [
+              -80.75,
+              27.75
+            ],
+            [
+              -80.75,
+              27.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r350_c0397",
+        "name": "gldas025_r350_c0397",
+        "bbox": [
+          -80.75,
+          27.5,
+          -80.5,
+          27.75
+        ],
+        "centroid": [
+          -80.625,
+          27.625
+        ],
+        "status": "eligible",
+        "classification": "no_detected_divergence",
+        "category": "No Detected Divergence",
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "paired",
+        "analysis_period": {
+          "start": "2003-01-01",
+          "end": "2024-12-31",
+          "aggregation": "annual_mean"
+        },
+        "paired_year_count": 22,
+        "available_year_count": 0,
+        "reasons": [
+          "required_opposing_directions_absent"
+        ],
+        "quality_flags": [
+          "coverage_review_required"
+        ],
+        "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": -0.001300628929465348,
+            "sen_slope_per_year": -0.0013355808398465285,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.06735282716611839,
+            "worldwide_significant": false
+          },
+          "soil_water_0_100cm": {
+            "unit": "kg m-2",
+            "slope_per_year": -0.4460718761207512,
+            "sen_slope_per_year": -0.3080749015013377,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.6372702603268362,
+            "worldwide_significant": false
+          }
+        },
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r350_c0398",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.5,
+              27.5
+            ],
+            [
+              -80.25,
+              27.5
+            ],
+            [
+              -80.25,
+              27.75
+            ],
+            [
+              -80.5,
+              27.75
+            ],
+            [
+              -80.5,
+              27.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r350_c0398",
+        "name": "gldas025_r350_c0398",
+        "bbox": [
+          -80.5,
+          27.5,
+          -80.25,
+          27.75
+        ],
+        "centroid": [
+          -80.375,
+          27.625
+        ],
+        "status": "eligible",
+        "classification": "uncertain_signal",
+        "category": "Uncertain Signal",
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "paired",
+        "analysis_period": {
+          "start": "2003-01-01",
+          "end": "2024-12-31",
+          "aggregation": "annual_mean"
+        },
+        "paired_year_count": 22,
+        "available_year_count": 0,
+        "reasons": [
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established",
+          "quality_or_robustness_checks_failed"
+        ],
+        "quality_flags": [
+          "coverage_review_required"
+        ],
+        "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": 0.0014406428272298888,
+            "sen_slope_per_year": 0.001332589185808697,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": false,
+            "worldwide_adjusted_p_value": 0.11603451565357734,
+            "worldwide_significant": false
+          },
+          "soil_water_0_100cm": {
+            "unit": "kg m-2",
+            "slope_per_year": -0.21456047890887714,
+            "sen_slope_per_year": -0.17048021157582482,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": false,
+            "worldwide_adjusted_p_value": 0.777959384381542,
+            "worldwide_significant": false
+          }
+        },
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r350_c0399",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.25,
+              27.5
+            ],
+            [
+              -80.0,
+              27.5
+            ],
+            [
+              -80.0,
+              27.75
+            ],
+            [
+              -80.25,
+              27.75
+            ],
+            [
+              -80.25,
+              27.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r350_c0399",
+        "name": "gldas025_r350_c0399",
+        "bbox": [
+          -80.25,
+          27.5,
+          -80.0,
+          27.75
+        ],
+        "centroid": [
+          -80.125,
+          27.625
+        ],
+        "status": "unsupported",
+        "classification": "unsupported",
+        "category": null,
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "none",
+        "analysis_period": null,
+        "paired_year_count": 0,
+        "available_year_count": 0,
+        "reasons": [
+          "outside_product_support"
+        ],
+        "quality_flags": [
+          "no_valid_pixels"
+        ],
+        "indicators": {},
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r351_c0396",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -81.0,
+              27.75
+            ],
+            [
+              -80.75,
+              27.75
+            ],
+            [
+              -80.75,
+              28.0
+            ],
+            [
+              -81.0,
+              28.0
+            ],
+            [
+              -81.0,
+              27.75
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r351_c0396",
+        "name": "gldas025_r351_c0396",
+        "bbox": [
+          -81.0,
+          27.75,
+          -80.75,
+          28.0
+        ],
+        "centroid": [
+          -80.875,
+          27.875
+        ],
+        "status": "eligible",
+        "classification": "uncertain_signal",
+        "category": "Uncertain Signal",
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "paired",
+        "analysis_period": {
+          "start": "2003-01-01",
+          "end": "2024-12-31",
+          "aggregation": "annual_mean"
+        },
+        "paired_year_count": 22,
+        "available_year_count": 0,
+        "reasons": [
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established",
+          "quality_or_robustness_checks_failed"
+        ],
+        "quality_flags": [
+          "coverage_review_required"
+        ],
+        "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": 0.001517244897740663,
+            "sen_slope_per_year": 0.0012804956002036134,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": false,
+            "worldwide_adjusted_p_value": 0.06735282716611839,
+            "worldwide_significant": false
+          },
+          "soil_water_0_100cm": {
+            "unit": "kg m-2",
+            "slope_per_year": -0.4995994421804375,
+            "sen_slope_per_year": -0.4301389257113139,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.39987397069632524,
+            "worldwide_significant": false
+          }
+        },
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r351_c0397",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.75,
+              27.75
+            ],
+            [
+              -80.5,
+              27.75
+            ],
+            [
+              -80.5,
+              28.0
+            ],
+            [
+              -80.75,
+              28.0
+            ],
+            [
+              -80.75,
+              27.75
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r351_c0397",
+        "name": "gldas025_r351_c0397",
+        "bbox": [
+          -80.75,
+          27.75,
+          -80.5,
+          28.0
+        ],
+        "centroid": [
+          -80.625,
+          27.875
+        ],
+        "status": "eligible",
+        "classification": "uncertain_signal",
+        "category": "Uncertain Signal",
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "paired",
+        "analysis_period": {
+          "start": "2003-01-01",
+          "end": "2024-12-31",
+          "aggregation": "annual_mean"
+        },
+        "paired_year_count": 22,
+        "available_year_count": 0,
+        "reasons": [
+          "adjusted_significance_not_established",
+          "directional_confidence_intervals_not_established",
+          "quality_or_robustness_checks_failed"
+        ],
+        "quality_flags": [
+          "coverage_review_required"
+        ],
+        "indicators": {
+          "ndvi": {
+            "unit": "1",
+            "slope_per_year": 0.0004985562031712235,
+            "sen_slope_per_year": 0.00047186289871424075,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": true,
+            "worldwide_adjusted_p_value": 0.6303663994313485,
+            "worldwide_significant": false
+          },
+          "soil_water_0_100cm": {
+            "unit": "kg m-2",
+            "slope_per_year": -0.29253465593500627,
+            "sen_slope_per_year": -0.2069075277873448,
+            "n_years": 22,
+            "source_coverage_year_count": 22,
+            "reliable": false,
+            "worldwide_adjusted_p_value": 0.6729360321800955,
+            "worldwide_significant": false
+          }
+        },
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r351_c0398",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.5,
+              27.75
+            ],
+            [
+              -80.25,
+              27.75
+            ],
+            [
+              -80.25,
+              28.0
+            ],
+            [
+              -80.5,
+              28.0
+            ],
+            [
+              -80.5,
+              27.75
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r351_c0398",
+        "name": "gldas025_r351_c0398",
+        "bbox": [
+          -80.5,
+          27.75,
+          -80.25,
+          28.0
+        ],
+        "centroid": [
+          -80.375,
+          27.875
+        ],
+        "status": "unsupported",
+        "classification": "unsupported",
+        "category": null,
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "none",
+        "analysis_period": null,
+        "paired_year_count": 0,
+        "available_year_count": 0,
+        "reasons": [
+          "outside_product_support"
+        ],
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "indicators": {},
+        "native_resolution_degrees": 0.25
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gldas025_r351_c0399",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.25,
+              27.75
+            ],
+            [
+              -80.0,
+              27.75
+            ],
+            [
+              -80.0,
+              28.0
+            ],
+            [
+              -80.25,
+              28.0
+            ],
+            [
+              -80.25,
+              27.75
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "region_id": "gldas025_r351_c0399",
+        "name": "gldas025_r351_c0399",
+        "bbox": [
+          -80.25,
+          27.75,
+          -80.0,
+          28.0
+        ],
+        "centroid": [
+          -80.125,
+          27.875
+        ],
+        "status": "unsupported",
+        "classification": "unsupported",
+        "category": null,
+        "provisional": true,
+        "qa_reviewed": false,
+        "synthetic_demo": false,
+        "analysis_kind": "none",
+        "analysis_period": null,
+        "paired_year_count": 0,
+        "available_year_count": 0,
+        "reasons": [
+          "outside_product_support"
+        ],
+        "quality_flags": [
+          "no_valid_pixels"
+        ],
+        "indicators": {},
+        "native_resolution_degrees": 0.25
+      }
+    }
+  ],
+  "source_csv_sha256": "2e41beb250a5bf8e951ce8a1a89cb2a11aa82344ba8006d9a04a7f66f35cbcfb",
+  "source_catalog_sha256": "eb5821e6e86ebe5c4fe846ef7e5f1868cc7e4104b87c38cb66163fb76b2cfc3d"
+}

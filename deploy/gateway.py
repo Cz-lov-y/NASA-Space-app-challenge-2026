@@ -14,6 +14,7 @@ import mimetypes
 import os
 from pathlib import Path
 import secrets
+import sqlite3
 from threading import Lock
 import time
 from urllib.parse import parse_qs, urlsplit
@@ -38,13 +39,34 @@ class Limit:
             events.append(now);return True
 
 
-def create_server(*, passcode, session_key, origin, static_dir=ROOT/'frontend/dist', port=8081, api_port=8000):
-    if not passcode or len(passcode)<10 or not session_key or len(session_key)<32:
+class ResearchQuota:
+    """Persistent per-address and shared daily limits, charged only on POST."""
+    def __init__(self,path,per_hour=3,per_day=30):
+        self.path=Path(path);self.path.parent.mkdir(parents=True,exist_ok=True)
+        self.per_hour=per_hour;self.per_day=per_day;self.lock=Lock()
+        with sqlite3.connect(self.path) as db:
+            db.execute('CREATE TABLE IF NOT EXISTS requests (client TEXT NOT NULL, created REAL NOT NULL)')
+            db.execute('CREATE INDEX IF NOT EXISTS requests_created ON requests(created)')
+    def allow(self,client):
+        now=time.time()
+        with self.lock,sqlite3.connect(self.path,timeout=10) as db:
+            db.execute('BEGIN IMMEDIATE')
+            db.execute('DELETE FROM requests WHERE created < ?', (now-86400,))
+            daily=db.execute('SELECT COUNT(*) FROM requests').fetchone()[0]
+            hourly=db.execute('SELECT COUNT(*) FROM requests WHERE client=? AND created>=?',(client,now-3600)).fetchone()[0]
+            if daily>=self.per_day or hourly>=self.per_hour:return False
+            db.execute('INSERT INTO requests(client,created) VALUES(?,?)',(client,now))
+            return True
+
+
+def create_server(*, passcode='', session_key='', origin, static_dir=ROOT/'frontend/dist', port=8081, api_port=8000, public=False, quota_path=ROOT/'.cache/public_research_quota.sqlite', research_per_hour=3, research_per_day=30):
+    if not public and (not passcode or len(passcode)<10 or not session_key or len(session_key)<32):
         raise ValueError('A passcode of at least 10 characters and a session key of at least 32 characters are required')
     if not origin.startswith('https://') or urlsplit(origin).path not in ('','/'):
         raise ValueError('A public HTTPS origin is required')
     origin=origin.rstrip('/');static=Path(static_dir).resolve();limiter=Limit()
     key=session_key.encode();expected=passcode.encode()
+    quota=ResearchQuota(quota_path,research_per_hour,research_per_day)
     def signed():
         expiry=str(int(time.time())+SESSION_SECONDS)
         nonce=secrets.token_hex(16);payload=f'{expiry}.{nonce}'
@@ -89,7 +111,8 @@ def create_server(*, passcode, session_key, origin, static_dir=ROOT/'frontend/di
             return self.send_body(303,b'',headers=[('Set-Cookie',cookie),('Location','/')])
         def proxy(self,path,body=None):
             if self.command=='POST' and not self.valid_origin():return self.send_body(403,b'Forbidden')
-            if self.command=='POST' and '/research' in path and not limiter.allow(('research',self.client()),12,3600):return self.send_body(429,b'Too many research requests')
+            if self.command=='POST' and '/research' in path and not quota.allow(self.client()):return self.send_body(429,b'{"error":{"code":"research_limit_reached"}}','application/json')
+            if self.command=='POST' and path.split('?')[0].endswith('/ndvi') and not limiter.allow(('ndvi',self.client()),20,3600):return self.send_body(429,b'Too many data requests')
             if self.command=='GET' and '/observations' in path and 'start_native=0' not in path and not limiter.allow(('observations',self.client()),40,3600):return self.send_body(429,b'Too many location requests')
             try:
                 connection=HTTPConnection('127.0.0.1',api_port,timeout=45)
@@ -101,8 +124,9 @@ def create_server(*, passcode, session_key, origin, static_dir=ROOT/'frontend/di
             except (OSError,TimeoutError):return self.send_body(503,b'{"error":{"code":"service_unavailable"}}','application/json')
         def do_GET(self):
             path=urlsplit(self.path).path
-            if path=='/login':return self.send_body(200,LOGIN_PAGE,'text/html; charset=utf-8')
-            if not authenticated(self.headers.get('Cookie')):
+            if path=='/login':
+                return self.send_body(303,b'',headers=[('Location','/')]) if public else self.send_body(200,LOGIN_PAGE,'text/html; charset=utf-8')
+            if not public and not authenticated(self.headers.get('Cookie')):
                 if path.startswith('/api/'):return self.send_body(401,b'{"error":{"code":"authentication_required"}}','application/json')
                 return self.send_body(303,b'',headers=[('Location','/login')])
             if path.startswith('/api/') or path=='/health':return self.proxy(self.path)
@@ -115,8 +139,11 @@ def create_server(*, passcode, session_key, origin, static_dir=ROOT/'frontend/di
             except (OSError,ValueError):return self.send_body(404,b'Not found')
         def do_POST(self):
             path=urlsplit(self.path).path
-            if path=='/login':return self.login()
-            if not authenticated(self.headers.get('Cookie')):
+            if path=='/login':
+                if public:
+                    self.close_connection=True;return self.send_body(404,b'Not found')
+                return self.login()
+            if not public and not authenticated(self.headers.get('Cookie')):
                 self.close_connection=True;return self.send_body(401,b'Authentication required')
             if not path.startswith('/api/'):
                 self.close_connection=True;return self.send_body(404,b'Not found')
@@ -132,7 +159,7 @@ def create_server(*, passcode, session_key, origin, static_dir=ROOT/'frontend/di
 
 
 def main():
-    server=create_server(passcode=os.environ['EARTHRISK_PASSCODE'],session_key=os.environ['EARTHRISK_SESSION_KEY'],origin=os.environ['EARTHRISK_PUBLIC_ORIGIN'],port=int(os.environ.get('EARTHRISK_GATEWAY_PORT','8081')))
+    server=create_server(passcode=os.environ.get('EARTHRISK_PASSCODE',''),session_key=os.environ.get('EARTHRISK_SESSION_KEY',''),origin=os.environ['EARTHRISK_PUBLIC_ORIGIN'],port=int(os.environ.get('EARTHRISK_GATEWAY_PORT','8081')),public=os.environ.get('EARTHRISK_PUBLIC_ACCESS')=='1',research_per_hour=int(os.environ.get('EARTHRISK_RESEARCH_PER_HOUR','3')),research_per_day=int(os.environ.get('EARTHRISK_RESEARCH_PER_DAY','30')))
     try:server.serve_forever()
     finally:server.server_close()
 

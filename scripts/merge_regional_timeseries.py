@@ -63,7 +63,9 @@ def validate_modis(frame, region_areas=None):
     configured=frame.configured_at_utc.astype(str)
     if not configured.str.contains(r'(?:Z|[+-]\d{2}:\d{2})$',regex=True).all(): raise ValueError('Configured time requires timezone')
     pd.to_datetime(configured,utc=True,errors='raise')
-    if not frame.loc[finite,'value'].between(-.2,1).all(): raise ValueError('NDVI scale/range mismatch')
+    # Native weighted means can land one floating-point step beyond a bound.
+    # Keep the original value and reject anything farther outside the product range.
+    if not frame.loc[finite,'value'].between(np.nextafter(-.2,-np.inf),np.nextafter(1.,np.inf)).all(): raise ValueError('NDVI scale/range mismatch')
     if not frame.valid_area_fraction.dropna().between(0,1.001).all(): raise ValueError('Invalid coverage')
     expected=frame.region_id.map(valid_ids)
     if not np.allclose(frame.region_area_m2,expected,rtol=1e-8): raise ValueError('Region area mismatch')

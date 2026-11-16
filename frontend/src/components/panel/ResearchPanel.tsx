@@ -41,7 +41,7 @@ export function ResearchPanel({ detail }: { detail: RegionalDetail }) {
       catch { /* A matching saved report was unavailable. */ }
       if (!active) return;
       try { const job = await apiJson(base, {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); if (active) await poll(job); }
-      catch { if (active) setStatus('Context is unavailable right now. Please try again later.'); }
+      catch (error) { if (active) setStatus(error instanceof Error && error.message.includes('(429)') ? 'The research limit has been reached. Please try again later.' : 'Context is unavailable right now. Please try again later.'); }
     };
     void start();
     return () => { active = false; clearTimeout(pollTimer); };

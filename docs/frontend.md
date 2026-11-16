@@ -1,3 +1,5 @@
+> **Current demo:** See the [repository README](../README.md) for the public site and current navigation. Earlier milestone notes below are historical; current screening, search and deployment notes appear at the end of this file.
+
 # Member D — Frontend, Integration, Deployment
 
 Member D owns `app.py`, `src/ui/`, the Streamlit theme, display

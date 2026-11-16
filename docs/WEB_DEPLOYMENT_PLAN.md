@@ -1,6 +1,6 @@
 # Deploying the live EarthRisk demo
 
-Status: deployed on 2026-11-15 as a passcode-protected demo at https://34-31-40-122.sslip.io/. The React frontend and Python API now run on the Google Cloud VM; the previous local API still serves its older local snapshot. The existing API explicitly binds to loopback, enforces local Host/Origin checks, uses in-process job queues, and is documented for a trusted local user. It is not ready to expose publicly as-is. Do not forward it through a public tunnel or proxy without first implementing and testing the public-service controls below.
+Status: deployed on 2026-11-15 as a public demo at https://34-31-40-122.sslip.io/. The React frontend and Python API now run on the Google Cloud VM; the previous local API still serves its older local snapshot. The existing API explicitly binds to loopback, enforces local Host/Origin checks, uses in-process job queues, and is documented for a trusted local user. It is not ready to expose publicly as-is. Do not forward it through a public tunnel or proxy without first implementing and testing the public-service controls below.
 
 ## Recommended hackathon architecture
 
@@ -25,7 +25,7 @@ For a more scalable deployment, package the API separately for Cloud Run, place 
 
 ## Remaining human decisions
 
-The current demo uses a shared passcode and a temporary provider hostname. The team can later choose a team-controlled domain, budget alerts and ownership for ongoing operation.
+The current demo is public and uses a temporary provider hostname. The team can later choose a team-controlled domain, budget alerts and ownership for ongoing operation.
 
 ## Earlier browser preparation (before deployment)
 
@@ -34,10 +34,17 @@ The user enabled Chrome's Apple Events JavaScript control, switched the Cloud Co
 
 ## Active deployment (2026-11-15)
 
-The `earthrisk-demo` VM in `us-central1-a` runs the local API, passcode gateway, HTTPS Caddy proxy and the sole global acquisition worker as systemd services. The static external IP is reserved. The gateway requires a passcode, uses a signed secure cookie, checks POST origins and applies bounded login, data and research request rates. Provider credentials and passcode/session secrets live in root-managed `/etc/earthrisk/` files and must not be added to Git. The user's local generated passcode copy is in ignored `.cache/deployment/private.env`. The local world worker was stopped at cutover; do not restart it against the live dataset.
+The `earthrisk-demo` VM in `us-central1-a` runs the local API, public gateway, HTTPS Caddy proxy and the sole global acquisition worker as systemd services. The static external IP is reserved. The gateway allows public access, checks POST origins, limits on-demand data requests, and limits live AI research POSTs to three per client IP per hour and 30 across the service per rolling 24 hours. The shared AI quota is recorded in a persistent SQLite file under `.cache/` and survives gateway restarts. Cached research reads do not consume this quota. Provider credentials and retained private-mode secrets live in root-managed `/etc/earthrisk/` files and must not be added to Git. The local world worker was stopped at cutover; do not restart it against the live dataset.
 
 The initial data snapshot and a final 12-tile delta were copied with checksum verification. The VM worker uses its attached `earthrisk-demo` service account, not the user's local OAuth token, and prioritizes southern Prairies then Canada. New tile data stays on the VM; the older local data copy is not automatically synchronized. To inspect services, use `gcloud compute ssh earthrisk-demo --project=tactical-attic-456217-t0 --zone=us-central1-a --command='systemctl is-active earthrisk-api earthrisk-gateway earthrisk-worker caddy'`. To see acquisition status, inspect the worker journal and `/opt/earthrisk/data/processed/fine/global/index.json` as the `earthrisk` user.
 
 To publish frontend-only changes, build `frontend/` and run `deploy/publish_frontend.sh` from an authenticated workstation. This publishes assets first and switches the HTML entrypoint last, retaining older hashed assets for existing sessions. Server-side code, credentials, and datasets are not updated by that command.
 
 The VM, persistent disk, reserved IP, network transfer and provider requests can incur charges. Stopping the VM interrupts acquisition and serving; the persistent disk and reserved address may still incur charges. The demo uses a third-party `sslip.io` DNS hostname and automatic public TLS; use a team-controlled domain for a durable deployment. The current first-1,000-cell map limitation and non-calibrated modeled screening caveats remain.
+
+
+## Public submission update
+
+On 2026-11-15 public mode was enabled, removing the passcode requirement. The VM worker remains the sole writer and continues prioritizing the Canadian Prairies and Canada. Three retained MODIS requests encountered values one floating-point step below the NDVI lower boundary; the validator was updated to accept exactly one representational step outside either bound without changing values, and the worker was restarted to retry those tiles. Source responses remain archived.
+
+The worker uses `deploy/run_worker.sh` with a systemd override to retry source or service interruptions after 30 minutes. It does not automatically retry a completed run or a disk-space stop. Check the journal and free disk if updates stop; new VM data is not automatically committed to GitHub.

@@ -1,3 +1,5 @@
+> **Deployment note:** This document describes the loopback API. The public HTTPS site sits behind a separate gateway; see [deployment operations](WEB_DEPLOYMENT_PLAN.md).
+
 # Local HTTP API for the React globe
 
 The server provides the stored regional catalog, numerical detail, annual fits and optional background research. Data and cache reads perform no live research. It uses Python's standard library HTTP server and the existing processing modules; no new Python package is required.

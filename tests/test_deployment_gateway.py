@@ -14,7 +14,7 @@ def test_passcode_gate_and_api_proxy(tmp_path):
             size=int(self.headers['Content-Length']);self.rfile.read(size);self.send_response(202);self.send_header('Content-Length','0');self.end_headers()
     api=ThreadingHTTPServer(('127.0.0.1',0),API);Thread(target=api.serve_forever,daemon=True).start()
     (tmp_path/'index.html').write_text('<h1>Real frontend</h1>')
-    origin='https://demo.example';gateway=create_server(passcode='a-strong-demo-code',session_key='a'*64,origin=origin,static_dir=tmp_path,port=0,api_port=api.server_port)
+    origin='https://demo.example';gateway=create_server(passcode='a-strong-demo-code',session_key='a'*64,origin=origin,static_dir=tmp_path,port=0,api_port=api.server_port,quota_path=tmp_path/'quota.sqlite')
     Thread(target=gateway.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{gateway.server_port}'
     try:
         assert requests.get(base+'/',allow_redirects=False).status_code==303
@@ -36,7 +36,7 @@ def test_passcode_gate_and_api_proxy(tmp_path):
 def test_login_attempts_are_rate_limited_and_cookie_tampering_fails(tmp_path):
     (tmp_path/'index.html').write_text('frontend')
     origin='https://demo.example'
-    gateway=create_server(passcode='secure-demo-code',session_key='b'*64,origin=origin,static_dir=tmp_path,port=0)
+    gateway=create_server(passcode='secure-demo-code',session_key='b'*64,origin=origin,static_dir=tmp_path,port=0,quota_path=tmp_path/'quota.sqlite')
     Thread(target=gateway.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{gateway.server_port}'
     try:
         for _ in range(8):
@@ -45,3 +45,33 @@ def test_login_attempts_are_rate_limited_and_cookie_tampering_fails(tmp_path):
         assert requests.get(base+'/api/v1/regions',headers={'Cookie':'earthrisk_session=9999999999.bad.invalid'}).status_code==401
     finally:
         gateway.shutdown();gateway.server_close()
+
+
+def test_public_site_ai_quota_is_shared_and_survives_restart(tmp_path):
+    class API(BaseHTTPRequestHandler):
+        def log_message(self,*args):pass
+        def do_POST(self):
+            self.rfile.read(int(self.headers['Content-Length']))
+            self.send_response(202);self.send_header('Content-Length','0');self.end_headers()
+    api=ThreadingHTTPServer(('127.0.0.1',0),API);Thread(target=api.serve_forever,daemon=True).start()
+    (tmp_path/'index.html').write_text('Public EarthRisk')
+    origin='https://demo.example';quota=tmp_path/'quota.sqlite'
+    def start():
+        server=create_server(origin=origin,static_dir=tmp_path,port=0,api_port=api.server_port,public=True,
+            quota_path=quota,research_per_hour=1,research_per_day=2)
+        Thread(target=server.serve_forever,daemon=True).start()
+        return server,f'http://127.0.0.1:{server.server_port}'
+    server,base=start()
+    try:
+        assert requests.get(base+'/').text=='Public EarthRisk'
+        assert requests.get(base+'/login',allow_redirects=False).status_code==303
+        def post(address):return requests.post(base+'/api/v1/regions/abc/research',headers={'Origin':origin,'X-Real-IP':address},json={}).status_code
+        assert post('192.0.2.1')==202
+        assert post('192.0.2.1')==429
+        assert post('192.0.2.2')==202
+        assert post('192.0.2.3')==429
+        server.shutdown();server.server_close();server,base=start()
+        assert post('192.0.2.4')==429
+        assert requests.post(base+'/api/v1/regions/abc/research',headers={'Origin':'https://other.example'},json={}).status_code==403
+    finally:
+        server.shutdown();server.server_close();api.shutdown();api.server_close()

@@ -1,3 +1,5 @@
+> **Historical planning document:** Some earlier status updates below are superseded. See the [repository README](../README.md) and [current handoff](HANDOFF_CURRENT.md) for the live demo and current behavior.
+
 # EarthRisk team delivery plan
 
 Controller review: 2026-11-14. Target: demo on November 15, followed by scientific review. This document supersedes older task orderings where they conflict. Existing individual methodology and provenance documents still apply.

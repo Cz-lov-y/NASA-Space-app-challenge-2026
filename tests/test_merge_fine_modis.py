@@ -140,3 +140,14 @@ def test_processing_method_upgrade_requires_complete_legacy_replacement(fine_rel
     metadata=json.loads((out/'metadata.json').read_text())
     assert metadata['modis_calculation_version']==CALCULATION_VERSION
     assert metadata['ndvi']['area_method']==CALCULATION_VERSION
+
+
+def test_range_boundary_accepts_single_float_rounding_step_only(fine_release):
+    _,catalog=fine_release
+    rows=fake_rows(catalog,['2003-01-01'])
+    rows.loc[rows.index[0],'value']=np.nextafter(-.2,-np.inf)
+    rows.loc[rows.index[1],'value']=np.nextafter(1.,np.inf)
+    result=validate_frame(rows,catalog)
+    assert result.loc[0,'value']==rows.loc[0,'value']
+    bad=rows.copy();bad.loc[0,'value']=-.200001
+    with pytest.raises(ValueError,match='scale/range mismatch'):validate_frame(bad,catalog)

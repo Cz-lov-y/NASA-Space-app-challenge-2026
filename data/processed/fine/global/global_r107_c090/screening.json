@@ -1,0 +1,2379 @@
+{
+  "schema_version": "regional-screening-1",
+  "dataset_version": "7c18bbfdd2a3dac61d7190e1e6d717fc68a6140fdb7d4686cffd3367486d9c76",
+  "input_sha256": "7c18bbfdd2a3dac61d7190e1e6d717fc68a6140fdb7d4686cffd3367486d9c76",
+  "observation_period": {
+    "start": "2003-01-01",
+    "end": "2024-12-31"
+  },
+  "primary_variables": [
+    "ndvi",
+    "soil_water_0_100cm"
+  ],
+  "settings": {
+    "alpha": 0.05,
+    "min_years": 8,
+    "min_months_per_year": 12
+  },
+  "multiple_testing": {
+    "method": "benjamini_hochberg",
+    "family_size": 0,
+    "eligible_regions": 0,
+    "catalog_regions": 16,
+    "supported_regions": 1,
+    "pending_regions": 0,
+    "insufficient_regions": 1,
+    "complete_period_regions": 0,
+    "provisional": true,
+    "family_definition": "Both finite primary-indicator MK tests for every region with sufficient common complete years; no direction/significance/reliability selection.",
+    "scope": "Only this frozen fine pilot catalog; never a worldwide or coarse-grid family.",
+    "family_id": "fine-pilot-5b056a161269271636421f53574e5c42e3a1b335debb723c7c99a440c49e595e"
+  },
+  "limitations": [
+    "Provisional statistical screening; source QA and common spatial footprints remain unreviewed.",
+    "BH assumes independence or suitable positive dependence; spatial dependence has not been validated.",
+    "Worldwide-adjusted map classifications are separate from unchanged within-region analysis results.",
+    "No detected divergence does not establish environmental safety; opposing trends do not establish causation.",
+    "No missing observations are interpolated. Known low-coverage/rejected rows are excluded only in the analysis copy.",
+    "Grid cells without both primary indicators remain pending; global means are never assigned to cells.",
+    "Available-indicator diagnostics are not part of the paired worldwide family; their significance is exploratory across regions.",
+    "Fine pilot only; neighboring native model cells may be spatially dependent. Worldwide fine coverage remains pending."
+  ],
+  "regions": [
+    {
+      "region_id": "gldas025_r428_c0360",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.0,
+              47.0
+            ],
+            [
+              -89.75,
+              47.0
+            ],
+            [
+              -89.75,
+              47.25
+            ],
+            [
+              -90.0,
+              47.25
+            ],
+            [
+              -90.0,
+              47.0
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -90.0,
+        47.0,
+        -89.75,
+        47.25
+      ],
+      "centroid": [
+        -89.875,
+        47.125
+      ],
+      "properties": {
+        "region_id": "gldas025_r428_c0360",
+        "name": "gldas025_r428_c0360",
+        "bbox": [
+          -90.0,
+          47.0,
+          -89.75,
+          47.25
+        ],
+        "centroid": [
+          -89.875,
+          47.125
+        ],
+        "region_area_m2": 525794029.4266878,
+        "crs": "EPSG:4326",
+        "grid_row": 428,
+        "grid_col": 360,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 525793519.5991516,
+            "region_area_fraction": 0.9999990303664408,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 143,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 385
+      }
+    },
+    {
+      "region_id": "gldas025_r428_c0361",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.75,
+              47.0
+            ],
+            [
+              -89.5,
+              47.0
+            ],
+            [
+              -89.5,
+              47.25
+            ],
+            [
+              -89.75,
+              47.25
+            ],
+            [
+              -89.75,
+              47.0
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -89.75,
+        47.0,
+        -89.5,
+        47.25
+      ],
+      "centroid": [
+        -89.625,
+        47.125
+      ],
+      "properties": {
+        "region_id": "gldas025_r428_c0361",
+        "name": "gldas025_r428_c0361",
+        "bbox": [
+          -89.75,
+          47.0,
+          -89.5,
+          47.25
+        ],
+        "centroid": [
+          -89.625,
+          47.125
+        ],
+        "region_area_m2": 525794029.4266878,
+        "crs": "EPSG:4326",
+        "grid_row": 428,
+        "grid_col": 361,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 525793519.5991516,
+            "region_area_fraction": 0.9999990303664408,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 124,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 404
+      }
+    },
+    {
+      "region_id": "gldas025_r428_c0362",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.5,
+              47.0
+            ],
+            [
+              -89.25,
+              47.0
+            ],
+            [
+              -89.25,
+              47.25
+            ],
+            [
+              -89.5,
+              47.25
+            ],
+            [
+              -89.5,
+              47.0
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -89.5,
+        47.0,
+        -89.25,
+        47.25
+      ],
+      "centroid": [
+        -89.375,
+        47.125
+      ],
+      "properties": {
+        "region_id": "gldas025_r428_c0362",
+        "name": "gldas025_r428_c0362",
+        "bbox": [
+          -89.5,
+          47.0,
+          -89.25,
+          47.25
+        ],
+        "centroid": [
+          -89.375,
+          47.125
+        ],
+        "region_area_m2": 525794029.4266878,
+        "crs": "EPSG:4326",
+        "grid_row": 428,
+        "grid_col": 362,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 525793519.5991516,
+            "region_area_fraction": 0.9999990303664408,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 171,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 357
+      }
+    },
+    {
+      "region_id": "gldas025_r428_c0363",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.25,
+              47.0
+            ],
+            [
+              -89.0,
+              47.0
+            ],
+            [
+              -89.0,
+              47.25
+            ],
+            [
+              -89.25,
+              47.25
+            ],
+            [
+              -89.25,
+              47.0
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -89.25,
+        47.0,
+        -89.0,
+        47.25
+      ],
+      "centroid": [
+        -89.125,
+        47.125
+      ],
+      "properties": {
+        "region_id": "gldas025_r428_c0363",
+        "name": "gldas025_r428_c0363",
+        "bbox": [
+          -89.25,
+          47.0,
+          -89.0,
+          47.25
+        ],
+        "centroid": [
+          -89.125,
+          47.125
+        ],
+        "region_area_m2": 525794029.4266878,
+        "crs": "EPSG:4326",
+        "grid_row": 428,
+        "grid_col": 363,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 525793519.5991516,
+            "region_area_fraction": 0.9999990303664408,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 198,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 330
+      }
+    },
+    {
+      "region_id": "gldas025_r429_c0360",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.0,
+              47.25
+            ],
+            [
+              -89.75,
+              47.25
+            ],
+            [
+              -89.75,
+              47.5
+            ],
+            [
+              -90.0,
+              47.5
+            ],
+            [
+              -90.0,
+              47.25
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -90.0,
+        47.25,
+        -89.75,
+        47.5
+      ],
+      "centroid": [
+        -89.875,
+        47.375
+      ],
+      "properties": {
+        "region_id": "gldas025_r429_c0360",
+        "name": "gldas025_r429_c0360",
+        "bbox": [
+          -90.0,
+          47.25,
+          -89.75,
+          47.5
+        ],
+        "centroid": [
+          -89.875,
+          47.375
+        ],
+        "region_area_m2": 523318007.59337384,
+        "crs": "EPSG:4326",
+        "grid_row": 429,
+        "grid_col": 360,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 523317489.332016,
+            "region_area_fraction": 0.9999990096626711,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 146,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 382
+      }
+    },
+    {
+      "region_id": "gldas025_r429_c0361",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.75,
+              47.25
+            ],
+            [
+              -89.5,
+              47.25
+            ],
+            [
+              -89.5,
+              47.5
+            ],
+            [
+              -89.75,
+              47.5
+            ],
+            [
+              -89.75,
+              47.25
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -89.75,
+        47.25,
+        -89.5,
+        47.5
+      ],
+      "centroid": [
+        -89.625,
+        47.375
+      ],
+      "properties": {
+        "region_id": "gldas025_r429_c0361",
+        "name": "gldas025_r429_c0361",
+        "bbox": [
+          -89.75,
+          47.25,
+          -89.5,
+          47.5
+        ],
+        "centroid": [
+          -89.625,
+          47.375
+        ],
+        "region_area_m2": 523318007.59337384,
+        "crs": "EPSG:4326",
+        "grid_row": 429,
+        "grid_col": 361,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 523317489.332016,
+            "region_area_fraction": 0.9999990096626711,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 95,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 433
+      }
+    },
+    {
+      "region_id": "gldas025_r429_c0362",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.5,
+              47.25
+            ],
+            [
+              -89.25,
+              47.25
+            ],
+            [
+              -89.25,
+              47.5
+            ],
+            [
+              -89.5,
+              47.5
+            ],
+            [
+              -89.5,
+              47.25
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -89.5,
+        47.25,
+        -89.25,
+        47.5
+      ],
+      "centroid": [
+        -89.375,
+        47.375
+      ],
+      "properties": {
+        "region_id": "gldas025_r429_c0362",
+        "name": "gldas025_r429_c0362",
+        "bbox": [
+          -89.5,
+          47.25,
+          -89.25,
+          47.5
+        ],
+        "centroid": [
+          -89.375,
+          47.375
+        ],
+        "region_area_m2": 523318007.59337384,
+        "crs": "EPSG:4326",
+        "grid_row": 429,
+        "grid_col": 362,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 523317489.332016,
+            "region_area_fraction": 0.9999990096626711,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 126,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 402
+      }
+    },
+    {
+      "region_id": "gldas025_r429_c0363",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.25,
+              47.25
+            ],
+            [
+              -89.0,
+              47.25
+            ],
+            [
+              -89.0,
+              47.5
+            ],
+            [
+              -89.25,
+              47.5
+            ],
+            [
+              -89.25,
+              47.25
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -89.25,
+        47.25,
+        -89.0,
+        47.5
+      ],
+      "centroid": [
+        -89.125,
+        47.375
+      ],
+      "properties": {
+        "region_id": "gldas025_r429_c0363",
+        "name": "gldas025_r429_c0363",
+        "bbox": [
+          -89.25,
+          47.25,
+          -89.0,
+          47.5
+        ],
+        "centroid": [
+          -89.125,
+          47.375
+        ],
+        "region_area_m2": 523318007.59337384,
+        "crs": "EPSG:4326",
+        "grid_row": 429,
+        "grid_col": 363,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 523317489.332016,
+            "region_area_fraction": 0.9999990096626711,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 154,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 374
+      }
+    },
+    {
+      "region_id": "gldas025_r430_c0360",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.0,
+              47.5
+            ],
+            [
+              -89.75,
+              47.5
+            ],
+            [
+              -89.75,
+              47.75
+            ],
+            [
+              -90.0,
+              47.75
+            ],
+            [
+              -90.0,
+              47.5
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -90.0,
+        47.5,
+        -89.75,
+        47.75
+      ],
+      "centroid": [
+        -89.875,
+        47.625
+      ],
+      "properties": {
+        "region_id": "gldas025_r430_c0360",
+        "name": "gldas025_r430_c0360",
+        "bbox": [
+          -90.0,
+          47.5,
+          -89.75,
+          47.75
+        ],
+        "centroid": [
+          -89.875,
+          47.625
+        ],
+        "region_area_m2": 520832022.5395231,
+        "crs": "EPSG:4326",
+        "grid_row": 430,
+        "grid_col": 360,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 520831495.96487427,
+            "region_area_fraction": 0.9999989889741298,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 160,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 368
+      }
+    },
+    {
+      "region_id": "gldas025_r430_c0361",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.75,
+              47.5
+            ],
+            [
+              -89.5,
+              47.5
+            ],
+            [
+              -89.5,
+              47.75
+            ],
+            [
+              -89.75,
+              47.75
+            ],
+            [
+              -89.75,
+              47.5
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -89.75,
+        47.5,
+        -89.5,
+        47.75
+      ],
+      "centroid": [
+        -89.625,
+        47.625
+      ],
+      "properties": {
+        "region_id": "gldas025_r430_c0361",
+        "name": "gldas025_r430_c0361",
+        "bbox": [
+          -89.75,
+          47.5,
+          -89.5,
+          47.75
+        ],
+        "centroid": [
+          -89.625,
+          47.625
+        ],
+        "region_area_m2": 520832022.5395231,
+        "crs": "EPSG:4326",
+        "grid_row": 430,
+        "grid_col": 361,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 520831495.96487427,
+            "region_area_fraction": 0.9999989889741298,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 150,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 378
+      }
+    },
+    {
+      "region_id": "gldas025_r430_c0362",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.5,
+              47.5
+            ],
+            [
+              -89.25,
+              47.5
+            ],
+            [
+              -89.25,
+              47.75
+            ],
+            [
+              -89.5,
+              47.75
+            ],
+            [
+              -89.5,
+              47.5
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -89.5,
+        47.5,
+        -89.25,
+        47.75
+      ],
+      "centroid": [
+        -89.375,
+        47.625
+      ],
+      "properties": {
+        "region_id": "gldas025_r430_c0362",
+        "name": "gldas025_r430_c0362",
+        "bbox": [
+          -89.5,
+          47.5,
+          -89.25,
+          47.75
+        ],
+        "centroid": [
+          -89.375,
+          47.625
+        ],
+        "region_area_m2": 520832022.5395231,
+        "crs": "EPSG:4326",
+        "grid_row": 430,
+        "grid_col": 362,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 520831495.96487427,
+            "region_area_fraction": 0.9999989889741298,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 141,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 387
+      }
+    },
+    {
+      "region_id": "gldas025_r430_c0363",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.25,
+              47.5
+            ],
+            [
+              -89.0,
+              47.5
+            ],
+            [
+              -89.0,
+              47.75
+            ],
+            [
+              -89.25,
+              47.75
+            ],
+            [
+              -89.25,
+              47.5
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -89.25,
+        47.5,
+        -89.0,
+        47.75
+      ],
+      "centroid": [
+        -89.125,
+        47.625
+      ],
+      "properties": {
+        "region_id": "gldas025_r430_c0363",
+        "name": "gldas025_r430_c0363",
+        "bbox": [
+          -89.25,
+          47.5,
+          -89.0,
+          47.75
+        ],
+        "centroid": [
+          -89.125,
+          47.625
+        ],
+        "region_area_m2": 520832022.5395231,
+        "crs": "EPSG:4326",
+        "grid_row": 430,
+        "grid_col": 363,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 520831495.96487427,
+            "region_area_fraction": 0.9999989889741298,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 131,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 397
+      }
+    },
+    {
+      "region_id": "gldas025_r431_c0360",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.0,
+              47.75
+            ],
+            [
+              -89.75,
+              47.75
+            ],
+            [
+              -89.75,
+              48.0
+            ],
+            [
+              -90.0,
+              48.0
+            ],
+            [
+              -90.0,
+              47.75
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -90.0,
+        47.75,
+        -89.75,
+        48.0
+      ],
+      "centroid": [
+        -89.875,
+        47.875
+      ],
+      "properties": {
+        "region_id": "gldas025_r431_c0360",
+        "name": "gldas025_r431_c0360",
+        "bbox": [
+          -90.0,
+          47.75,
+          -89.75,
+          48.0
+        ],
+        "centroid": [
+          -89.875,
+          47.875
+        ],
+        "region_area_m2": 518336121.59477955,
+        "crs": "EPSG:4326",
+        "grid_row": 431,
+        "grid_col": 360,
+        "native_resolution_degrees": 0.25,
+        "data_status": "incomplete_ndvi",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 518335586.82847595,
+            "region_area_fraction": 0.9999989683020701,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 264,
+          "soil_water_0_100cm": 264
+        },
+        "ndvi_valid_months": 207,
+        "ndvi_exported_months": 264
+      },
+      "status": "insufficient",
+      "analysis": {
+        "schema_version": "0.3",
+        "region": "gldas025_r431_c0360",
+        "observation_period": {
+          "start": null,
+          "end": null,
+          "years": [],
+          "aggregation": "annual_mean"
+        },
+        "variables": [
+          "ndvi",
+          "soil_water_0_100cm"
+        ],
+        "analysis": {
+          "ndvi": {
+            "status": "insufficient_data",
+            "data_quality": {
+              "input_rows": 264,
+              "valid_observations": 207,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.21590909090909094,
+              "raw_excluded_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "available_years": [],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [],
+              "n_years": 0,
+              "analysis_period": null,
+              "expected_observations": 0,
+              "analyzed_valid_observations": 0,
+              "missing_fraction": null,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [],
+              "alignment_excluded_years": []
+            },
+            "linear_regression": null,
+            "theil_sen": null,
+            "mann_kendall": null,
+            "sensitivity": null,
+            "autocorrelation": null,
+            "reliable": false,
+            "reliability_reasons": [
+              "insufficient_years"
+            ],
+            "unit": "1",
+            "slope_unit": "1/year",
+            "source": "MOD13A3.061",
+            "adjusted_p_value": null
+          },
+          "soil_water_0_100cm": {
+            "status": "insufficient_data",
+            "data_quality": {
+              "input_rows": 264,
+              "valid_observations": 264,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.0,
+              "raw_excluded_years": [],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [],
+              "n_years": 0,
+              "analysis_period": null,
+              "expected_observations": 0,
+              "analyzed_valid_observations": 0,
+              "missing_fraction": null,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [],
+              "alignment_excluded_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ]
+            },
+            "linear_regression": null,
+            "theil_sen": null,
+            "mann_kendall": null,
+            "sensitivity": null,
+            "autocorrelation": null,
+            "reliable": false,
+            "reliability_reasons": [
+              "insufficient_years"
+            ],
+            "unit": "kg m-2",
+            "slope_unit": "kg m-2/year",
+            "source": "GLDAS_NOAH025_M.2.1",
+            "adjusted_p_value": null
+          }
+        },
+        "trends": {
+          "ndvi": {
+            "variable": "ndvi",
+            "unit": "1",
+            "n_observations": 0,
+            "slope_per_year": null,
+            "slope_95ci": null,
+            "p_value": null,
+            "theil_sen_slope_per_year": null,
+            "theil_sen_95ci": null,
+            "kendall_tau": null,
+            "kendall_p_value": null,
+            "kendall_method": "asymptotic_mann_kendall_ties_continuity_corrected",
+            "kendall_tau_variant": "tau_a"
+          },
+          "soil_water_0_100cm": {
+            "variable": "soil_water_0_100cm",
+            "unit": "kg m-2",
+            "n_observations": 0,
+            "slope_per_year": null,
+            "slope_95ci": null,
+            "p_value": null,
+            "theil_sen_slope_per_year": null,
+            "theil_sen_95ci": null,
+            "kendall_tau": null,
+            "kendall_p_value": null,
+            "kendall_method": "asymptotic_mann_kendall_ties_continuity_corrected",
+            "kendall_tau_variant": "tau_a"
+          }
+        },
+        "trend_slopes": {
+          "ndvi": null,
+          "soil_water_0_100cm": null
+        },
+        "confidence_intervals": {
+          "ndvi": null,
+          "soil_water_0_100cm": null
+        },
+        "p_values": {
+          "ndvi": null,
+          "soil_water_0_100cm": null
+        },
+        "adjusted_p_values": {
+          "ndvi": null,
+          "soil_water_0_100cm": null
+        },
+        "data_quality": {
+          "n_raw_rows": 528,
+          "sources": [
+            "GLDAS_NOAH025_M.2.1",
+            "MOD13A3.061"
+          ],
+          "synthetic_demo": false,
+          "qa_reviewed": false,
+          "by_variable": {
+            "ndvi": {
+              "input_rows": 264,
+              "valid_observations": 207,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.21590909090909094,
+              "raw_excluded_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "available_years": [],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [],
+              "n_years": 0,
+              "analysis_period": null,
+              "expected_observations": 0,
+              "analyzed_valid_observations": 0,
+              "missing_fraction": null,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [],
+              "alignment_excluded_years": []
+            },
+            "soil_water_0_100cm": {
+              "input_rows": 264,
+              "valid_observations": 264,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.0,
+              "raw_excluded_years": [],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [],
+              "n_years": 0,
+              "analysis_period": null,
+              "expected_observations": 0,
+              "analyzed_valid_observations": 0,
+              "missing_fraction": null,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [],
+              "alignment_excluded_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ]
+            }
+          }
+        },
+        "divergence_detected": null,
+        "divergence_status": "uncertain_signal",
+        "divergence": {
+          "category": "Uncertain Signal",
+          "pairs": [
+            {
+              "vegetation": "ndvi",
+              "soil_moisture": "soil_water_0_100cm",
+              "category": "Uncertain Signal",
+              "reasons": [
+                "insufficient_data"
+              ]
+            }
+          ],
+          "reasons": []
+        },
+        "limitations": [
+          "Greenness is not ecosystem health; divergence does not establish degradation or causation.",
+          "Monthly inputs use equal-weight calendar-year means; default requires all 12 months. No imputation.",
+          "All indicators share valid calendar years; extra indicators can reduce the common record.",
+          "P-values and slope intervals assume independent annual observations. Residual lag-1 is only a screen, not a correction or proof of independence.",
+          "BH correction covers MK tests for indicators in this call, not regions or repeated exploratory analyses; it assumes independence or suitable positive dependence.",
+          "Confidence intervals are marginal, not simultaneous, prediction, or ecological-damage intervals.",
+          "Sensitivity checks assess direction, not significance stability or alternate spatial aggregation.",
+          "Source strings are supplied by the caller; NASA provenance, QA flags, spatial comparability and physical units must be verified upstream.",
+          "If any source label contains SYNTHETIC (case-insensitive), the entire result is marked synthetic_demo=true, including mixtures of real and synthetic sources; this is a label heuristic, not provenance verification.",
+          "Raw coverage uses supplied calendar years. Reliability uses contributing observations within final analysis bounds, including unusable interior years as gaps; unobserved endpoint years cannot be inferred.",
+          "Numerically constant series use a 100-epsilon relative tolerance across trend methods and residual checks; this is not an ecological effect-size threshold."
+        ],
+        "settings": {
+          "frequency": "monthly",
+          "alpha": 0.05,
+          "min_years": 8,
+          "min_months_per_year": 12,
+          "max_missing_fraction": 0.2
+        }
+      },
+      "available_indicator_analysis": {
+        "schema_version": "0.3",
+        "region": "gldas025_r431_c0360",
+        "observation_period": {
+          "start": "2003-01-01",
+          "end": "2024-12-31",
+          "years": [
+            2003,
+            2004,
+            2005,
+            2006,
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019,
+            2020,
+            2021,
+            2022,
+            2023,
+            2024
+          ],
+          "aggregation": "annual_mean"
+        },
+        "variables": [
+          "soil_water_0_100cm"
+        ],
+        "analysis": {
+          "soil_water_0_100cm": {
+            "status": "ok",
+            "data_quality": {
+              "input_rows": 264,
+              "valid_observations": 264,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.0,
+              "raw_excluded_years": [],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "n_years": 22,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-31"
+              },
+              "expected_observations": 264,
+              "analyzed_valid_observations": 264,
+              "missing_fraction": 0.0,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [],
+              "alignment_excluded_years": []
+            },
+            "linear_regression": {
+              "slope": 0.6758609714648072,
+              "intercept": 276.29075874484414,
+              "time_origin": 2003.0,
+              "p_value": 0.05588094721356775,
+              "r_squared": 0.17083031510930283,
+              "standard_error": 0.33295198405161097,
+              "confidence_interval": [
+                -0.018664696961500193,
+                1.3703866398911146
+              ],
+              "confidence_level": 0.95
+            },
+            "theil_sen": {
+              "slope": 0.5523093188250464,
+              "intercept": 280.5892216099634,
+              "time_origin": 2003.0,
+              "confidence_level": 0.95,
+              "confidence_interval": [
+                0.11656305525037662,
+                1.545899007055496
+              ]
+            },
+            "mann_kendall": {
+              "s": 75,
+              "variance": 1257.6666666666667,
+              "z": 2.0866468040152673,
+              "p_value": 0.03692007316250187,
+              "tau_a": 0.3246753246753247,
+              "significant": true,
+              "direction": "increasing",
+              "method": "asymptotic_mann_kendall_ties_continuity_corrected"
+            },
+            "sensitivity": {
+              "leave_one_year_out_slope_range": [
+                0.41735869362240813,
+                0.8756891214658351
+              ],
+              "direction_stable": true,
+              "ols_sen_direction_agree": true
+            },
+            "autocorrelation": {
+              "lag1": 0.11828138961389265,
+              "adjacent_pairs": 21,
+              "threshold": 0.42770706486254506,
+              "flagged": false,
+              "status": "screen_only"
+            },
+            "reliable": true,
+            "reliability_reasons": [],
+            "unit": "kg m-2",
+            "slope_unit": "kg m-2/year",
+            "source": "GLDAS_NOAH025_M.2.1",
+            "adjusted_p_value": 0.03692007316250187
+          }
+        },
+        "trends": {
+          "soil_water_0_100cm": {
+            "variable": "soil_water_0_100cm",
+            "unit": "kg m-2",
+            "n_observations": 22,
+            "slope_per_year": 0.6758609714648072,
+            "slope_95ci": [
+              -0.018664696961500193,
+              1.3703866398911146
+            ],
+            "p_value": 0.05588094721356775,
+            "theil_sen_slope_per_year": 0.5523093188250464,
+            "theil_sen_95ci": [
+              0.11656305525037662,
+              1.545899007055496
+            ],
+            "kendall_tau": 0.3246753246753247,
+            "kendall_p_value": 0.03692007316250187,
+            "kendall_method": "asymptotic_mann_kendall_ties_continuity_corrected",
+            "kendall_tau_variant": "tau_a"
+          }
+        },
+        "trend_slopes": {
+          "soil_water_0_100cm": 0.6758609714648072
+        },
+        "confidence_intervals": {
+          "soil_water_0_100cm": [
+            -0.018664696961500193,
+            1.3703866398911146
+          ]
+        },
+        "p_values": {
+          "soil_water_0_100cm": 0.05588094721356775
+        },
+        "adjusted_p_values": {
+          "soil_water_0_100cm": 0.03692007316250187
+        },
+        "data_quality": {
+          "n_raw_rows": 264,
+          "sources": [
+            "GLDAS_NOAH025_M.2.1"
+          ],
+          "synthetic_demo": false,
+          "qa_reviewed": false,
+          "by_variable": {
+            "soil_water_0_100cm": {
+              "input_rows": 264,
+              "valid_observations": 264,
+              "raw_expected_observations": 264,
+              "raw_missing_fraction": 0.0,
+              "raw_excluded_years": [],
+              "available_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "raw_incomplete_retained_years": [],
+              "input_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-01"
+              },
+              "analyzed_years": [
+                2003,
+                2004,
+                2005,
+                2006,
+                2007,
+                2008,
+                2009,
+                2010,
+                2011,
+                2012,
+                2013,
+                2014,
+                2015,
+                2016,
+                2017,
+                2018,
+                2019,
+                2020,
+                2021,
+                2022,
+                2023,
+                2024
+              ],
+              "n_years": 22,
+              "analysis_period": {
+                "start": "2003-01-01",
+                "end": "2024-12-31"
+              },
+              "expected_observations": 264,
+              "analyzed_valid_observations": 264,
+              "missing_fraction": 0.0,
+              "excluded_years": [],
+              "incomplete_retained_years": [],
+              "missing_analysis_years": [],
+              "alignment_excluded_years": []
+            }
+          }
+        },
+        "divergence_detected": null,
+        "divergence_status": "uncertain_signal",
+        "divergence": {
+          "category": "Uncertain Signal",
+          "pairs": [],
+          "reasons": [
+            "required_vegetation_or_soil_moisture_missing"
+          ]
+        },
+        "limitations": [
+          "Available-indicator diagnostic only: paired regional screening is pending or insufficient; these p-values have not been adjusted across regions and must not color the divergence map.",
+          "Greenness is not ecosystem health; divergence does not establish degradation or causation.",
+          "Monthly inputs use equal-weight calendar-year means; default requires all 12 months. No imputation.",
+          "All indicators share valid calendar years; extra indicators can reduce the common record.",
+          "P-values and slope intervals assume independent annual observations. Residual lag-1 is only a screen, not a correction or proof of independence.",
+          "BH correction covers MK tests for indicators in this call, not regions or repeated exploratory analyses; it assumes independence or suitable positive dependence.",
+          "Confidence intervals are marginal, not simultaneous, prediction, or ecological-damage intervals.",
+          "Sensitivity checks assess direction, not significance stability or alternate spatial aggregation.",
+          "Source strings are supplied by the caller; NASA provenance, QA flags, spatial comparability and physical units must be verified upstream.",
+          "If any source label contains SYNTHETIC (case-insensitive), the entire result is marked synthetic_demo=true, including mixtures of real and synthetic sources; this is a label heuristic, not provenance verification.",
+          "Raw coverage uses supplied calendar years. Reliability uses contributing observations within final analysis bounds, including unusable interior years as gaps; unobserved endpoint years cannot be inferred.",
+          "Numerically constant series use a 100-epsilon relative tolerance across trend methods and residual checks; this is not an ecological effect-size threshold."
+        ],
+        "settings": {
+          "frequency": "monthly",
+          "alpha": 0.05,
+          "min_years": 8,
+          "min_months_per_year": 12,
+          "max_missing_fraction": 0.2
+        }
+      },
+      "screening": {
+        "category": null,
+        "classification": "insufficient",
+        "adjusted_p_values": {},
+        "reasons": [
+          "insufficient_common_complete_years"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 57
+      }
+    },
+    {
+      "region_id": "gldas025_r431_c0361",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.75,
+              47.75
+            ],
+            [
+              -89.5,
+              47.75
+            ],
+            [
+              -89.5,
+              48.0
+            ],
+            [
+              -89.75,
+              48.0
+            ],
+            [
+              -89.75,
+              47.75
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -89.75,
+        47.75,
+        -89.5,
+        48.0
+      ],
+      "centroid": [
+        -89.625,
+        47.875
+      ],
+      "properties": {
+        "region_id": "gldas025_r431_c0361",
+        "name": "gldas025_r431_c0361",
+        "bbox": [
+          -89.75,
+          47.75,
+          -89.5,
+          48.0
+        ],
+        "centroid": [
+          -89.625,
+          47.875
+        ],
+        "region_area_m2": 518336121.59477955,
+        "crs": "EPSG:4326",
+        "grid_row": 431,
+        "grid_col": 361,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 518335586.82847595,
+            "region_area_fraction": 0.9999989683020701,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 221,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 307
+      }
+    },
+    {
+      "region_id": "gldas025_r431_c0362",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.5,
+              47.75
+            ],
+            [
+              -89.25,
+              47.75
+            ],
+            [
+              -89.25,
+              48.0
+            ],
+            [
+              -89.5,
+              48.0
+            ],
+            [
+              -89.5,
+              47.75
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -89.5,
+        47.75,
+        -89.25,
+        48.0
+      ],
+      "centroid": [
+        -89.375,
+        47.875
+      ],
+      "properties": {
+        "region_id": "gldas025_r431_c0362",
+        "name": "gldas025_r431_c0362",
+        "bbox": [
+          -89.5,
+          47.75,
+          -89.25,
+          48.0
+        ],
+        "centroid": [
+          -89.375,
+          47.875
+        ],
+        "region_area_m2": 518336121.59477955,
+        "crs": "EPSG:4326",
+        "grid_row": 431,
+        "grid_col": 362,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 518335586.82847595,
+            "region_area_fraction": 0.9999989683020701,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 217,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 311
+      }
+    },
+    {
+      "region_id": "gldas025_r431_c0363",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.25,
+              47.75
+            ],
+            [
+              -89.0,
+              47.75
+            ],
+            [
+              -89.0,
+              48.0
+            ],
+            [
+              -89.25,
+              48.0
+            ],
+            [
+              -89.25,
+              47.75
+            ]
+          ]
+        ]
+      },
+      "bbox": [
+        -89.25,
+        47.75,
+        -89.0,
+        48.0
+      ],
+      "centroid": [
+        -89.125,
+        47.875
+      ],
+      "properties": {
+        "region_id": "gldas025_r431_c0363",
+        "name": "gldas025_r431_c0363",
+        "bbox": [
+          -89.25,
+          47.75,
+          -89.0,
+          48.0
+        ],
+        "centroid": [
+          -89.125,
+          47.875
+        ],
+        "region_area_m2": 518336121.59477955,
+        "crs": "EPSG:4326",
+        "grid_row": 431,
+        "grid_col": 363,
+        "native_resolution_degrees": 0.25,
+        "data_status": "unsupported_gldas",
+        "variables": [
+          "soil_water_0_10cm",
+          "soil_water_0_100cm",
+          "ndvi"
+        ],
+        "jurisdictions": [
+          {
+            "name": "United States of America",
+            "country_code": "US",
+            "overlap_area_m2": 518335586.82847595,
+            "region_area_fraction": 0.9999989683020701,
+            "boundary_source": "Natural Earth 1:110m admin_0_countries",
+            "uncertainty": "Coarse geographic intersection; disputed boundaries and policy authority require source review.",
+            "land_area_fraction": 1.0
+          }
+        ],
+        "jurisdiction_status": "geographic_candidates",
+        "tile_id": "global_r107_c090",
+        "ndvi_status": "complete_with_missing",
+        "gldas_valid_months": {
+          "soil_water_0_10cm": 0,
+          "soil_water_0_100cm": 0
+        },
+        "ndvi_valid_months": 213,
+        "ndvi_exported_months": 264
+      },
+      "status": "unsupported",
+      "analysis": null,
+      "available_indicator_analysis": null,
+      "screening": {
+        "category": null,
+        "classification": "unsupported",
+        "adjusted_p_values": {},
+        "reasons": [
+          "outside_product_support"
+        ],
+        "qa_reviewed": false,
+        "provisional": true,
+        "quality_flags": [
+          "coverage_review_required",
+          "no_valid_pixels"
+        ],
+        "qa_rejected_rows": 315
+      }
+    }
+  ],
+  "source_csv_sha256": "f44fc7c55babe167fe86fbecfd4a8018d7da7e3361a58eaf0500f26cdc97c7c4",
+  "source_catalog_sha256": "3a1569c172d40194d4e5b05d99528a57cc29e372c8167b9144a781470d7fb60c"
+}
